@@ -11,7 +11,7 @@ runs on top of Node, and as such can use anything Node gives you!
 A simple "Hello, World!" in Phemme:
 
 ```hs
-page / {request} => text "Hello, world!".
+page / {request} => "Hello, world!".
 ```
 
 
