@@ -41,7 +41,7 @@ a new function:
 let one-two-and-three = [1 2 3] concat.
 print: one-two-and-three: [4].
 
--- |> [1 2 3 4]
+-- > [1 2 3 4]
 ```
 
 Phemme also sports easily extensible syntax and expressive identifiers:
