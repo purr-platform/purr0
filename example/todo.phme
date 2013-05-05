@@ -1,0 +1,56 @@
+--- Module todo
+--
+-- A simple TODO application.
+
+use html
+
+
+---- Templates ---------------------------------------------------------
+-- * A template for the default page
+let template = |page| =>
+    html-5
+      (head
+        (meta <[charset = "utf-8"]>)
+        (title page/title))
+      (body
+        page/body
+        (script <[src = "/scripts/main.js"]>))
+
+
+-- * A template for the toolbar
+let toolbar =
+    div <[class = "toolbar"]>
+      (span <[class = "button"]> "delete")
+
+
+-- * A template for TODO items
+let todo-item = |item| =>
+    li <[class = "item" data-id = item/id]>
+      toolbar
+      (span <[class = "title"]> item/title)
+
+      
+---- State -------------------------------------------------------------
+let items = []
+
+
+
+---- Pages -------------------------------------------------------------
+
+-- | Lists all items
+`/ get: |req| => template <[
+  title = "Simple to-do"
+  body  = (map todo-item items)
+]>
+
+-- | Adds a new item
+`/*:title post: |req| => {
+  items add: <[ id = (guid _) title = title ]>
+  redirect "/"
+}
+
+-- | Removes an item
+`/*:id delete: |req| => {
+  items remove: (items find: <[ id = id ]>)
+  redirect "/"
+}
