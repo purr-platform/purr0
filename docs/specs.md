@@ -62,7 +62,7 @@ type <list> {
   tail: a. -- The rest of the list.
 }.
 
-implement list: as 
+implement | list: as |
   <list> {
     head: as => first: as.
     tail: as => rest: as.
@@ -115,13 +115,13 @@ message to call is defined at run-time.
 ## 5) Formal syntax
 
 ```hs
--- * Basic stuff
+-- # Basic stuff -------------------------------------------------------
 comment :: "--" (anything but EOL)
 
--- * Values
+-- # Values ------------------------------------------------------------
+value :: number | string | list | map | lambda | name
 
--- ** Numbers
-
+-- ## Numbers ----------------------------------------------------------
 digit          :: "0" .. "9"
 digits         :: digit+
 sign           :: "+" | "-"
@@ -145,24 +145,68 @@ number :: hexadecimal-number
         | binary-number
         | decimal-number
 
--- ** String
-
+-- ## String -----------------------------------------------------------
 string-escape :: '"'
 string-char   :: (anything but string-escape)
-string        :: '"' string-char* '"'
-long-string   :: '"""' (anything) '"""'
+text-string   :: '"' string-char* '"'
+doc-string    :: '"""' (anything) '"""'
 keyword       :: "`" (anything but space)
+string        :: keyword | doc-string | text-string
 
--- ** Names
-
-reserved     :: "=>" | "let" | "type" | "implement"
+-- ## Names ------------------------------------------------------------
+reserved     :: "=>" | "=" | "<:" | "let" | "type" | "implement"
 name-symbols :: "(" | ")" | "[" | "]" | "{" | "}" | "." | ":" | "|" | "`"
 name-start   :: (none-of name-symbols | digits | space)
 name-rest    :: (none-of name-symbols | space)
 name         :: name-start name-rest* ?(not reserved)
 
--- ** List
+-- ## List -------------------------------------------------------------
+list :: "[" value* "]"
+
+-- ## Map --------------------------------------------------------------
+map-field :: name "=" value
+map :: "{" map-field* "}"
+
+-- ## Function ---------------------------------------------------------
+lambda               :: lambda-args "=>" expression
+lambda-args          :: "|" name* "|"
+function-declaration :: fn-decl-args "=>" expression
+fn-decl-args         :: (fn-keyword | name)*
+fn-keyword           :: name ":"
 
 
+-- # Expressions -------------------------------------------------------
+declaration :: ( let-declaration
+               | type-declaration
+               | implement-declaration
+               | expression
+               )
+               "."
 
+expression :: block-expression
+              invocation
+              group-expression
+              value
+
+block-expression :: "{" declaration* "}"
+group-expression :: "(" expression ")"
+
+let-declaration     :: "let" (function-declaration | binding-declaration)
+binding-declaration :: name "=" expression
+
+type-declaration   :: "type" name "{" type-block "}"
+type-block         :: (optional string) function-interface*
+function-interface :: fn-decl-args "."
+
+implement-declaration :: "implement" constructor type-impl*
+constructor           :: "|" fn-keyword name* "|"
+type-impl             :: name impl-block
+impl-block            :: "{" function-declaration* "}"
+
+invocation         :: keyword-invocation
+                    | regular-invocation
+keyword-invocation :: expression* fn-keyword expression*
+regular-invocation :: expression expression+
+
+program :: declaration*
 ```
