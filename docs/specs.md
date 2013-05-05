@@ -31,14 +31,14 @@ As a small functional language, the main building block of Phemme are
 functions, which are first-class:
 
 ```hs
-let a concat: b => a ++ b.
+let concat: a b => a ++ b.
 ```
 
 Functions are auto-curried, so you can partially apply them and get back
 a new function:
 
 ```hs
-let one-two-and-three = [1 2 3] concat.
+let one-two-and-three = concat [1 2 3].
 print: one-two-and-three: [4].
 
 -- > [1 2 3 4]
@@ -47,7 +47,7 @@ print: one-two-and-three: [4].
 Phemme also sports easily extensible syntax and expressive identifiers:
 
 ```hs
-let a ++: b => a concat: b.
+let a ++: b => concat: a b.
 ```
 
 Lastly, we have abstract polymorphism the same way Clojure does it:
