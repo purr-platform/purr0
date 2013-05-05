@@ -27,6 +27,8 @@ for writing RESTful services.
 
 ## 1) Overview of Phemme
 
+### 1.1) Semantics
+
 As a small functional language, the main building block of Phemme are
 functions, which are first-class:
 
@@ -67,5 +69,36 @@ implement list: as {
 ```
 
 And for even more simplicity, the language is dynamically typed (with no
-nullary types!), and all values are immutable by default. We support the
-usual value types: `Boolean`, `Number`, `String`, `List` and `Map`.
+stinkin' null/undefined!), and all values are immutable by default. We
+support the usual value types: `Boolean`, `Number`, `String`, `List` and
+`Map`.
+
+
+### 1.2) REST DSL
+
+As the main goal of Phemme is to make it easier to write web servers,
+REST handling is baked straight into the language, through the functions
+`page:`, `get:`, `post:`, `put:`, etc. `page:` is the low-level
+construct, which all the others build upon, and it's there if you need
+to support additonal verbs.
+
+Writing REST services is then as simple as:
+
+```hs
+`/ get:  |request| => "Hello, world."
+`/ post: |request| => "Hello, " .. request/body.
+
+"GET" page: `/:name |request| => "'Sup, " .. request/parms/name.
+```
+
+
+### 1.3) Syntax
+
+Syntax is heavily influenced by Lisps (Clojure, Dylan), Haskell,
+Smalltalk/Self, Ruby and Magpie. Mostly, functions are defined in terms
+of keyword parameters, like in Smalltalk, except that messages are
+defined through `Type` declarations, rather than objects, and which
+message to call is defined at run-time.
+
+
+
