@@ -165,7 +165,7 @@ list :: "[" value* "]"
 
 -- ## Map --------------------------------------------------------------
 map-field :: name "=" value
-map :: "{" map-field* "}"
+map :: "<[" map-field* "]>"
 
 -- ## Function ---------------------------------------------------------
 lambda               :: lambda-args "=>" expression
