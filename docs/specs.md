@@ -130,15 +130,15 @@ decimal-number :: sign digits ("." digits)?
 
 hex-digit          :: "0" .. "9" | "a" .. "f"
 hex-digits         :: hex-digit+
-hexadecimal-number :: "0x" hex-digits
+hexadecimal-number :: "16::" hex-digits
 
 octal-digit  :: "0" .. "8"
 octal-digits :: octal-digit+
-octal-number :: "8b" octal-digits
+octal-number :: "8::" octal-digits
 
 binary-digit  :: "0" | "1"
 binary-digits :: binary-digit+
-binary-number :: "2b" binary-digits
+binary-number :: "2::" binary-digits
 
 number :: hexadecimal-number
         | octal-number
