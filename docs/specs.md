@@ -33,7 +33,7 @@ As a small functional language, the main building block of Phemme are
 functions, which are first-class:
 
 ```hs
-let a concat: b => a ++ b.
+let a concat: b => a ++: b.
 ```
 
 Functions are auto-curried, so you can partially apply them and get back
@@ -49,7 +49,7 @@ print (one-two-and-three [4]).
 Phemme also sports easily extensible syntax and expressive identifiers:
 
 ```hs
-let a & b => a & b.
+let a & b => a &: b.
 ```
 
 Lastly, we have abstract polymorphism the same way Clojure does it:
@@ -96,7 +96,24 @@ Writing REST services is then as simple as:
 ```
 
 
-### 1.3) Syntax
+### 1.3) Node literals
+
+Since most of the time people will be likely dealing with either JSON or
+HTML, Phemme tries to make it easier to encode those by providing Node
+literals, which can be used to make HTML documents quite easily:
+
+
+```hs
+let page-head = <head>
+                  <meta charset = "utf-8" />
+                  <title>"foo"</title>
+                </head>
+```
+
+Basically, nodes create Node objects, and can contain any valid Phemme
+expression.
+
+### 1.4) Syntax
 
 Syntax is heavily influenced by Lisps (Clojure, Dylan), Haskell,
 Smalltalk/Self, Ruby and Magpie. Mostly, functions are defined in terms
@@ -118,8 +135,10 @@ message to call is defined at run-time.
 -- # Basic stuff -------------------------------------------------------
 comment :: "--" (anything but EOL)
 
+
 -- # Values ------------------------------------------------------------
-value :: number | string | list | map | lambda | name
+value :: number | string | list | node | map | lambda | name
+
 
 -- ## Numbers ----------------------------------------------------------
 digit          :: "0" .. "9"
@@ -145,6 +164,7 @@ number :: hexadecimal-number
         | binary-number
         | decimal-number
 
+
 -- ## String -----------------------------------------------------------
 string-escape :: '"'
 string-char   :: (anything but string-escape)
@@ -153,19 +173,33 @@ doc-string    :: '"""' (anything) '"""'
 keyword       :: "`" (anything but space)
 string        :: keyword | doc-string | text-string
 
+
 -- ## Names ------------------------------------------------------------
 reserved     :: "=>" | "=" | "<:" | "let" | "type" | "implement"
-name-symbols :: "(" | ")" | "[" | "]" | "{" | "}" | "." | ":" | "|" | "`"
+name-symbols :: "(" | ")" | "[" | "]" | "{" | "}" | "." | ":" | "|" | "`" | "#"
 name-start   :: (none-of name-symbols | digits | space)
 name-rest    :: (none-of name-symbols | space)
 name         :: name-start name-rest* ?(not reserved)
 
+
 -- ## List -------------------------------------------------------------
 list :: "[" value* "]"
+
 
 -- ## Map --------------------------------------------------------------
 map-field :: name "=" value
 map :: "<[" map-field* "]>"
+
+
+-- ## Trees ------------------------------------------------------------
+node           :: singleton-node
+                | container-node
+singleton-node :: "<" nodeHead map-field* "/>"
+container-node :: "<" nodeHead map-field* "/>" expression* "</" name ">"
+nodeHead       :: name idSpec? classSpec*
+idSpec         :: "#" name
+classSpec      :: "." name
+
 
 -- ## Function ---------------------------------------------------------
 lambda               :: lambda-args "=>" expression
@@ -203,10 +237,7 @@ constructor           :: "|" fn-keyword name* "|"
 type-impl             :: name impl-block
 impl-block            :: "{" function-declaration* "}"
 
-invocation         :: keyword-invocation
-                    | regular-invocation
-keyword-invocation :: expression* fn-keyword expression*
-regular-invocation :: expression expression+
+invocation         :: expression* fn-keyword expression+
 
 program :: declaration*
 ```
