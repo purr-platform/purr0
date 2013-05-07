@@ -41,7 +41,7 @@ a new function:
 
 ```hs
 let one-two-and-three = concat [1 2 3].
-print (one-two-and-three [4]).
+print (one-two-and-three call: [4]).
 
 -- > [1 2 3 4]
 ```
