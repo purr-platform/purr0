@@ -144,42 +144,42 @@ value :: number | string | list | node | map | lambda | name
 digit          :: "0" .. "9"
 digits         :: digit+
 sign           :: "+" | "-"
-decimal-number :: sign digits ("." digits)?
+decimalNumber  :: sign digits ("." digits)?
                 | digits ("." digits)?
 
-hex-digit          :: "0" .. "9" | "a" .. "f"
-hex-digits         :: hex-digit+
-hexadecimal-number :: "16::" hex-digits
+hexDigit          :: "0" .. "9" | "a" .. "f"
+hexDigits         :: hexDigit+
+hexadecimalNumber :: "16::" hexDigits
 
-octal-digit  :: "0" .. "8"
-octal-digits :: octal-digit+
-octal-number :: "8::" octal-digits
+octalDigit  :: "0" .. "8"
+octalDigits :: octalDigit+
+octalNumber :: "8::" octalDigits
 
-binary-digit  :: "0" | "1"
-binary-digits :: binary-digit+
-binary-number :: "2::" binary-digits
+binaryDigit  :: "0" | "1"
+binaryDigits :: binaryDigit+
+binaryNumber :: "2::" binaryDigits
 
-number :: hexadecimal-number
-        | octal-number
-        | binary-number
-        | decimal-number
+number :: hexadecimalNumber
+        | octalNumber
+        | binaryNumber
+        | decimalNumber
 
 
 -- ## String -----------------------------------------------------------
-string-escape :: '"'
-string-char   :: (anything but string-escape)
-text-string   :: '"' string-char* '"'
-doc-string    :: '"""' (anything) '"""'
-keyword       :: "`" (anything but space)
-string        :: keyword | doc-string | text-string
+stringEscape :: '"'
+stringChar   :: (anything but stringEscape)
+textString   :: '"' stringChar* '"'
+docString    :: '"""' (anything) '"""'
+keyword      :: "`" (anything but space)
+string       :: keyword | docString | textString
 
 
 -- ## Names ------------------------------------------------------------
-reserved     :: "=>" | "=" | "<:" | "let" | "type" | "implement"
-name-symbols :: "(" | ")" | "[" | "]" | "{" | "}" | "." | ":" | "|" | "`" | "#"
-name-start   :: (none-of name-symbols | digits | space)
-name-rest    :: (none-of name-symbols | space)
-name         :: name-start name-rest* ?(not reserved)
+reserved    :: "=>" | "=" | "<:" | "let" | "type" | "implement"
+nameSymbols :: "(" | ")" | "[" | "]" | "{" | "}" | "." | ":" | "|" | "`" | "#"
+nameStart   :: (none-of nameSymbols | digits | space)
+nameRest    :: (none-of nameSymbols | space)
+name        :: nameStart nameRest* ?(not reserved)
 
 
 -- ## List -------------------------------------------------------------
@@ -187,8 +187,8 @@ list :: "[" value* "]"
 
 
 -- ## Map --------------------------------------------------------------
-map-field :: name "=" value
-map :: "<[" map-field* "]>"
+mapField :: name "=" value
+map :: "<[" mapField* "]>"
 
 
 -- ## Trees ------------------------------------------------------------
@@ -202,40 +202,40 @@ classSpec      :: "." name
 
 
 -- ## Function ---------------------------------------------------------
-lambda               :: lambda-args "=>" expression
-lambda-args          :: "|" name* "|"
-function-declaration :: fn-decl-args "=>" expression
-fn-decl-args         :: (fn-keyword | name)*
-fn-keyword           :: name ":"
+lambda              :: lambdaArgs "=>" expression
+lambdaArgs          :: "|" name* "|"
+functionDeclaration :: fnDeclArgs "=>" expression
+fnDeclArgs          :: (fnKeyword | name)*
+fnKeyword           :: name ":"
 
 
 -- # Expressions -------------------------------------------------------
-declaration :: ( let-declaration
-               | type-declaration
-               | implement-declaration
+declaration :: ( letDeclaration
+               | typeDeclaration
+               | implementDeclaration
                | expression
                )
                "."
 
-expression :: block-expression
+expression :: blockExpression
               invocation
-              group-expression
+              groupExpression
               value
 
-block-expression :: "{" declaration* "}"
-group-expression :: "(" expression ")"
+blockExpression :: "{" declaration* "}"
+groupExpression :: "(" expression ")"
 
-let-declaration     :: "let" (function-declaration | binding-declaration)
-binding-declaration :: name "=" expression
+letDeclaration     :: "let" (functionDeclaration | bindingDeclaration)
+bindingDeclaration :: name "=" expression
 
-type-declaration   :: "type" name "{" type-block "}"
-type-block         :: (optional string) function-interface*
-function-interface :: fn-decl-args "."
+typeDeclaration   :: "type" name "{" typeBlock "}"
+typeBlock         :: (optional string) functionInterface*
+functionInterface :: fnDeclArgs "."
 
-implement-declaration :: "implement" constructor type-impl*
-constructor           :: "|" fn-keyword name* "|"
-type-impl             :: name impl-block
-impl-block            :: "{" function-declaration* "}"
+implementDeclaration :: "implement" constructor typeImpl*
+constructor          :: "|" fnKeyword name* "|"
+typeImpl             :: name implBlock
+implBlock            :: "{" functionDeclaration* "}"
 
 invocation         :: expression* fn-keyword expression+
 
