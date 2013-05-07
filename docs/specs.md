@@ -55,7 +55,7 @@ let a & b => a &: b.
 Lastly, we have abstract polymorphism the same way Clojure does it:
 
 ```hs
-type <list> {
+type @list {
   "A list container"
 
   head: a. -- The first item of the list.
@@ -63,7 +63,7 @@ type <list> {
 }.
 
 implement | list: as |
-  <list> {
+  @list {
     head: as => first: as.
     tail: as => rest: as.
   }.
@@ -176,7 +176,7 @@ string       :: keyword | docString | textString
 
 -- ## Names ------------------------------------------------------------
 reserved    :: "=>" | "=" | "<:" | "let" | "type" | "implement"
-nameSymbols :: "(" | ")" | "[" | "]" | "{" | "}" | "." | ":" | "|" | "`" | "#"
+nameSymbols :: "(" | ")" | "[" | "]" | "{" | "}" | "<" | ">" | "." | ":" | "|" | "`" | "#"
 nameStart   :: (none-of nameSymbols | digits | space)
 nameRest    :: (none-of nameSymbols | space)
 name        :: nameStart nameRest* ?(not reserved)
