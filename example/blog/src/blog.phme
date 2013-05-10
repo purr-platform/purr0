@@ -30,6 +30,6 @@ let blog-page = |posts| =>
 --- Endpoints ----------------------------------------------------------
 `/                get: |req| => redirect "/blog"
 `/blog            get: |req| => blog-page (last: posts)
-`/blog/page/#n    get: |req| => blog-page (posts page: n)
+`/blog/page/#n    get: |req| => blog-page (posts page: req/params/n)
 `/blog/page       get: |req| => render "/blog/page/1"
-`/blog/view/#link get: |req| => blog-page (posts with-permalink: link)
+`/blog/view/#link get: |req| => blog-page (posts with-permalink: req/params/link)
