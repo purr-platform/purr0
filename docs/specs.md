@@ -175,7 +175,7 @@ string       :: keyword | docString | textString
 
 
 -- ## Names ------------------------------------------------------------
-reserved    :: "=>" | "=" | "<:" | "let" | interface" | "implement"
+reserved    :: "=>" | "=" | "<:" | "let" | "interface" | "implement"
 nameSymbols :: "(" | ")" | "[" | "]" | "{" | "}" | "<" | ">" | "." | ":" | "|" | "`" | "#"
 nameStart   :: (none-of nameSymbols | digits | space)
 nameRest    :: (none-of nameSymbols | space)
