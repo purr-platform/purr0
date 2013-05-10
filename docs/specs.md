@@ -9,7 +9,7 @@ Some of the features it offers:
   - Extensible syntax Smalltalk style;
   - Dynamically typed;
   - Immutable everything;
-  - Abstract polymorphism with protocols;
+  - Ad-hoc polymorphism with protocols;
 
 
 ## 0) Prelude
@@ -21,7 +21,7 @@ fact that Phemme uses promises all the way down, so you don't need to
 concern yourself with callbacks and all that.
 
 Besides this, Phemme is a functional language with extensible syntax and
-abstract polymorphism (Clojure style). And it's syntax absolutely rocks
+ad-hoc polymorphism (Clojure style). And it's syntax absolutely rocks
 for writing RESTful services.
 
 
@@ -55,7 +55,7 @@ let a & b => a &: b.
 Lastly, we have abstract polymorphism the same way Clojure does it:
 
 ```hs
-type @list {
+interface @list {
   "A list container"
 
   head: a. -- The first item of the list.
@@ -118,7 +118,7 @@ expression.
 Syntax is heavily influenced by Lisps (Clojure, Dylan), Haskell,
 Smalltalk/Self, Ruby and Magpie. Mostly, functions are defined in terms
 of keyword parameters, like in Smalltalk, except that messages are
-defined through `Type` declarations, rather than objects, and which
+defined through `Interface` declarations, rather than objects, and which
 message to call is defined at run-time.
 
 
@@ -175,7 +175,7 @@ string       :: keyword | docString | textString
 
 
 -- ## Names ------------------------------------------------------------
-reserved    :: "=>" | "=" | "<:" | "let" | "type" | "implement"
+reserved    :: "=>" | "=" | "<:" | "let" | interface" | "implement"
 nameSymbols :: "(" | ")" | "[" | "]" | "{" | "}" | "<" | ">" | "." | ":" | "|" | "`" | "#"
 nameStart   :: (none-of nameSymbols | digits | space)
 nameRest    :: (none-of nameSymbols | space)
@@ -211,7 +211,7 @@ fnKeyword           :: name ":"
 
 -- # Expressions -------------------------------------------------------
 declaration :: ( letDeclaration
-               | typeDeclaration
+               | interfaceDeclaration
                | implementDeclaration
                | expression
                )
@@ -228,13 +228,13 @@ groupExpression :: "(" expression ")"
 letDeclaration     :: "let" (functionDeclaration | bindingDeclaration)
 bindingDeclaration :: name "=" expression
 
-typeDeclaration   :: "type" name "{" typeBlock "}"
-typeBlock         :: (optional string) functionInterface*
-functionInterface :: fnDeclArgs "."
+interfaceDeclaration :: "interface" name "{" interfaceBlock "}"
+interfaceBlock       :: (optional string) functionInterface*
+functionInterface    :: fnDeclArgs "."
 
-implementDeclaration :: "implement" constructor typeImpl*
+implementDeclaration :: "implement" constructor interfaceImpl*
 constructor          :: "|" fnKeyword name* "|"
-typeImpl             :: name implBlock
+interfaceImpl        :: name implBlock
 implBlock            :: "{" functionDeclaration* "}"
 
 invocation         :: expression* fn-keyword expression+
