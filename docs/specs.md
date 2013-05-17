@@ -56,7 +56,7 @@ Lastly, we have abstract polymorphism the same way Clojure does it:
 
 ```hs
 interface @list {
-  "A list container"
+  `A list container`
 
   head: a. -- The first item of the list.
   tail: a. -- The rest of the list.
@@ -89,10 +89,10 @@ to support additonal verbs.
 Writing REST services is then as simple as:
 
 ```hs
-`/ get:  |request| => "Hello, world."
-`/ post: |request| => "Hello, " .. request/body.
+'/ get:  |request| => `Hello, world.`
+'/ post: |request| => `Hello, ` .. request/body.
 
-"GET" page: `/:name |request| => "'Sup, " .. request/parms/name.
+`GET` page: '/:name |request| => `'Sup, ` .. request/parms/name.
 ```
 
 
@@ -105,8 +105,8 @@ literals, which can be used to make HTML documents quite easily:
 
 ```hs
 let page-head = <head>
-                  <meta charset = "utf-8" />
-                  <title>"foo"</title>
+                  <meta charset = 'utf-8 />
+                  <title>`foo`</title>
                 </head>
 ```
 
@@ -166,11 +166,11 @@ number :: hexadecimalNumber
 
 
 -- ## String -----------------------------------------------------------
-stringEscape :: '"'
+stringEscape :: '\\`'
 stringChar   :: (anything but stringEscape)
-textString   :: '"' stringChar* '"'
-docString    :: '"""' (anything) '"""'
-keyword      :: "`" (anything but space)
+textString   :: '`' stringChar* '`'
+docString    :: '\`\`\`' (anything) '\`\`\`'
+keyword      :: "'" (anything but space)
 string       :: keyword | docString | textString
 
 
