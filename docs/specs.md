@@ -4,12 +4,47 @@ This is a draft of Phemme's language specification.
 
 Some of the features it offers:
 
-  - Promise-based everything;
-  - Functional, auto-currying;
-  - Extensible syntax Smalltalk style;
-  - Dynamically typed;
+  - Dynamically Typed;
   - Immutable everything;
+  - Smalltalk syntax;
   - Ad-hoc polymorphism with protocols;
+  - SQL Schemas and built-in ORM;
+  - First-class SQL;
+  - First-class HTML;
+  - Literals for: Vectors, Sets, Maps;
+  - Partial-application syntax;
+  - Future-based concurrency;
+  - Pattern matching;
+  - Algebraic Data Types: Sum, Product, Extensible Records;
+  - First-class modules;
+  - Programming by contract;
+  - First-class documentation (so we can have an interactive development env) —
+    Decorators;
+
+
+module List {
+  data List = Nil
+            | a :: b
+
+  @doc: "Something that can be mapped over."
+  interface #functor {
+    @doc "Maps one function over a container."
+    method a map: f
+  }
+
+  implement #functor for: List {
+    method Nil map: f       => Nil
+    method (x :: xs) map: f => f(x) :: xs map: f
+  }
+
+  // An ADT with only one case, and record syntax
+  struct Person {
+    field name ^String = a
+    field age ^Int     = b
+  }
+
+  main => <h1>{ Text: Person[name: "Bob", age: 12] name }</h1>
+}
 
 
 ## 0) Prelude
@@ -73,7 +108,7 @@ head: list: [1 2 3].
 ```
 
 And for even more simplicity, the language is dynamically typed (with no
-stinkin' null/undefined!), and all values are immutable by default. We
+stinkin' null/undefined!), and( all values are immutable by default. We
 support the usual value types: `Boolean`, `Number`, `String`, `List` and
 `Map`.
 

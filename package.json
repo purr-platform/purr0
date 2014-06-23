@@ -1,21 +1,31 @@
 {
   "name": "phemme",
-  "version": "0.1.0",
-  "description": "A small language for writing web servers.",
-  "main": "index.js",
+  "version": "0.0.0",
+  "description": "A small, portable functional language for writing highly concurrent web servers.",
+  "main": "lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "make test"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/killdream/phemme.git"
+    "url": "https://github.com/robotlolita/phemme"
   },
-  "keywords": [
-    "php",
-    "web",
-    "server",
-    "rest"
-  ],
-  "author": "Quildreen \"Sorella\" Motta",
-  "license": "MIT"
+  "keywords": [],
+  "author": "Quildreen Motta",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/robotlolita/phemme/issues"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "alright": "^1.0.0",
+    "browserify": "^3.33.0",
+    "hifive": "^0.4.0",
+    "hifive-spec": "^0.2.1",
+    "ink-docstrap": "git://github.com/robotlolita/docstrap",
+    "jsdoc": "^3.3.0-alpha5",
+    "laws": "^0.2.1",
+    "sweet.js": "^0.6.1",
+    "uglify-js": "^2.4.3"
+  }
 }
