@@ -11,7 +11,7 @@ Some of the features it offers:
   - SQL Schemas and built-in ORM;
   - First-class SQL;
   - First-class HTML;
-  - Literals for: Vectors, Sets, Maps;
+  - Literals for: Lists, Vectors, Sets, Maps;
   - Partial-application syntax;
   - Future-based concurrency;
   - Pattern matching;
@@ -34,13 +34,13 @@ module List {
 
   implement #functor for: List {
     method Nil map: f       => Nil
-    method (x :: xs) map: f => f(x) :: xs map: f
+    method (x :: xs) map: f => f(x) :: xs map: f  // f call: x
   }
 
   // An ADT with only one case, and record syntax
   struct Person {
-    field name ^String = a
-    field age ^Int     = b
+    field name ^String
+    field age ^Int
   }
 
   main => <h1>{ Text: Person[name: "Bob", age: 12] name }</h1>
