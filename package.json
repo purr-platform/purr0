@@ -29,7 +29,9 @@
     "hifive-spec": "^0.2.1",
     "ink-docstrap": "git://github.com/robotlolita/docstrap",
     "jsdoc": "^3.3.0-alpha5",
+    "lambda-chop": "^0.1.5",
     "laws": "^0.2.1",
+    "macros.operators": "^0.4.0",
     "sweet.js": "^0.6.1",
     "uglify-js": "^2.4.3"
   }

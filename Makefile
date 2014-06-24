@@ -37,10 +37,13 @@ $(LIB_DIR)/%.js: $(SRC_DIR)/%.ometajs
 
 $(LIB_DIR)/%.js: $(SRC_DIR)/%.sjs
 	mkdir -p $(dir $@)
+	cat ./node_modules/macros.operators/macros/*.sjs - < $< > $(LIB_DIR)/tmp.sjs
 	$(sjs) --readable-names \
 	       --sourcemap      \
+	       --module lambda-chop/macros \
 	       --output $@      \
-	       $<
+	       $(LIB_DIR)/tmp.sjs
+	rm $(LIB_DIR)/tmp.sjs
 
 $(TEST_BLD)/%.js: $(TEST_DIR)/%.sjs
 	mkdir -p $(dir $@)

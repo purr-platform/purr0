@@ -19,26 +19,52 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-var _ = require('./codegen')
+/**
+ * The Phemme runtime environment.
+ *
+ * @module phemme/runtime
+ */
+var $Phemme = {}
 
-ometa Compiler {
-  Id :a                           -> _.identifier(a),
-  Num :a :b                       -> _.number(a, b),
-  Str :a                          -> _.string(a),
-  App cc:id [cc*:args]            -> _.call(id, args),
-  Fn [cc:id [cc*:args]] cc:expr   -> _.lambda(id, args, expr),
-  FFI cc:code                     -> _.parseExpr(code.value),
+void
+function(root) {
 
-  IFace cc:id [cc*:decl]          -> _.ifaceStmt(id, decl),
-  Impl cc:proto cc:tag [cc*:impl] -> _.implStmt(proto, tag, impl),
-  Let cc:id cc:val                -> _.letStmt(id, val),
-  Mod cc:id [cc*:args] [cc*:body] -> _.module(id, args, body),
-  Export cc:id                    -> _.exportStmt(id),
+  // -- Helpers --------------------------------------------------------
 
-  IMeth cc:a [cc*:args]           -> [a, args],
-  Meth cc:id cc:val               -> [id, val],
+  // IDs for data tags.
+  var newTag = new function() {
+    var index = 0;
+    return function(type) {
+      return '<#' + type.$$name + ':' + (++index).toString(16) + '>'
+    }
+  }
 
-  Multi cc*:as                    -> as,
+  function tagFor(type) {
+    return type == null?    '<nil>'
+    :      type.$$tag?      type.$$tag
+    :      /* otherwise */  typeof type
+  }
 
-  cc [:t apply(t):a] -> a,
-}
+  // -- Protocols ------------------------------------------------------
+  root.Protocol = Protocol
+  function Protocol(name) {
+    this.$impl = {}
+    this.$$name = name
+  }
+
+  Protocol.prototype.$$tag = newTag({ $$name: 'Protocol' })
+
+  Protocol.prototype.$add = function(type, impl) {
+    this.$impl[tagFor(type)] = impl
+  }
+
+  Protocol.prototype.$get = function(type) {
+    var tag  = tagFor(type)
+    var impl = this.$impl[tag]
+    if (!impl)  throw new TypeError( 'No available implementations of ' + this.$$name
+                                   + ' for: ' + tag)
+    return impl
+  }
+
+}($Phemme)
+

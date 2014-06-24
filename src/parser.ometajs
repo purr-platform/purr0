@@ -47,7 +47,9 @@ var reserved = [ ':'  // Method parameter
                , 'module'
                // Scoping & others
                , 'let'
+               , 'export'
                , 'ffi'
+               , 'for'
                ]
 
 /**
@@ -120,11 +122,27 @@ ometa Parser {
 
   // Declarations
   declaration = module
+              | iface
+              | implem
+              | exportStmt
               | letStmt,
 
+  exportStmt = kw('export') ws pattern:p ws "=>" ws expr:e -> [#Multi
+                                                              ,[#Let, p[0], [#Fn, p, e]]
+                                                              ,[#Export, p[0]]],     
   letStmt = kw('let') ws pattern:p ws "=>" ws expr:e -> [#Let, p[0], [#Fn, p, e]],
+
   module = kw('module') ws identifier:a (ws keywordApp)*:as
              ws '{' (ws declaration)*:xs ws '}' -> [#Mod, a, kwArgs(as), xs],
+
+  iface = kw('interface') ws identifier:a ws '{' (ws ifaceDecl)*:xs ws '}' -> [#IFace, a, xs],
+  ifaceDecl = methodDecl,
+  methodDecl = kw('method') ws pattern:p -> [#IMeth].concat(p),
+
+  implem = kw('implement') ws expr:a ws kw('for') ws expr:b
+             ws '{' (ws implDecl)*:xs ws '}' -> [#Impl, a, b, xs],
+  implDecl = methodImpl,
+  methodImpl = kw('method') ws pattern:p ws "=>" ws expr:e -> [#Meth, p[0], [#Fn, p, e]],
 
   // Expressions
   expr = keywordExpr

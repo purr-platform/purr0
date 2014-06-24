@@ -35,6 +35,12 @@ function sanitiseName(name) {
                                  return '$' + x.charCodeAt(0) })
 }
 
+function flatten(xs) {
+  return xs.reduce(function(ys, x) {
+    return Array.isArray(x)?  ys.concat(x)
+    :      /* otherwise */    ys.concat([x])
+  }, [])
+}
 
 // -- Base node constructors -------------------------------------------
 function node(type, body) {
@@ -103,6 +109,25 @@ function varsDecl(xs) {
                                                      , init: x[1] })})})
 }
 
+function newExpr(callee, args) {
+  return node('NewExpression', { callee: callee
+                               , arguments: args })
+}
+
+function builtin(name) {
+  return member(id("$Phemme"), lit(name))
+}
+
+function set(what, value) {
+  return node('AssignmentExpression', { operator: '='
+                                      , left: what
+                                      , right: value })
+}
+
+function thisExpr() {
+  return node('ThisExpression')
+}
+
 // High-level stuff
 exports.number = number;
 function number(integer, decimal) {
@@ -121,9 +146,34 @@ function letStmt(id, value) {
 
 exports.module = module;
 function module(_id, args, body) {
-  return fn(_id, args, [ letStmt(id("$exports", obj([]))) ]
-                       .concat(body)
+  return fn(_id, args, [ letStmt(id("$exports"), obj([])) ]
+                       .concat(flatten(body))
                        .concat([ ret(id("$exports")) ]))
+}
+
+exports.ifaceStmt = ifaceStmt;
+function ifaceStmt(_id, decls) {
+  return [ letStmt(_id, newExpr(builtin("Protocol"), [lit(_id.name)]))
+         ].concat(decls.map(makeDecl));
+
+  function makeDecl(pair) {
+    var args = pair[1].map(λ(_, i) -> id(String.fromCharCode(i + 65)));
+
+    return letStmt(pair[0]
+                  ,set(member(_id, lit(pair[0].name))
+                      ,lambda(pair[0], args
+                             ,call(member(call(member(_id, lit('$get')), [args[0]]), lit(pair[0].name))
+                                  ,args))))  }
+}
+
+exports.implStmt = implStmt
+function implStmt(proto, tag, impl) {
+  return expr(call(member(proto, lit('$add')), [tag, makeImpl(impl)]));
+
+  function makeImpl(xs) {
+    return obj(xs.map(function(x) {
+                        return { key: x[0], value: x[1] } }))
+  }
 }
 
 exports.lambda = lambda;
@@ -140,6 +190,11 @@ function call(callee, args) {
 exports.identifier = identifier;
 function identifier(name) {
   return id(sanitiseName(name))
+}
+
+exports.exportStmt = exportStmt
+function exportStmt(_id) {
+  return expr(set(member(id("$exports"), lit(_id.name)), _id))
 }
 
 exports.parseExpr = parseExpr;
