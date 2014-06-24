@@ -19,6 +19,9 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+// -- Dependencies -----------------------------------------------------
+var extend = require('xtend');
+
 // -- Helpers ----------------------------------------------------------
 
 /**
@@ -116,10 +119,10 @@ function letStmt(id, value) {
 }
 
 exports.module = module;
-function module(id, args, body) {
-  return fn(id, args, [ letStmt(id("$exports", obj([]))) ]
-                      .concat(body)
-                      .concat([ ret(id("$exports")) ]))
+function module(_id, args, body) {
+  return fn(_id, args, [ letStmt(id("$exports", obj([]))) ]
+                       .concat(body)
+                       .concat([ ret(id("$exports")) ]))
 }
 
 exports.lambda = lambda;
