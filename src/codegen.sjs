@@ -31,8 +31,8 @@ var esprima = require('esprima')
  * @summary String → String
  */
 function sanitiseName(name) {
-  return name.replace(/(\W)/g, function(x) {
-                                 return '$' + x.charCodeAt(0) })
+  return '_' + name.replace(/(\W)/g, function(x) {
+                                       return '$' + x.charCodeAt(0) })
 }
 
 function flatten(xs) {
@@ -80,8 +80,11 @@ function member(object, property) {
                , computed: true })
 }
 
-function id(a) {
-  return node('Identifier', { name: a })
+function smember(object, property) {
+  return node( 'MemberExpression'
+             , { object: object
+               , property: property
+               , computed: false })
 }
 
 function method(object, method, args) {
@@ -128,6 +131,21 @@ function thisExpr() {
   return node('ThisExpression')
 }
 
+function prog(body) {
+  return node('Program', { body: body })
+}
+
+function scoped(expr) {
+  return call(
+    lambda(null, [id("$scope")], expr),
+    [call(smember(id("self"), id("clone")), [])]
+  )
+}
+
+function get(name) {
+  return member(id("self"), name)
+}
+
 // High-level stuff
 exports.number = number;
 function number(integer, decimal) {
@@ -140,15 +158,28 @@ function string(text) {
 }
 
 exports.letStmt = letStmt;
-function letStmt(id, value) {
-  return varsDecl([[id, value]])
+function letStmt(name, value) {
+  return expr(set(member(id("self"), name), value))
 }
 
 exports.module = module;
-function module(_id, args, body) {
-  return fn(_id, args, [ letStmt(id("$exports"), obj([])) ]
-                       .concat(flatten(body))
-                       .concat([ ret(id("$exports")) ]))
+function module(name, args, body) {
+  return letStmt(
+    name,
+    scoped(
+      fn(
+        identifier(name.value),
+        args,
+        [
+          varsDecl([[id("$exports"), obj([])]]),
+          varsDecl([[id("self"), id("$scope")]]),
+        ].concat(flatten(body))
+         .concat([
+           ret(id("$exports"))
+         ])
+      )
+    )
+  )
 }
 
 exports.ifaceStmt = ifaceStmt;
@@ -181,6 +212,11 @@ function lambda(id, args, expr) {
   return fn(id, args, [ret(expr)])
 }
 
+exports.app = app;
+function app(scope, name, args) {
+  return call(member(scope, name), args)
+}
+
 exports.call = call;
 function call(callee, args) {
   return node('CallExpression', { callee: callee
@@ -193,8 +229,8 @@ function identifier(name) {
 }
 
 exports.exportStmt = exportStmt
-function exportStmt(_id) {
-  return expr(set(member(id("$exports"), lit(_id.name)), _id))
+function exportStmt(name) {
+  return expr(set(member(id("$exports"), name), get(name)))
 }
 
 exports.parseExpr = parseExpr;
@@ -203,4 +239,18 @@ function parseExpr(js) {
   if (tokens.length !== 1 || tokens[0].type !== 'ExpressionStatement')
     throw new SyntaxError('Expected a single expression.');
   return tokens[0].expression
+}
+
+exports.program = program
+function program(name, module) {
+  return prog([
+    varsDecl([[id("self"), smember(id("$Phemme"), id("Namespace"))]]),
+    module,
+    expr(set(smember(id("module"), id("exports")), id("self")))
+  ])
+}
+
+exports.rawId = id
+function id(a) {
+  return node('Identifier', { name: a })
 }

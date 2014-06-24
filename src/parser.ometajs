@@ -82,7 +82,7 @@ ometa Parser {
   idRest     = letter | digit | symbol,
   symbolChar = symbol | ':',
   identifier = <idStart idRest*>:a ~':' ?(isValid(a)) -> [#Id, a],
-  keyword    = <idStart idRest*>:a ':'  ?(isValid(a)) -> [#Id, a + ':'],
+  keyword    = <idStart idRest*>:a ':'                -> [#Id, a + ':'],
   symbols    = <symbolChar+>:a          ?(isValid(a)) -> [#Id, a],
 
   // Values
@@ -132,8 +132,10 @@ ometa Parser {
                                                               ,[#Export, p[0]]],     
   letStmt = kw('let') ws pattern:p ws "=>" ws expr:e -> [#Let, p[0], [#Fn, p, e]],
 
-  module = kw('module') ws identifier:a (ws keywordApp)*:as
-             ws '{' (ws declaration)*:xs ws '}' -> [#Mod, a, kwArgs(as), xs],
+  module = kw('module') ws mparms:p ws '{' (ws declaration)*:xs ws '}' -> [#Mod, p, xs],
+  mparms = (ws keywordArg)*:ks -> (function(i,xs) {
+                                     return [i[1]? i : [#Id, 'default'], xs]
+                                  }(kwId(ks), kwArgs(ks))),
 
   iface = kw('interface') ws identifier:a ws '{' (ws ifaceDecl)*:xs ws '}' -> [#IFace, a, xs],
   ifaceDecl = methodDecl,
@@ -148,14 +150,14 @@ ometa Parser {
   expr = keywordExpr
        | binaryExpr,
 
-  keywordExpr = binaryExpr:a (ws keywordApp)+:as -> [#App, kwId(as), [a].concat(kwArgs(as))],
-  binaryExpr  = binaryExpr:a ws symbols:s ws unaryExpr:b -> [#App, s, [a, b]]
+  keywordExpr = binaryExpr:a (ws keywordApp)+:as         -> [#App, [#BVar, 'self'], kwId(as), [a].concat(kwArgs(as))],
+  binaryExpr  = binaryExpr:a ws symbols:s ws unaryExpr:b -> [#App, [#BVar, 'self'], s, [a, b]]
               | unaryExpr,
-  unaryExpr   = unaryExpr:a ws identifier:i -> [#App, i, [a]]
+  unaryExpr   = unaryExpr:a ws identifier:i              -> [#App, [#BVar, 'self'], i, [a]]
               | primaryExpr,
   primaryExpr = ffi
               | value
-              | identifier:a
+              | identifier:a         -> [#Var, a[1]]
               | '(' ws expr:a ws ')' -> a,
 
   keywordApp = keyword:k ws binaryExpr:v -> [k, v],
@@ -163,5 +165,5 @@ ometa Parser {
   ffi = kw('ffi') ws string:a -> [#FFI, a],
   
   // Program
-  program = ws module:m ws eof -> m
+  program = ws module:m ws eof -> [#Program, m && m[1][0], m]
 }

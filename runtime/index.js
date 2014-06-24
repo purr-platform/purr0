@@ -45,6 +45,13 @@ function(root) {
     :      /* otherwise */  typeof type
   }
 
+  // -- Namespaces -----------------------------------------------------
+  root.Namespace = Object.create(null)
+  root.Namespace.clone = function() {
+    return Object.create(this)
+  }
+
+
   // -- Protocols ------------------------------------------------------
   root.Protocol = Protocol
   function Protocol(name) {

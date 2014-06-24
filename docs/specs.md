@@ -27,7 +27,7 @@ module List {
             | a :: b
 
   @doc: "Something that can be mapped over."
-  interface #functor {
+  interface functor {
     @doc "Maps one function over a container."
     method a map: f
   }
