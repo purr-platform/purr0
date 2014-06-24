@@ -45,12 +45,23 @@ function(root) {
     :      /* otherwise */  typeof type
   }
 
+  function makeFn(n, Ctor) {
+    var args = Array.apply(null, Array(n)).map(function(_,i){
+      return String.fromCharCode(i + 97)
+    })
+    return new Function( 'Ctor'
+                       , 'return function(' + args.join(', ') + ') {'
+                       + '  return new Ctor(' + args.join(', ') + ')'
+                       + '}'
+                       )(Ctor)
+  }
+
   // -- Namespaces -----------------------------------------------------
   root.Namespace = Object.create(null)
   root.Namespace.clone = function() {
     return Object.create(this)
   }
-  root.Namespace["print:"] = function(_, arg) {
+  root.Namespace["print"] = function(arg) {
     console.log(arg)
   }
 
@@ -75,6 +86,29 @@ function(root) {
                                    + ' for: ' + tag)
     return impl
   }
+
+  // -- ADTs -----------------------------------------------------------
+  root.ADT = ADT
+  function ADT(name) {
+    this.$$name  = name
+    this.$$tag   = newTag(this)
+    this.$sealed = false
+  }
+
+  ADT.prototype.$add = function(tag, ctor) {
+    if (this.sealed)
+      throw new Error('Trying to add a constructor to the sealed AST ' + this.$$name)
+      
+    ctor.prototye = Object.create(this)
+    ctor.prototype.$$name = this.$$name + "." + tag
+    ctor.prototype.$$ctag = tag
+    this[tag] = makeFn(ctor.length, ctor)
+  }
+
+  ADT.prototype.$seal = function() {
+    this.$sealed = true
+  }
+
 
 }($Phemme)
 

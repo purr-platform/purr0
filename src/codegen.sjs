@@ -201,7 +201,7 @@ function ifaceStmt(name, decls) {
   }
 }
 
-exports.implStmt = implStmt
+exports.implStmt = implStmt;
 function implStmt(proto, tag, impl) {
   return expr(call(smember(proto, id('$add')), [tag, makeImpl(impl)]));
 
@@ -232,7 +232,7 @@ function identifier(name) {
   return id(sanitiseName(name))
 }
 
-exports.exportStmt = exportStmt
+exports.exportStmt = exportStmt;
 function exportStmt(name) {
   return expr(set(member(id("$exports"), name), get(name)))
 }
@@ -245,7 +245,7 @@ function parseExpr(js) {
   return tokens[0].expression
 }
 
-exports.program = program
+exports.program = program;
 function program(name, module) {
   return prog([
     varsDecl([[id("_self"), smember(id("$Phemme"), id("Namespace"))]]),
@@ -254,15 +254,53 @@ function program(name, module) {
   ])
 }
 
-exports.rawId = id
+exports.rawId = id;
 function id(a) {
   return node('Identifier', { name: a })
 }
 
-exports.member = member
+exports.member = member;
 function member(object, property) {
   return node( 'MemberExpression'
              , { object: object
                , property: property
                , computed: true })
+}
+
+exports.adtStmt = adtStmt;
+function adtStmt(name, cases) {
+  return [
+    letStmt(name, newExpr(builtin("ADT"), [name]))
+  ].concat(flatten(cases.map(makeCase)));
+
+  function makeCase(pair) {
+    var type     = pair[0];
+    var key      = pair[1];
+    var argNames = key.value.split(':').map(lit)
+    var args     = pair[2].map(λ(x) -> identifier(x.value));
+
+    return [
+      expr(call(
+        smember(get(name), id("$add")),
+        [key, fn(identifier(key.value), args, makeBody(type, argNames, args))]
+      )),
+      letStmt(key, member(get(name), key))
+    ]
+  }
+
+  function makeBody(kind, names, args) {
+    switch (kind) {
+      case 'Val': return [];
+      case 'Bin': return [
+        expr(set(smember(thisExpr(), id('left')), args[0])),
+        expr(set(smember(thisExpr(), id('right')), args[1]))
+      ];
+      case 'Kw': return [
+        expr(set(smember(thisExpr(), id('self')), args[0]))
+      ].concat(args.slice(1).map(function(a, i) {
+        return expr(set(member(thisExpr(), names[i]), a))
+      }));
+      default: throw new Error('Unknow data constructor kind: ' + kind)
+    }
+  }
 }

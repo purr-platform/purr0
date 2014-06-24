@@ -34,6 +34,7 @@ ometa Compiler {
 
   IFace cc:id [cc*:decl]            -> _.ifaceStmt(id, decl),
   Impl cc:proto cc:tag [cc*:impl]   -> _.implStmt(proto, tag, impl),
+  Data cc:id [cc*:cases]            -> _.adtStmt(id, cases),
   Let cc:id cc:val                  -> _.letStmt(id, val),
   Mod [cc:id [cc*:args]] [cc*:body] -> _.module(id, args, body),
   Export cc:id                      -> _.exportStmt(id),
@@ -41,6 +42,7 @@ ometa Compiler {
 
   IMeth cc:a [cc*:args]             -> [a, args],
   Meth cc:id cc:val                 -> [id, val],
+  DataCtor [:t cc:id [cc*:args]]    -> [t, id, args],
 
   Multi cc*:as                      -> as,
 

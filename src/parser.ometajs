@@ -33,6 +33,7 @@ var reserved = [ ':'  // Method parameter
                , '^'  // Contract
                , '_'  // Partial / Wildcard
                , '=>' // Function definition
+               , '|'  // Case separators
                // Protocols
                , 'interface'
                , 'implement'
@@ -124,6 +125,7 @@ ometa Parser {
   declaration = module
               | iface
               | implem
+              | adt
               | exportStmt
               | letStmt,
 
@@ -145,6 +147,12 @@ ometa Parser {
              ws '{' (ws implDecl)*:xs ws '}' -> [#Impl, a, b, xs],
   implDecl = methodImpl,
   methodImpl = kw('method') ws pattern:p ws "=>" ws expr:e -> [#Meth, p[0], [#Fn, p, e]],
+
+  adt = kw('data') ws identifier:id ws '=' ws adtPatterns:xs -> [#Data, id, xs],
+  adtPatt = keywordPattern:p -> [#DataCtor, [#Kw].concat(p)]
+          | binaryPattern:p  -> [#DataCtor, [#Bin].concat(p)]
+          | identifier:a     -> [#DataCtor, [#Val, a, []]],
+  adtPatterns = adtPatt:a (ws '|' ws adtPatt)*:as -> [a].concat(as),
 
   // Expressions
   expr = keywordExpr
