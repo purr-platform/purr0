@@ -29,6 +29,7 @@ ometa Compiler {
   Fn [cc:id [cc*:args]] cc:expr   -> _.lambda(id, args, expr),
   Let cc:id cc:val                -> _.letStmt(id, val),
   Mod cc:id [cc*:args] [cc*:body] -> _.module(id, args, body),
+  FFI cc:code                     -> _.parseExpr(code.value),
 
   cc [:t apply(t):a] -> a,
 }

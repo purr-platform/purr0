@@ -45,8 +45,9 @@ var reserved = [ ':'  // Method parameter
                , 'case'
                // Modules
                , 'module'
-               // Scoping
+               // Scoping & others
                , 'let'
+               , 'ffi'
                ]
 
 /**
@@ -88,9 +89,9 @@ ometa Parser {
   
   stringEscape     = '\\' '"',
   stringChar       = (stringEscape | (~seq('"') char)):a -> a,
-  unescapableChars = ~seq('"') char,
-  string           = '"' <stringChar*>:as '"'           -> [#Str, a]
-                   | '"""' <unescapableChars*>:as '"""' -> [#Str, as],
+  unescapableChars = ~seq('"""') char,
+  string           = seq('"""') <unescapableChars*>:as seq('"""') -> [#Str, as]
+                   | '"' <stringChar*>:as '"'                     -> [#Str, as],
 
   vector = '[' ws expr:hd (ws ',' ws expr)*:tl ws ']' -> [#Vec, [hd].concat(tl)]
          | '[' ws ']'                                 -> [#Vec, []],
@@ -134,12 +135,15 @@ ometa Parser {
               | unaryExpr,
   unaryExpr   = unaryExpr:a ws identifier:i -> [#App, i, [a]]
               | primaryExpr,
-  primaryExpr = value
+  primaryExpr = ffi
+              | value
               | identifier:a
               | '(' ws expr:a ws ')' -> a,
 
   keywordApp = keyword:k ws binaryExpr:v -> [k, v],
 
+  ffi = kw('ffi') ws string:a -> [#FFI, a],
+  
   // Program
   program = ws module:m ws eof -> m
 }

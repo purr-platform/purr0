@@ -20,7 +20,8 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // -- Dependencies -----------------------------------------------------
-var extend = require('xtend');
+var extend  = require('xtend');
+var esprima = require('esprima')
 
 // -- Helpers ----------------------------------------------------------
 
@@ -139,4 +140,12 @@ function call(callee, args) {
 exports.identifier = identifier;
 function identifier(name) {
   return id(sanitiseName(name))
+}
+
+exports.parseExpr = parseExpr;
+function parseExpr(js) {
+  var tokens = esprima.parse(js).body;
+  if (tokens.length !== 1 || tokens[0].type !== 'ExpressionStatement')
+    throw new SyntaxError('Expected a single expression.');
+  return tokens[0].expression
 }
