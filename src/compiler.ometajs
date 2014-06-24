@@ -22,12 +22,13 @@
 var _ = require('./codegen')
 
 ometa Compiler {
-  Id :a                         -> _.identifier(a),
-  Num cc:a cc:b                 -> _.number(a, b),
-  Str cc:a                      -> _.string(a),
-  App cc:id [cc*:args]          -> _.call(id, args),
-  Fn [cc:id [cc*:args]] cc:expr -> _.fn(id, args, expr),
-  Mod cc:id _ [cc*:body]        -> _.module(id, [], body),
+  Id :a                           -> _.identifier(a),
+  Num :a :b                       -> _.number(a, b),
+  Str :a                          -> _.string(a),
+  App cc:id [cc*:args]            -> _.call(id, args),
+  Fn [cc:id [cc*:args]] cc:expr   -> _.lambda(id, args, expr),
+  Let cc:id cc:val                -> _.letStmt(id, val),
+  Mod cc:id [cc*:args] [cc*:body] -> _.module(id, args, body),
 
   cc [:t apply(t):a] -> a,
 }

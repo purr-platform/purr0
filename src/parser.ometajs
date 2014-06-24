@@ -45,13 +45,15 @@ var reserved = [ ':'  // Method parameter
                , 'case'
                // Modules
                , 'module'
+               // Scoping
+               , 'let'
                ]
 
 /**
  * Verifies if a name can be used.
  */
 function isValid(name) {
-  return reserved.indexOf(name) !== -1
+  return reserved.indexOf(name) === -1
 }
 
 function kwId(xss) {
@@ -69,15 +71,16 @@ ometa Parser {
   ws      = space*,
   symbol  = ~(letter | digit | space
              | '$' | ';' | ',' | '.' | ':' | '[' | ']' | '{' | '}' | '(' | ')') char,
-  eof     = ~~char,
+  eof     = ~char,
   kw :xs  = seq(xs) ~(letter | digit | symbol | ':'),
 
   // Identifiers
   idStart    = letter,
   idRest     = letter | digit | symbol,
+  symbolChar = symbol | ':',
   identifier = <idStart idRest*>:a ~':' ?(isValid(a)) -> [#Id, a],
   keyword    = <idStart idRest*>:a ':'  ?(isValid(a)) -> [#Id, a + ':'],
-  symbols    = <symbol | ':'>+:as       ?(isValid(a)) -> [#Id, a],
+  symbols    = <symbolChar+>:a          ?(isValid(a)) -> [#Id, a],
 
   // Values
   digits = <digit+>:a -> Number(a),
@@ -97,6 +100,12 @@ ometa Parser {
 
   set = '#' vector:xs -> [#Set, xs[1]],
 
+  value = number
+        | string
+        | vector
+        | map
+        | set,
+
   // Patterns
   pattern = keywordPattern
           | binaryPattern
@@ -112,15 +121,15 @@ ometa Parser {
   declaration = module
               | letStmt,
 
-  letStmt = kw('let') ws pattern:p ws "=>" ws expr:e -> [#Let, [#Fn, p, e]],
-  module = kw('module') ws identifier:a (ws keywordArg)*:ps
-             ws '{' (ws declaration)*:xs ws '}' -> [#Mod, a, ps, xs],
+  letStmt = kw('let') ws pattern:p ws "=>" ws expr:e -> [#Let, p[0], [#Fn, p, e]],
+  module = kw('module') ws identifier:a (ws keywordApp)*:as
+             ws '{' (ws declaration)*:xs ws '}' -> [#Mod, a, kwArgs(as), xs],
 
   // Expressions
   expr = keywordExpr
        | binaryExpr,
 
-  keywordExpr = binaryExpr:a (ws keywordApp)+:as -> [#App, kdId(as), [a].concat(kwArgs(as))],
+  keywordExpr = binaryExpr:a (ws keywordApp)+:as -> [#App, kwId(as), [a].concat(kwArgs(as))],
   binaryExpr  = binaryExpr:a ws symbols:s ws unaryExpr:b -> [#App, s, [a, b]]
               | unaryExpr,
   unaryExpr   = unaryExpr:a ws identifier:i -> [#App, i, [a]]
