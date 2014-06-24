@@ -22,5 +22,28 @@
 /**
  * A small, portable functional language for writing highly concurrent web servers.
  *
- * @module lib/index
+ * @module phemme
  */
+
+var escodegen = require('escodegen');
+var Parser    = require('./parser').Parser;
+var Compiler  = require('./compiler').Compiler;
+
+exports = module.exports = function(program) {
+  return generate(compile(parse(program)))
+};
+
+exports.parse = parse;
+function parse(text) {
+  return Parser.matchAll(text, 'program')
+}
+
+exports.compile = compile;
+function compile(ast) {
+  return Compiler.match(ast, 'cc')
+}
+
+exports.generate = generate;
+function generate(ast) {
+  return escodegen.generate(ast)
+}
