@@ -3,6 +3,7 @@ sjs        = $(bin)/sjs
 browserify = $(bin)/browserify
 jsdoc      = $(bin)/jsdoc
 uglify     = $(bin)/uglifyjs
+ometa      = $(bin)/ometajs2js
 VERSION    = $(shell node -e 'console.log(require("./package.json").version)')
 
 # -- Configuration -----------------------------------------------------
@@ -11,8 +12,8 @@ EXPORTS  = EXPORTS
 
 LIB_DIR  = lib
 SRC_DIR  = src
-SRC      = $(wildcard $(SRC_DIR)/*.sjs)
-TGT      = ${SRC:$(SRC_DIR)/%.sjs=$(LIB_DIR)/%.js}
+SRC      = $(wildcard $(SRC_DIR)/*.sjs $(SRC_DIR)/*.ometajs)
+TGT      = ${SRC:$(SRC_DIR)/%.sjs=$(LIB_DIR)/%.js} ${SRC:$(SRC_DIR)/%.ometajs=$(LIB_DIR)/%.js}
 
 TEST_DIR = test/specs-src
 TEST_BLD = test/specs
@@ -29,6 +30,10 @@ dist/$(PACKAGE).umd.js: $(LIB_DIR)/index.js dist
 
 dist/$(PACKAGE).umd.min.js: dist/$(PACKAGE).umd.js
 	$(uglify) --mangle - < $< > $@
+
+$(LIB_DIR)/%.js: $(SRC_DIR)/%.ometajs
+	mkdir -p $(dir $@)
+	$(ometa) --beautify < $< > $@
 
 $(LIB_DIR)/%.js: $(SRC_DIR)/%.sjs
 	mkdir -p $(dir $@)
@@ -52,7 +57,7 @@ bundle: dist/$(PACKAGE).umd.js
 
 minify: dist/$(PACKAGE).umd.min.js
 
-documentation:
+documentation: $(TGT)
 	$(jsdoc) --configure jsdoc.conf.json
 	ABSPATH=$(shell cd "$(dirname "$0")"; pwd) $(MAKE) clean-docs
 
@@ -60,12 +65,12 @@ clean-docs:
 	perl -pi -e "s?$$ABSPATH/??g" ./docs/*.html
 
 clean:
-	rm -rf dist build
+	rm -rf dist build $(LIB_DIR) $(TEST_BLD)
 
-test: $(TEST_TGT)
+test: all $(TEST_TGT)
 	node test/tap
 
-package: documentation bundle minify
+package: all documentation bundle minify
 	mkdir -p dist/$(PACKAGE)-$(VERSION)
 	cp -r docs dist/$(PACKAGE)-$(VERSION)
 	cp -r lib dist/$(PACKAGE)-$(VERSION)
@@ -76,7 +81,9 @@ package: documentation bundle minify
 	cd dist && tar -czf $(PACKAGE)-$(VERSION).tar.gz $(PACKAGE)-$(VERSION)
 
 publish: clean
+	rm -rf node_modules
 	npm install
+	$(MAKE) test
 	npm publish
 
 bump:
