@@ -25,11 +25,14 @@
  * @module phemme
  */
 
+var read      = require('fs').readFileSync;
+var path      = require('path');
+var vm        = require('vm');
 var escodegen = require('escodegen');
 var Parser    = require('./parser').Parser;
 var Compiler  = require('./compiler').Compiler;
 
-exports = module.exports = function(program) {
+var doSource = exports = module.exports = function(program) {
   return generate(compile(parse(program)))
 };
 
@@ -46,4 +49,21 @@ function compile(ast) {
 exports.generate = generate;
 function generate(ast) {
   return escodegen.generate(ast)
+}
+
+exports.run = run;
+function run(code) {
+  var source  = prelude() + ';\n' + doSource(code) + ';\n' + runner();
+  var context = vm.createContext({ process: process
+                                 , console: console
+                                 , module: { exports: {} }})
+  vm.runInNewContext(source, context)
+}
+
+function prelude() {
+  return read(path.join(__dirname, '../runtime/index.js'), 'utf-8')
+}
+
+function runner() {
+  return '_self["default"]().main(process.argv.slice(2))'
 }

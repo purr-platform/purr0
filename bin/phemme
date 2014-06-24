@@ -1,0 +1,93 @@
+#!/usr/bin/env node
+// Copyright (c) 2014 Quildreen Motta <quildreen@gmail.com>
+//
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation files
+// (the "Software"), to deal in the Software without restriction,
+// including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software,
+// and to permit persons to whom the Software is furnished to do so,
+// subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var doc = [ 'phemme — A minimal & portable language for concurrent web servers.'
+          , ''
+          , 'Usage:'
+          , '  phemme repl [options]            # Starts an interactive session'
+          , '  phemme run [options] <file>      # Runs the given program'
+          , '  phemme compile [options] <file>  # Compiles the given module'
+          , '  phemme help                      # Shows this help screen'
+          , '  phemme version                   # Shows the version number'
+          , ''
+          , 'Options:'
+          , '  -a, --ast                Displays the Phemme AST in JSON.'
+          , '  -j, --js-ast             Displays the generated JS ast in JSON.'
+          ].join('\n')
+
+// -- Dependencies -----------------------------------------------------
+var fs     = require('fs')
+var docopt = require('docopt').docopt
+var path   = require('path')
+var curry  = require('core.lambda').curry
+var pkg    = require('../package.json')
+var phemme = require('../lib/')
+
+var die  = process.exit.bind(process)
+var _log = console.log.bind(console)
+
+
+// -- Helpers ----------------------------------------------------------
+function show(a) {
+  if (a !== undefined)  _log(a)
+}
+
+function read(filename) {
+  return fs.readFileSync(filename, 'utf-8')
+}
+
+function stripComments(doc) {
+  return doc.replace(/\#.+/g, '')
+}
+
+function unimplemented() {
+  throw new Error('Unimplemented.')
+}
+
+function parseArgs(spec, options) {
+  var _oldExit = process.exit
+  var _oldLog  = console.log
+  try {
+    process.exit = function(){ throw new Error }
+    console.log  = function(){ }
+
+    return docopt(spec, options)
+  } catch (e) {
+    show(doc)
+    die()
+  } finally {
+    process.exit = _oldExit
+    console.log  = _oldLog
+  }
+}
+
+// -- Main -------------------------------------------------------------
+void function Main() {
+  var args = parseArgs(stripComments(doc), { help: false })
+
+  ; args.repl?          unimplemented()
+  : args.run?           phemme.run(read(args['<file>']))
+  : args.compile?       unimplemented()
+  : args.help?          show(doc)
+  : args.version?       show('phemme version ' + pkg.version)
+  : /* otherwise */     die(show(doc))
+}()

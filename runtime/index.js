@@ -50,6 +50,9 @@ function(root) {
   root.Namespace.clone = function() {
     return Object.create(this)
   }
+  root.Namespace["print:"] = function(_, arg) {
+    console.log(arg)
+  }
 
 
   // -- Protocols ------------------------------------------------------
