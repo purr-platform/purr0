@@ -100,40 +100,40 @@ function varsDecl(xs) {
 }
 
 // High-level stuff
-exports.number = number
+exports.number = number;
 function number(integer, decimal) {
   return lit(Number(integer + '.' + decimal))
 }
 
-exports.string = string
+exports.string = string;
 function string(text) {
   return lit(String(text))
 }
 
-exports.letStmt = letStmt
+exports.letStmt = letStmt;
 function letStmt(id, value) {
   return varsDecl([[id, value]])
 }
 
-exports.module = module
+exports.module = module;
 function module(id, args, body) {
   return fn(id, args, [ letStmt(id("$exports", obj([]))) ]
                       .concat(body)
                       .concat([ ret(id("$exports")) ]))
 }
 
-exports.lambda = lambda
+exports.lambda = lambda;
 function lambda(id, args, expr) {
   return fn(id, args, [ret(expr)])
 }
 
-exports.call = call
+exports.call = call;
 function call(callee, args) {
   return node('CallExpression', { callee: callee
                                 , arguments: args })
 }
 
-exports.identifier = identifier
+exports.identifier = identifier;
 function identifier(name) {
   return id(sanitiseName(name))
 }
