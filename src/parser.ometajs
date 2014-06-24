@@ -32,6 +32,7 @@ var reserved = [ ':'  // Method parameter
                , '@'  // Decorator
                , '^'  // Contract
                , '_'  // Partial / Wildcard
+               , '=>' // Function definition
                // Protocols
                , 'interface'
                , 'implement'
@@ -53,13 +54,21 @@ function isValid(name) {
   return reserved.indexOf(name) !== -1
 }
 
+function kwId(xss) {
+  return [#Id, xss.map(function(xs){ return xs[0][1] }).join('')]
+}
+
+function kwArgs(xss) {
+  return xss.map(function(xs){ return xs[1] })
+}
+
 ometa Parser {
   // Lexical structure
   space   = ^space | comment,
   comment = fromTo('#', '\n'),
   ws      = space*,
   symbol  = ~(letter | digit | space
-             | ';' | ',' | '.' | ':' | '[' | ']' | '{' | '}' | '(' | ')') char,
+             | '$' | ';' | ',' | '.' | ':' | '[' | ']' | '{' | '}' | '(' | ')') char,
   eof     = ~~char,
   kw :xs  = seq(xs) ~(letter | digit | symbol | ':'),
 
@@ -67,8 +76,8 @@ ometa Parser {
   idStart    = letter,
   idRest     = letter | digit | symbol,
   identifier = <idStart idRest*>:a ~':' ?(isValid(a)) -> [#Id, a],
-  keyword    = <idStart idRest*>:a ':'  ?(isValid(a)) -> [#Kw, a],
-  symbols    = <symbol | ':'>+:as       ?(isValid(a)) -> [#Sym, a],
+  keyword    = <idStart idRest*>:a ':'  ?(isValid(a)) -> [#Id, a + ':'],
+  symbols    = <symbol | ':'>+:as       ?(isValid(a)) -> [#Id, a],
 
   // Values
   digits = <digit+>:a -> Number(a),
@@ -93,9 +102,9 @@ ometa Parser {
           | binaryPattern
           | unaryPattern,
 
-  keywordPattern = identifier:a (ws keywordArg)+:ks          -> [#KwPatt, a, ks],
-  unaryPattern   = identifier:a ws identifier:b              -> [#Patt1, a, b],
-  binaryPattern  = identifier:a ws symbols:b ws identifier:c -> [#Patt2, b, a, c],
+  keywordPattern = identifier:a (ws keywordArg)+:ks          -> [kwId(ks), [a].concat(kwArgs(ks))],
+  unaryPattern   = identifier:a ws identifier:b              -> [b, [a]],
+  binaryPattern  = identifier:a ws symbols:b ws identifier:c -> [b, [a, c]],
 
   keywordArg     = keyword:k ws identifier:n -> [k, n],
 
@@ -103,7 +112,7 @@ ometa Parser {
   declaration = module
               | letStmt,
 
-  letStmt = kw('let') ws pattern:p ws "=>" ws expr:e -> [#Let, p, e],
+  letStmt = kw('let') ws pattern:p ws "=>" ws expr:e -> [#Let, [#Fn, p, e]],
   module = kw('module') ws identifier:a (ws keywordArg)*:ps
              ws '{' (ws declaration)*:xs ws '}' -> [#Mod, a, ps, xs],
 
@@ -111,13 +120,13 @@ ometa Parser {
   expr = keywordExpr
        | binaryExpr,
 
-  keywordExpr = binaryExpr:a (ws keywordApp)+:as -> [#Kw, a, as],
-  binaryExpr  = binaryExpr:a ws symbols:s ws unaryExpr:b -> [#Bin, a, s, b]
+  keywordExpr = binaryExpr:a (ws keywordApp)+:as -> [#App, kdId(as), [a].concat(kwArgs(as))],
+  binaryExpr  = binaryExpr:a ws symbols:s ws unaryExpr:b -> [#App, s, [a, b]]
               | unaryExpr,
-  unaryExpr   = unaryExpr:a ws identifier:i -> [#Un, a, i]
+  unaryExpr   = unaryExpr:a ws identifier:i -> [#App, i, [a]]
               | primaryExpr,
   primaryExpr = value
-              | identifier:a -> [#Var, a[1]]
+              | identifier:a
               | '(' ws expr:a ws ')' -> a,
 
   keywordApp = keyword:k ws binaryExpr:v -> [k, v],
