@@ -73,13 +73,6 @@ function fn(id, params, body) {
                , generator: false })
 }
 
-function member(object, property) {
-  return node( 'MemberExpression'
-             , { object: object
-               , property: property
-               , computed: true })
-}
-
 function smember(object, property) {
   return node( 'MemberExpression'
              , { object: object
@@ -118,7 +111,7 @@ function newExpr(callee, args) {
 }
 
 function builtin(name) {
-  return member(id("$Phemme"), lit(name))
+  return smember(id("$Phemme"), id(name))
 }
 
 function set(what, value) {
@@ -138,12 +131,12 @@ function prog(body) {
 function scoped(expr) {
   return call(
     lambda(null, [id("$scope")], expr),
-    [call(smember(id("self"), id("clone")), [])]
+    [call(smember(id("_self"), id("clone")), [])]
   )
 }
 
 function get(name) {
-  return member(id("self"), name)
+  return member(id("_self"), name)
 }
 
 // High-level stuff
@@ -159,7 +152,7 @@ function string(text) {
 
 exports.letStmt = letStmt;
 function letStmt(name, value) {
-  return expr(set(member(id("self"), name), value))
+  return expr(set(get(name), value))
 }
 
 exports.module = module;
@@ -172,7 +165,7 @@ function module(name, args, body) {
         args,
         [
           varsDecl([[id("$exports"), obj([])]]),
-          varsDecl([[id("self"), id("$scope")]]),
+          varsDecl([[id("_self"), id("$scope")]]),
         ].concat(flatten(body))
          .concat([
            ret(id("$exports"))
@@ -183,23 +176,34 @@ function module(name, args, body) {
 }
 
 exports.ifaceStmt = ifaceStmt;
-function ifaceStmt(_id, decls) {
-  return [ letStmt(_id, newExpr(builtin("Protocol"), [lit(_id.name)]))
-         ].concat(decls.map(makeDecl));
+function ifaceStmt(name, decls) {
+  return [
+    letStmt(name, newExpr(builtin("Protocol"), [name]))
+  ].concat(decls.map(makeDecl));
 
   function makeDecl(pair) {
-    var args = pair[1].map(λ(_, i) -> id(String.fromCharCode(i + 65)));
+    var args = pair[1].map(λ(x) -> identifier(x.value));
 
-    return letStmt(pair[0]
-                  ,set(member(_id, lit(pair[0].name))
-                      ,lambda(pair[0], args
-                             ,call(member(call(member(_id, lit('$get')), [args[0]]), lit(pair[0].name))
-                                  ,args))))  }
+    return letStmt(
+      pair[0],
+      set(
+        member(get(name), pair[0]),
+        lambda(
+          identifier(pair[0].value),
+          args,
+          call(
+            member(call(smember(get(name), id('$get')), [args[0]]), pair[0]),
+            args
+          )
+        )
+      )
+    )
+  }
 }
 
 exports.implStmt = implStmt
 function implStmt(proto, tag, impl) {
-  return expr(call(member(proto, lit('$add')), [tag, makeImpl(impl)]));
+  return expr(call(smember(proto, id('$add')), [tag, makeImpl(impl)]));
 
   function makeImpl(xs) {
     return obj(xs.map(function(x) {
@@ -244,13 +248,21 @@ function parseExpr(js) {
 exports.program = program
 function program(name, module) {
   return prog([
-    varsDecl([[id("self"), smember(id("$Phemme"), id("Namespace"))]]),
+    varsDecl([[id("_self"), smember(id("$Phemme"), id("Namespace"))]]),
     module,
-    expr(set(smember(id("module"), id("exports")), id("self")))
+    expr(set(smember(id("module"), id("exports")), id("_self")))
   ])
 }
 
 exports.rawId = id
 function id(a) {
   return node('Identifier', { name: a })
+}
+
+exports.member = member
+function member(object, property) {
+  return node( 'MemberExpression'
+             , { object: object
+               , property: property
+               , computed: true })
 }

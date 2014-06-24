@@ -25,10 +25,10 @@ ometa Compiler {
   sId :a                            -> _.identifier(a),
   Id :a                             -> _.string(a),
   Var :a                            -> _.identifier(a),
-  BVar :a                           -> _.rawId(a),
   Num :a :b                         -> _.number(a, b),
   Str :a                            -> _.string(a),
   App cc:scope cc:id [cc*:args]     -> _.app(scope, id, args),
+  Member cc:a cc:b                  -> _.member(a, b),
   Fn [scc:id [scc*:args]] cc:expr   -> _.lambda(id, args, expr),
   FFI cc:code                       -> _.parseExpr(code.value),
 
