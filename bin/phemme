@@ -86,7 +86,7 @@ void function Main() {
 
   ; args.repl?          unimplemented()
   : args.run?           phemme.run(read(args['<file>']))
-  : args.compile?       unimplemented()
+  : args.compile?       show(phemme(read(args['<file>'])))
   : args.help?          show(doc)
   : args.version?       show('phemme version ' + pkg.version)
   : /* otherwise */     die(show(doc))
