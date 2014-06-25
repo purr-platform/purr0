@@ -381,8 +381,13 @@ function caseVal(v) {
 }
 
 exports.caseUn = caseUn
-function caseUn(v) {
-  return caseVal(force(get(v)))
+function caseUn(tag) {
+  return function(v) {
+    return when(
+      eq(smember(id("$match"), id("$$ctag")), tag),
+      ret(v)
+    )
+  }
 }
 
 exports.caseBin = caseBin

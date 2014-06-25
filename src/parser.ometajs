@@ -180,7 +180,7 @@ ometa Parser {
        | binaryExpr,
 
   keywordExpr = binaryExpr:a (ws keywordApp)+:as         -> [#App, [#Var, 'self'], kwId(as), [a].concat(kwArgs(as))],
-  binaryExpr  = binaryExpr:a ws symbols:s ws unaryExpr:b -> [#App, [#Var, 'self'], s, [a, b]]
+  binaryExpr  = unaryExpr:a ws symbols:s ws binaryExpr:b -> [#App, [#Var, 'self'], s, [a, b]]
               | unaryExpr,
   unaryExpr   = unaryExpr:a ws identifier:i              -> [#App, [#Var, 'self'], i, [a]]
               | postfixExpr,
