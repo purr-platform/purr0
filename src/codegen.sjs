@@ -135,9 +135,22 @@ function scoped(expr) {
   )
 }
 
+function using(name, value, body) {
+  return expr(call(fn(null, [name], body), [value]))
+}
+
+function force(value) {
+  return call(value, [])
+}
+
 function get(name) {
   return member(id("_self"), name)
 }
+
+function thunk(expr) {
+  return fn(null, [], [ret(expr)])
+}
+
 
 // High-level stuff
 exports.number = number;
@@ -177,9 +190,9 @@ function module(name, args, body) {
 
 exports.ifaceStmt = ifaceStmt;
 function ifaceStmt(name, decls) {
-  return [
-    letStmt(name, newExpr(builtin("Protocol"), [name]))
-  ].concat(decls.map(makeDecl));
+  return using(id("$proto"), newExpr(builtin("Protocol"), [name]), [
+    letStmt(name, thunk(id("$proto")))
+  ].concat(decls.map(makeDecl)));
 
   function makeDecl(pair) {
     var args = pair[1].map(λ(x) -> identifier(x.value));
@@ -187,12 +200,12 @@ function ifaceStmt(name, decls) {
     return letStmt(
       pair[0],
       set(
-        member(get(name), pair[0]),
+        member(id("$proto"), pair[0]),
         lambda(
           identifier(pair[0].value),
           args,
           call(
-            member(call(smember(get(name), id('$get')), [args[0]]), pair[0]),
+            member(call(smember(id("$proto"), id('$get')), [args[0]]), pair[0]),
             args
           )
         )
@@ -269,9 +282,12 @@ function member(object, property) {
 
 exports.adtStmt = adtStmt;
 function adtStmt(name, cases) {
-  return [
-    letStmt(name, newExpr(builtin("ADT"), [name]))
-  ].concat(flatten(cases.map(makeCase)));
+  return using(id("$adt"), newExpr(builtin("ADT"), [name]), [
+    letStmt(name, thunk(id("$adt")))
+  ].concat(flatten(cases.map(makeCase)))
+   .concat([
+     expr(call(smember(id("$adt"), id("$seal")), []))
+   ]));
 
   function makeCase(pair) {
     var type     = pair[0];
@@ -281,10 +297,10 @@ function adtStmt(name, cases) {
 
     return [
       expr(call(
-        smember(get(name), id("$add")),
+        smember(id("$adt"), id("$add")),
         [key, fn(identifier(key.value), args, makeBody(type, argNames, args))]
       )),
-      letStmt(key, member(get(name), key))
+      letStmt(key, member(id("$adt"), key))
     ]
   }
 

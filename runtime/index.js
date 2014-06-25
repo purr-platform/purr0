@@ -99,7 +99,7 @@ function(root) {
     if (this.sealed)
       throw new Error('Trying to add a constructor to the sealed AST ' + this.$$name)
       
-    ctor.prototye = Object.create(this)
+    ctor.prototype = Object.create(this)
     ctor.prototype.$$name = this.$$name + "." + tag
     ctor.prototype.$$ctag = tag
     this[tag] = makeFn(ctor.length, ctor)
