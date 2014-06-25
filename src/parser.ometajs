@@ -172,6 +172,7 @@ ometa Parser {
               | primaryExpr,
   primaryExpr = ffi
               | value
+              | lambda
               | identifier:a         -> [#Var, a[1]]
               | '(' ws expr:a ws ')' -> a,
 
@@ -179,6 +180,8 @@ ometa Parser {
 
   ffi = kw('ffi') ws string:a -> [#FFI, a],
   
+  lambda = (ws identifier)+:as ws "=>" ws expr:b -> [#Lambda, as, b],
+
   // Program
   program = ws module:m ws eof -> [#Program, m && m[1][0], m]
 }
