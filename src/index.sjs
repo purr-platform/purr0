@@ -65,5 +65,5 @@ function prelude() {
 }
 
 function runner() {
-  return '_self["default"]().main(process.argv.slice(2))'
+  return 'module.exports().main(process.argv.slice(2))'
 }
