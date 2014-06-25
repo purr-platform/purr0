@@ -304,7 +304,11 @@ function program(name, module) {
   return prog([
     varsDecl([[id("_self"), smember(id("$Phemme"), id("Namespace"))]]),
     module,
-    expr(set(smember(id("module"), id("exports")), id("_self")))
+    expr(set(
+      smember(id("module"), id("exports")),
+      name.value === 'default'?  member(id("_self"), lit("default"))
+      :                          id("_self")
+    ))
   ])
 }
 
