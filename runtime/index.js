@@ -58,11 +58,19 @@ function(root) {
 
   // -- Namespaces -----------------------------------------------------
   root.Namespace = Object.create(null)
-  root.Namespace.clone = function() {
-    return Object.create(this)
+  root.Namespace.clone = function(a) {
+    return Object.create(a)
   }
   root.Namespace["print"] = function(arg) {
     console.log(arg)
+  }
+
+  // -- Utilities ------------------------------------------------------
+  root.$destructiveExtend = function(a, b) {
+    for (var k in b) {
+      a[k] = b[k]
+    }
+    return a
   }
 
 

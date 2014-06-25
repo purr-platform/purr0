@@ -47,6 +47,13 @@ function node(type, body) {
   return extend({ type: type }, body)
 }
 
+function delayed(blocks) {
+  return expr(call(
+    smember(id("$init"), id("push")),
+    [fn(null, [], blocks)]
+  ))
+}
+
 function lit(value) {
   return node('Literal', { value: value })
 }
@@ -158,7 +165,7 @@ function prog(body) {
 function scoped(expr) {
   return call(
     lambda(null, [id("$scope")], expr),
-    [call(smember(id("_self"), id("clone")), [])]
+    [call(smember(id("_self"), id("clone")), [id("_self")])]
   )
 }
 
@@ -204,10 +211,17 @@ function module(name, args, body) {
         identifier(name.value),
         args,
         [
-          varsDecl([[id("$exports"), obj([])]]),
-          varsDecl([[id("_self"), id("$scope")]]),
+          varsDecl([
+            [id("$exports"), obj([])],
+            [id("$init"), array([])],
+            [id("_self"), id("$scope")],
+          ]),
         ].concat(flatten(body))
          .concat([
+           expr(call(
+             smember(id("$init"), id("forEach")),
+             [lambda(null, [id("f")], call(id("f"), []))]
+           )),
            ret(id("$exports"))
          ])
       )
@@ -422,4 +436,11 @@ function caseKw(tag, args) {
       ])
     )
   }
+}
+
+exports.use = use
+function use(e) {
+  return delayed([
+    expr(call(smember(id("$Phemme"), id("$destructiveExtend")), [id("_self"), e]))
+  ])
 }

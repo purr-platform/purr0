@@ -47,6 +47,7 @@ var reserved = [ ':'  // Method parameter
                , 'of'
                // Modules
                , 'module'
+               , 'use'
                // Scoping & others
                , 'let'
                , 'export'
@@ -130,6 +131,7 @@ ometa Parser {
               | iface
               | implem
               | adt
+              | useStmt
               | exportStmt
               | letStmt,
 
@@ -137,6 +139,8 @@ ometa Parser {
                                                               ,[#Let, p[0], [#Fn, p, e]]
                                                               ,[#Export, p[0]]],     
   letStmt = kw('let') ws pattern:p ws "=>" ws expr:e -> [#Let, p[0], [#Fn, p, e]],
+
+  useStmt = kw('use') ws expr:e -> [#Use, e],
 
   module = kw('module') ws mparms:p ws '{' (ws declaration)*:xs ws '}' -> [#Mod, p, xs],
   mparms = (ws keywordArg)*:ks -> (function(i,xs) {
@@ -180,7 +184,7 @@ ometa Parser {
        | binaryExpr,
 
   keywordExpr = binaryExpr:a (ws keywordApp)+:as         -> [#App, [#Var, 'self'], kwId(as), [a].concat(kwArgs(as))],
-  binaryExpr  = unaryExpr:a ws symbols:s ws binaryExpr:b -> [#App, [#Var, 'self'], s, [a, b]]
+  binaryExpr  = binaryExpr:a ws symbols:s ws unaryExpr:b -> [#App, [#Var, 'self'], s, [a, b]]
               | unaryExpr,
   unaryExpr   = unaryExpr:a ws identifier:i              -> [#App, [#Var, 'self'], i, [a]]
               | postfixExpr,
@@ -197,7 +201,7 @@ ometa Parser {
   keywordApp = keyword:k ws binaryExpr:v -> [k, v],
 
   ffi = kw('ffi') ws string:a -> [#FFI, a],
-  
+
   lambda = (ws identifier)+:as ws "=>" ws expr:b -> [#Lambda, as, b],
 
   // Program

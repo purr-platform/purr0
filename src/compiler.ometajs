@@ -34,6 +34,7 @@ ometa Compiler {
   Fn [scc:id [scc*:args]] cc:expr   -> _.lambda(id, args, expr),
   FFI cc:code                       -> _.parseExpr(code.value),
 
+  Use cc:e                          -> _.use(e),
   IFace cc:id [cc*:decl]            -> _.ifaceStmt(id, decl),
   Impl cc:proto cc:tag [cc*:impl]   -> _.implStmt(proto, tag, impl),
   Data cc:id [cc*:cases]            -> _.adtStmt(id, cases),
