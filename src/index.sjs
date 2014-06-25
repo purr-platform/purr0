@@ -60,6 +60,7 @@ function run(code) {
   vm.runInNewContext(source, context)
 }
 
+exports.prelude = prelude
 function prelude() {
   return read(path.join(__dirname, '../runtime/index.js'), 'utf-8')
 }
