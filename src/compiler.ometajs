@@ -46,6 +46,14 @@ ometa Compiler {
   Meth cc:id cc:val                 -> [id, val],
   DataCtor [:t cc:id [cc*:args]]    -> [t, id, args],
 
+  Case cc:v [cc*:xs]                -> _.caseStmt(v, xs),
+  CPatt cc:patt cc:e                -> patt(e),
+  CaseAny                           -> _.caseAny(),
+  CaseVal cc:a                      -> _.caseVal(a),
+  CaseUn cc:a                       -> _.caseUn(a),
+  CaseBin cc:tag [scc*:args]        -> _.caseBin(tag, args),
+  CaseKw cc:tag [scc*:args]         -> _.caseKw(tag, args),
+
   Multi cc*:as                      -> as,
 
   scc [:t apply('s' + t):a] -> a,

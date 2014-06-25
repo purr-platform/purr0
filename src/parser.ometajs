@@ -37,20 +37,20 @@ var reserved = [ ':'  // Method parameter
                // Protocols
                , 'interface'
                , 'implement'
+               , 'for'
                , 'method'
                // Data structures
                , 'data'
                , 'struct'
                , 'field'
-               , 'match'
                , 'case'
+               , 'of'
                // Modules
                , 'module'
                // Scoping & others
                , 'let'
                , 'export'
                , 'ffi'
-               , 'for'
                ]
 
 /**
@@ -158,6 +158,23 @@ ometa Parser {
           | identifier:a     -> [#DataCtor, [#Val, a, []]],
   adtPatterns = adtPatt:a (ws '|' ws adtPatt)*:as -> [a].concat(as),
 
+  // Pattern matching
+  matchCase = matchValue
+            | matchCtor
+            | matchWildcard,
+
+  matchValue = number:a -> [#CaseVal, a]
+             | string:a -> [#CaseVal, a],
+
+  matchCtor = binaryPattern:p  -> [#CaseBin].concat(p)
+            | keywordPattern:p -> [#CaseKw].concat(p)
+            | identifier:a     -> [#CaseUn, a],
+
+  matchWildcard = '_' -> [#CaseAny],
+
+  caseExpr = kw('case') ws expr:a ws kw('of') ws (ws casePatt)+:xs -> [#Case, a, xs],
+  casePatt = '|' ws matchCase:a ws "=>" ws expr:b                  -> [#CPatt, a, b],
+
   // Expressions
   expr = keywordExpr
        | binaryExpr,
@@ -172,6 +189,7 @@ ometa Parser {
               | primaryExpr,
   primaryExpr = ffi
               | value
+              | caseExpr
               | lambda
               | identifier:a         -> [#Var, a[1]]
               | '(' ws expr:a ws ')' -> a,

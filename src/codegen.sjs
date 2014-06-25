@@ -51,6 +51,33 @@ function lit(value) {
   return node('Literal', { value: value })
 }
 
+function throwStmt(x) {
+  return node('ThrowStatement', { argument: x })
+}
+
+function ifStmt(test, consequent, alternate) {
+  return node('IfStatement', { test: test
+                             , consequent: consequent
+                             , alternate: alternate })
+}
+
+function when(test, consequent) {
+  return ifStmt(test, consequent, null)
+}
+
+function binary(op, left, right) {
+  return node('BinaryExpression', { operator: op
+                                  , left: left
+                                  , right: right })
+}
+
+function unary(op, prefix, arg) {
+  return node('UnaryExpression', { operator: op
+                                 , left: left
+                                 , right: right })
+}
+
+function eq(a, b){ return binary('===', a, b) }
 
 function expr(body) {
   return node('ExpressionStatement', { expression: body })
@@ -318,5 +345,76 @@ function adtStmt(name, cases) {
       }));
       default: throw new Error('Unknow data constructor kind: ' + kind)
     }
+  }
+}
+
+// Pattern matching
+exports.caseStmt = caseStmt
+function caseStmt(v, xs) {
+  return call(
+    fn(
+      null,
+      [id("$match")],
+      xs.concat([
+        throwStmt(newExpr(id('TypeError'), lit('No cases matched the value.')))
+      ])
+    ),
+    [v]
+  )
+}
+
+exports.caseAny = caseAny
+function caseAny() {
+  return function(e) {
+    return ret(e)
+  }
+}
+
+exports.caseVal = caseVal
+function caseVal(v) {
+  return function(e) {
+    return when(
+      eq(id('$match'), v),
+      ret(e)
+    )
+  }
+}
+
+exports.caseUn = caseUn
+function caseUn(v) {
+  return caseVal(force(get(v)))
+}
+
+exports.caseBin = caseBin
+function caseBin(tag, args) {
+  return function(e) {
+    return when(
+      eq(smember(id("$match"), id("$$ctag")), tag),
+      block([
+        varsDecl([
+          [args[0], smember(id("$match"), id("left"))],
+          [args[1], smember(id("$match"), id("right"))]
+        ]),
+        ret(e)
+      ])
+    )
+  }
+}
+
+exports.caseKw = caseKw
+function caseKw(tag, args) {
+  var names = tag.value.split(':').map(lit);
+  return function(e) {
+    return when(
+      eq(smember(id("$match"), id("$$ctag")), tag),
+      block([
+        varsDecl([
+          [args[0], smember(id("$match"), id("self"))]
+        ].concat(args.slice(1).map(function(a, i) {
+          return [a, names[i]]
+        }))),
+        ret(e)
+      ])
+    )
   }
 }
