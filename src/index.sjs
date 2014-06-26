@@ -56,7 +56,8 @@ function run(code) {
   var source  = prelude() + ';\n' + doSource(code) + ';\n' + runner();
   var context = vm.createContext({ process: process
                                  , console: console
-                                 , module: { exports: {} }})
+                                 , global:  {}
+                                 , module:  { exports: {} }})
   vm.runInNewContext(source, context)
 }
 

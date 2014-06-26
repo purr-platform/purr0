@@ -149,7 +149,8 @@ ometa Parser {
 
   iface = kw('interface') ws identifier:a ws '{' (ws ifaceDecl)*:xs ws '}' -> [#IFace, a, xs],
   ifaceDecl = methodDecl,
-  methodDecl = kw('method') ws pattern:p -> [#IMeth].concat(p),
+  methodDecl = kw('method') ws pattern:p ws "=>" ws expr:e -> [#DMeth, p, [#Fn, p, e]]
+             | kw('method') ws pattern:p                   -> [#IMeth].concat(p),
 
   implem = kw('implement') ws expr:a ws kw('for') ws expr:b
              ws '{' (ws implDecl)*:xs ws '}' -> [#Impl, a, b, xs],
@@ -159,6 +160,7 @@ ometa Parser {
   adt = kw('data') ws identifier:id ws '=' ws adtPatterns:xs -> [#Data, id, xs],
   adtPatt = keywordPattern:p -> [#DataCtor, [#Kw].concat(p)]
           | binaryPattern:p  -> [#DataCtor, [#Bin].concat(p)]
+          | unaryPattern:p   -> [#DataCtor, [#Un].concat(p)]
           | identifier:a     -> [#DataCtor, [#Val, a, []]],
   adtPatterns = adtPatt:a (ws '|' ws adtPatt)*:as -> [a].concat(as),
 
@@ -172,7 +174,8 @@ ometa Parser {
 
   matchCtor = binaryPattern:p  -> [#CaseBin].concat(p)
             | keywordPattern:p -> [#CaseKw].concat(p)
-            | identifier:a     -> [#CaseUn, a],
+            | unaryPattern:p   -> [#CaseUn].concat(p)
+            | identifier:a     -> [#CaseId, a],
 
   matchWildcard = '_' -> [#CaseAny],
 

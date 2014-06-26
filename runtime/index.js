@@ -30,6 +30,13 @@ if (!('$Phemme' in global)) {
                          + '}'
                          )(Ctor)
     }
+
+    function implementsRequisites(reqs, o) {
+      var implemented = Object.keys(o).sort()
+      return reqs.slice().sort().every(function(a, i) {
+        return a === implemented[i]
+      })
+    }
   
     // -- Namespaces -----------------------------------------------------
     root.Namespace = Object.create(null)
@@ -39,9 +46,13 @@ if (!('$Phemme' in global)) {
     root.Namespace["print"] = function(arg) {
       console.log(arg)
     }
+    root.Namespace.Number   = function(){ return { $$tag: 'number'   } }
+    root.Namespace.String   = function(){ return { $$tag: 'string'   } }
+    root.Namespace.Function = function(){ return { $$tag: 'function' } }
+    root.Namespace.Boolean  = function(){ return { $$tag: 'boolean'  } }
   
     // -- Utilities ------------------------------------------------------
-    root.$destructiveExtend = function(a, b) {
+    var unsafeExtend = root.$destructiveExtend = function(a, b) {
       for (var k in b) {
         a[k] = b[k]
       }
@@ -52,14 +63,30 @@ if (!('$Phemme' in global)) {
     // -- Protocols ------------------------------------------------------
     root.Protocol = Protocol
     function Protocol(name) {
-      this.$impl = {}
-      this.$$name = name
+      this.$impl     = {}
+      this.$defaults = {}
+      this.$required = []
+      this.$$name    = name
     }
   
     Protocol.prototype.$$tag = newTag({ $$name: 'Protocol' })
   
     Protocol.prototype.$add = function(type, impl) {
-      this.$impl[tagFor(type)] = impl
+      var obj = unsafeExtend(unsafeExtend({}, this.$defaults), impl)
+      if (!implementsRequisites(this.$required, obj))
+        throw new TypeError(tagFor(type) + " doesn't implement all requisites of the " + this.$$name + " protocol.")
+
+      this.$impl[tagFor(type)] = obj
+    }
+
+    Protocol.prototype.$require = function(key, fn) {
+      this.$required.push(key)
+      this[key] = fn
+      return fn
+    }
+
+    Protocol.prototype.$addDefault = function(key, fn) {
+      this.$defaults[key] = fn
     }
   
     Protocol.prototype.$get = function(type) {

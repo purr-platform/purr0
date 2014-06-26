@@ -233,26 +233,41 @@ exports.ifaceStmt = ifaceStmt;
 function ifaceStmt(name, decls) {
   return using(id("$proto"), newExpr(builtin("Protocol"), [name]), [
     letStmt(name, thunk(id("$proto")))
-  ].concat(decls.map(makeDecl)));
+  ].concat(flatten(decls)));
+}
 
-  function makeDecl(pair) {
-    var args = pair[1].map(λ(x) -> identifier(x.value));
+exports.ifaceMethDecl = ifaceMethDecl
+function ifaceMethDecl(key, args) {
+  args = args.map(λ(x) -> identifier(x.value));
 
-    return letStmt(
-      pair[0],
-      set(
-        member(id("$proto"), pair[0]),
+  return letStmt(
+    key,
+    call(
+      smember(id("$proto"), id("$require")),
+      [
+        key,
         lambda(
-          identifier(pair[0].value),
+          identifier(key.value),
           args,
           call(
-            member(call(smember(id("$proto"), id('$get')), [args[0]]), pair[0]),
+            member(call(smember(id("$proto"), id('$get')), [args[0]]), key),
             args
           )
         )
-      )
+      ]
     )
-  }
+  )
+}
+
+exports.ifaceMethDef = ifaceMethDef
+function ifaceMethDef(key, args, val) {
+  return [
+    ifaceMethDecl(key, args),
+    expr(call(
+      smember(id("$proto"), id("$addDefault")),
+      [ key, val ]
+    ))
+  ]
 }
 
 exports.implStmt = implStmt;
@@ -356,6 +371,9 @@ function adtStmt(name, cases) {
         expr(set(smember(thisExpr(), id('left')), args[0])),
         expr(set(smember(thisExpr(), id('right')), args[1]))
       ];
+      case 'Un': return [
+        expr(set(member(thisExpr(), names[0]), args[0]))
+      ]
       case 'Kw': return [
         expr(set(smember(thisExpr(), id('self')), args[0]))
       ].concat(args.slice(1).map(function(a, i) {
@@ -398,12 +416,25 @@ function caseVal(v) {
   }
 }
 
-exports.caseUn = caseUn
-function caseUn(tag) {
+exports.caseId = caseId
+function caseId(tag) {
   return function(v) {
     return when(
       eq(smember(id("$match"), id("$$ctag")), tag),
       ret(v)
+    )
+  }
+}
+
+exports.caseUn = caseUn
+function caseUn(tag, arg) {
+  return function(e) {
+    return when(
+      eq(smember(id("$match"), id("$$ctag")), tag),
+      block([
+        varsDecl([[arg, member(id("$match"), tag)]]),
+        ret(e)
+      ])
     )
   }
 }
