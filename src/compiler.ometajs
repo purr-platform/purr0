@@ -40,6 +40,7 @@ ometa Compiler {
   Mod [cc:id [cc*:args]] [cc*:body] -> _.module(id, args, body),
   Export cc:id                      -> _.exportStmt(id),
   Program cc:id cc:mod              -> _.program(id, mod),
+  Deco cc:f cc:id cc:e              -> _.decorator(f, id, e),
 
   IFace cc:id [cc*:decl]            -> _.ifaceStmt(id, decl),
   Impl cc:proto cc:tag [cc*:impl]   -> _.implStmt(proto, tag, impl),

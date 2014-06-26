@@ -25,9 +25,10 @@ var esprima = require('esprima')
 
 // -- Helpers ----------------------------------------------------------
 
-var START   = 0
-var DELAYED = 1
-var END     = 2
+var START     = 0
+var DELAYED   = 1
+var END       = 2
+var EXPORTING = 3
 
 /**
  * Returns a valid name for JS identifiers.
@@ -63,6 +64,10 @@ function delayed(a) {
 
 function atEnd(a) {
   return extend(a, { 'x-order': END })
+}
+
+function atExportPhase(a) {
+  return extend(a, { 'x-order': EXPORTING })
 }
 
 function lit(value) {
@@ -317,7 +322,7 @@ function identifier(name) {
 
 exports.exportStmt = exportStmt;
 function exportStmt(name) {
-  return expr(set(member(id("$exports"), name), get(name)))
+  return atExportPhase(expr(set(member(id("$exports"), name), get(name))))
 }
 
 exports.parseExpr = parseExpr;
@@ -497,4 +502,16 @@ function use(e) {
 exports.bool = bool
 function bool(a) {
   return lit(a)
+}
+
+exports.decorator = decorator
+function decorator(f, name, e) {
+  return flatten([e]).concat([
+    atEnd(
+      letStmt(
+        name,
+        call(f, [get(name)])
+      )
+    )
+  ])
 }
