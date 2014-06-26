@@ -25,6 +25,9 @@ var esprima = require('esprima')
 
 // -- Helpers ----------------------------------------------------------
 
+var START = 0
+var END   = 1
+
 /**
  * Returns a valid name for JS identifiers.
  *
@@ -42,6 +45,12 @@ function flatten(xs) {
   }, [])
 }
 
+function sort(xs) {
+  return xs.slice().sort(function(a, b) {
+    return (a['x-order'] || 0) - (b['x-order'] || 0)
+  })
+}
+
 // -- Base node constructors -------------------------------------------
 function node(type, body) {
   return extend({ type: type }, body)
@@ -52,6 +61,10 @@ function delayed(blocks) {
     smember(id("$init"), id("push")),
     [fn(null, [], blocks)]
   ))
+}
+
+function atEnd(a) {
+  return extend(a, { 'x-order': END })
 }
 
 function lit(value) {
@@ -233,7 +246,7 @@ exports.ifaceStmt = ifaceStmt;
 function ifaceStmt(name, decls) {
   return using(id("$proto"), newExpr(builtin("Protocol"), [name]), [
     letStmt(name, thunk(id("$proto")))
-  ].concat(flatten(decls)));
+  ].concat(sort(flatten(decls))));
 }
 
 exports.ifaceMethDecl = ifaceMethDecl
@@ -268,6 +281,14 @@ function ifaceMethDef(key, args, val) {
       [ key, val ]
     ))
   ]
+}
+
+exports.ifaceNeed = ifaceNeed
+function ifaceNeed(base) {
+  return atEnd(expr(call(
+    smember(id("$proto"), id("$extend")),
+    [ base ]
+  )))
 }
 
 exports.implStmt = implStmt;

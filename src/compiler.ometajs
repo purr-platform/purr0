@@ -45,6 +45,7 @@ ometa Compiler {
   Impl cc:proto cc:tag [cc*:impl]   -> _.implStmt(proto, tag, impl),
   IMeth cc:a [cc*:args]             -> _.ifaceMethDecl(a, args),
   DMeth [cc:id [cc*:args]] cc:val   -> _.ifaceMethDef(id, args, val),
+  INeed cc:e                        -> _.ifaceNeed(e),
   Meth cc:id cc:val                 -> [id, val],
 
   Data cc:id [cc*:cases]            -> _.adtStmt(id, cases),

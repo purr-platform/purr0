@@ -29,7 +29,7 @@
  * Reserved symbols in this language.
  */
 var reserved = [ ':'  // Method parameter
-               , '@'  // Decorator
+               , '@'  // Self sends
                , '^'  // Contract
                , '_'  // Partial / Wildcard
                , '=>' // Function definition
@@ -39,6 +39,7 @@ var reserved = [ ':'  // Method parameter
                , 'implement'
                , 'for'
                , 'method'
+               , 'need'
                // Data structures
                , 'data'
                , 'struct'
@@ -154,7 +155,9 @@ ometa Parser {
                                   }(kwId(ks), kwArgs(ks))),
 
   iface = kw('interface') ws identifier:a ws '{' (ws ifaceDecl)*:xs ws '}' -> [#IFace, a, xs],
-  ifaceDecl = methodDecl,
+  ifaceDecl  = needDecl
+             | methodDecl,
+  needDecl   = kw('need') ws expr:e -> [#INeed, e],
   methodDecl = kw('method') ws pattern:p ws "=>" ws expr:e -> [#DMeth, p, [#Fn, p, e]]
              | kw('method') ws pattern:p                   -> [#IMeth].concat(p),
 
