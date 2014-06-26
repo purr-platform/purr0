@@ -52,6 +52,8 @@ var reserved = [ ':'  // Method parameter
                , 'let'
                , 'export'
                , 'ffi'
+               , 'true'
+               , 'false'
                ]
 
 /**
@@ -91,6 +93,9 @@ ometa Parser {
              | identifier,
 
   // Values
+  bool = kw('true'):a  -> [#Bool, true]
+       | kw('false'):a -> [#Bool, false],
+
   digits = <digit+>:a -> Number(a),
   number = digits:a ('.' digits:b)? -> [#Num, a, b || 0],
   
@@ -110,6 +115,7 @@ ometa Parser {
 
   value = number
         | string
+        | bool
         | vector
         | map
         | set,
@@ -170,6 +176,7 @@ ometa Parser {
             | matchWildcard,
 
   matchValue = number:a -> [#CaseVal, a]
+             | bool:a   -> [#CaseVal, a]
              | string:a -> [#CaseVal, a],
 
   matchCtor = binaryPattern:p  -> [#CaseBin].concat(p)

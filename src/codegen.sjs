@@ -479,3 +479,8 @@ function use(e) {
     expr(call(smember(id("$Phemme"), id("$destructiveExtend")), [id("_self"), e]))
   ])
 }
+
+exports.bool = bool
+function bool(a) {
+  return lit(a)
+}
