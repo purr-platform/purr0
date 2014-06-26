@@ -205,6 +205,7 @@ ometa Parser {
               | value
               | caseExpr
               | lambda
+              | '@' ws identifier:a  -> [#App, [#Var, 'self'], a, [[#Var, 'self']]]
               | identifier:a         -> [#Var, a[1]]
               | '(' ws expr:a ws ')' -> a,
 
