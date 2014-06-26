@@ -25,8 +25,9 @@ var esprima = require('esprima')
 
 // -- Helpers ----------------------------------------------------------
 
-var START = 0
-var END   = 1
+var START   = 0
+var DELAYED = 1
+var END     = 2
 
 /**
  * Returns a valid name for JS identifiers.
@@ -56,11 +57,8 @@ function node(type, body) {
   return extend({ type: type }, body)
 }
 
-function delayed(blocks) {
-  return expr(call(
-    smember(id("$init"), id("push")),
-    [fn(null, [], blocks)]
-  ))
+function delayed(a) {
+  return extend(a, { 'x-order': DELAYED })
 }
 
 function atEnd(a) {
@@ -226,15 +224,10 @@ function module(name, args, body) {
         [
           varsDecl([
             [id("$exports"), obj([])],
-            [id("$init"), array([])],
             [id("_self"), id("$scope")],
           ]),
-        ].concat(flatten(body))
+        ].concat(sort(flatten(body)))
          .concat([
-           expr(call(
-             smember(id("$init"), id("forEach")),
-             [lambda(null, [id("f")], call(id("f"), []))]
-           )),
            ret(id("$exports"))
          ])
       )
@@ -496,9 +489,9 @@ function caseKw(tag, args) {
 
 exports.use = use
 function use(e) {
-  return delayed([
+  return delayed(
     expr(call(smember(id("$Phemme"), id("$destructiveExtend")), [id("_self"), e]))
-  ])
+  )
 }
 
 exports.bool = bool
