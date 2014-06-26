@@ -109,8 +109,8 @@ ometa Parser {
   vector = '[' ws expr:hd (ws ',' ws expr)*:tl ws ']' -> [#Vec, [hd].concat(tl)]
          | '[' ws ']'                                 -> [#Vec, []],
 
-  map = '[|' ws mapExpr:hd (ws ',' ws mapExpr)*:tl ws '|]' -> [#Map, [hd].concat(tl)]
-      | '[|' ws '|]'                                       -> [#Map, []],
+  map = '{' ws mapExpr:hd (ws ',' ws mapExpr)*:tl ws '}' -> [#Map, [hd].concat(tl)]
+      | '{' ws '}'                                       -> [#Map, []],
 
   set = '#' vector:xs -> [#Set, xs[1]],
 
