@@ -51,6 +51,8 @@ var reserved = [ ':'  // Method parameter
                , 'use'
                // Scoping & others
                , 'let'
+               , 'in'
+               , 'where'
                , 'export'
                , 'ffi'
                , 'true'
@@ -202,8 +204,18 @@ ometa Parser {
   casePatt = '|' ws matchCase:a ws "=>" ws expr:b                  -> [#CPatt, a, b],
 
   // Expressions
-  expr = keywordExpr
-       | binaryExpr,
+  letExpr   = kw('let') ws bindingList:xs ws kw('in') ws expr:e -> [#Bind, xs, e],
+  whereExpr = appExpr:e ws kw('where') ws bindingList:xs      -> [#Bind, xs, e],
+
+
+  expr = letExpr
+       | whereExpr,
+
+  whereExpr = whereExpr
+            | appExpr,
+
+  appExpr = keywordExpr
+          | binaryExpr,
 
   keywordExpr = binaryExpr?:a (ws keywordApp)+:as        -> [#App, [#Var, 'self'], kwId(as), [a || [#Var, 'self']].concat(kwArgs(as))],
   binaryExpr  = binaryExpr:a ws symbols:s ws unaryExpr:b -> [#App, [#Var, 'self'], s, [a, b]]
@@ -226,6 +238,10 @@ ometa Parser {
   ffi = kw('ffi') ws string:a -> [#FFI, a],
 
   lambda = (ws identifier)+:as ws "=>" ws expr:b -> [#Lambda, as, b],
+
+  bindingList = bindingCase:x (ws '|' ws bindingCase)*:xs -> [x].concat(xs),
+  bindingCase = identifier:a ws '=' ws expr:e -> [#VarBind, a, e]
+              | pattern:p ws "=>" ws expr:e   -> [#Let, p[0], [#Fn, p, e]],
 
   // Program
   program = ws module:m ws eof -> [#Program, m && m[1][0], m]

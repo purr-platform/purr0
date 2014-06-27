@@ -181,7 +181,7 @@ function prog(body) {
 function scoped(expr) {
   return call(
     lambda(null, [id("$scope")], expr),
-    [call(smember(id("_self"), id("clone")), [id("_self")])]
+    [call(smember(identifier("self"), id("clone")), [identifier("self")])]
   )
 }
 
@@ -514,4 +514,21 @@ function decorator(f, name, e) {
       )
     )
   ])
+}
+
+exports.decl = decl
+function decl(id, e) {
+  return varsDecl([[id, e]])
+}
+
+exports.binding = binding
+function binding(vars, e) {
+  return call(
+    fn(
+      null,
+      [identifier("self")],
+      vars.concat([ret(e)])
+    ),
+    [call(smember(identifier("self"), id("clone")), [identifier("self")])]
+  )
 }

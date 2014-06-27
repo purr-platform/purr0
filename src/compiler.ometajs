@@ -49,6 +49,9 @@ ometa Compiler {
   INeed cc:e                        -> _.ifaceNeed(e),
   Meth cc:id cc:val                 -> [id, val],
 
+  VarBind scc:id cc:e               -> _.decl(id, e),
+  Bind [cc*:vars] cc:e              -> _.binding(vars, e),
+
   Data cc:id [cc*:cases]            -> _.adtStmt(id, cases),
   DataCtor [:t cc:id [cc*:args]]    -> [t, id, args],
 
