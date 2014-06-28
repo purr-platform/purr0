@@ -34,17 +34,13 @@ ometa Compiler {
   Lambda [scc*:args] cc:expr        -> _.lambda(null, args, expr),
   Fn [scc:id [scc*:args]] cc:expr   -> _.lambda(id, args, expr),
   FFI cc:code                       -> _.parseExpr(code.value),
-  FFIStmt cc:code                   -> _.parseProg(code.value),
 
+  Use cc:e                          -> _.use(e),
   Let cc:id cc:val                  -> _.letStmt(id, val),
   Mod [cc:id [cc*:args]] [cc*:body] -> _.module(id, args, body),
   Export cc:id                      -> _.exportStmt(id),
   Program cc:id cc:mod              -> _.program(id, mod),
   Deco cc:f cc:id cc:e              -> _.decorator(f, id, e),
-
-  Import cc:p cc:ks cc:id           -> _.importStmt(p, ks, id),
-  ImpKw cc:id [cc*:args]            -> [id, args],
-  Use cc:e                          -> _.use(e),
 
   IFace cc:id [cc*:decl]            -> _.ifaceStmt(id, decl),
   Impl cc:proto cc:tag [cc*:impl]   -> _.implStmt(proto, tag, impl),
@@ -60,16 +56,16 @@ ometa Compiler {
   DataCtor [:t cc:id [cc*:args]]    -> [t, id, args],
 
   Case cc:v [cc*:xs]                -> _.caseStmt(v, xs),
-  CPatt cc:patt cc:e                -> patt(e),
+  CPatt cc:patt cc:e                -> _.casePatt(patt, e),
   CaseAny                           -> _.caseAny(),
   CaseVal cc:a                      -> _.caseVal(a),
+  CaseVar scc:a                     -> _.caseVar(a),
   CaseId cc:a                       -> _.caseId(a),
-  CaseUn cc:tag [scc:arg]           -> _.caseUn(tag, arg),
-  CaseBin cc:tag [scc*:args]        -> _.caseBin(tag, args),
-  CaseKw cc:tag [scc*:args]         -> _.caseKw(tag, args),
+  CaseUn cc:tag cc:arg              -> _.caseUn(tag, arg),
+  CaseBin cc:tag [cc:l cc:r]        -> _.caseBin(tag, l, r),
+  CaseKw cc:tag [cc*:args]          -> _.caseKw(tag, args),
 
   Multi cc*:as                      -> as,
-  Nil                               -> null,
 
   scc [:t apply('s' + t):a] -> a,
   cc [:t apply(t):a] -> a,

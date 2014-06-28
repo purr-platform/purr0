@@ -31,6 +31,7 @@
 var reserved = [ ':'  // Method parameter
                , '@'  // Self sends
                , '^'  // Contract
+               , '$'  // Sigil for introducing variables
                , '_'  // Partial / Wildcard
                , '=>' // Function definition
                , '|'  // Case separators
@@ -49,9 +50,6 @@ var reserved = [ ':'  // Method parameter
                // Modules
                , 'module'
                , 'use'
-               , 'import'
-               , 'with'
-               , 'as'
                // Scoping & others
                , 'let'
                , 'in'
@@ -144,8 +142,6 @@ ometa Parser {
               | iface
               | implem
               | adt
-              | importDecl
-              | ffiStmt
               | useStmt
               | exportStmt
               | letStmt,
@@ -189,31 +185,23 @@ ometa Parser {
             | decorator:b               -> [#Deco, a, b[2], b]
             ),
 
-  ffiStmt = kw('ffi') ws string:a -> [#FFIStmt, a],
-
-  importDecl = kw('import') ws string:p
-                 (ws kw('with') (ws keywordApp)+:ks)?
-                 (ws kw('as') ws identifier:n)?
-             -> [#Import, p
-                 , ks? [#ImpKw, kwId(ks), kwArgs(ks)] : [#Nil]
-                 , n || [#Nil]],
-
   // Pattern matching
-  matchCase = matchValue
-            | matchCtor
-            | matchWildcard,
+  matchCase  = matchCase2:x (ws keywordCase)+:ks         -> [#CaseKw, kwId(ks), [x].concat(kwArgs(ks))]
+             | matchCase2,
+  matchCase2 = matchCase2:x ws symbols:s ws matchCase3:y -> [#CaseBin, s, [x, y]]
+             | matchCase3,
+  matchCase3 = matchCase3:a ws identifier:b              -> [#CaseUn, b, a]
+             | matchCase4,
+  matchCase4 = '_'                                       -> [#CaseAny]
+             | '$' ws identifier:a                       -> [#CaseVar, a]
+             | identifier:a ws '(' ws matchCase:b ws ')' -> [#CaseUn, a, b]
+             | identifier:a                              -> [#CaseId, a]
+             | number:a                                  -> [#CaseVal, a]
+             | bool:a                                    -> [#CaseVal, a]
+             | string:a                                  -> [#CaseVal, a]
+             | '(' ws matchCase:a ws ')'                 -> a,
 
-  matchValue = number:a -> [#CaseVal, a]
-             | bool:a   -> [#CaseVal, a]
-             | string:a -> [#CaseVal, a],
-
-  matchCtor = binaryPattern:p  -> [#CaseBin].concat(p)
-            | keywordPattern:p -> [#CaseKw].concat(p)
-            | unaryPattern:p   -> [#CaseUn].concat(p)
-            | identifier:a     -> [#CaseId, a],
-
-  matchWildcard = '_' -> [#CaseAny],
-
+  keywordCase = keyword:k ws matchCase2:x -> [k, x],
   caseExpr = kw('case') ws expr:a ws kw('of') ws (ws casePatt)+:xs -> [#Case, a, xs],
   casePatt = '|' ws matchCase:a ws "=>" ws expr:b                  -> [#CPatt, a, b],
 

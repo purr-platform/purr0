@@ -41,10 +41,17 @@ function sanitiseName(name) {
 }
 
 function flatten(xs) {
+  if (!Array.isArray(xs)) return xs
   return xs.reduce(function(ys, x) {
     return Array.isArray(x)?  ys.concat(x)
     :      /* otherwise */    ys.concat([x])
   }, [])
+}
+
+function foldr(f, b, xs, idx) {
+  idx = idx || 0
+  return xs.length === 0?  b
+  :      /* otherwise */   f(xs[0], foldr(f, b, xs.slice(1), idx + 1), idx)
 }
 
 function sort(xs) {
@@ -58,8 +65,16 @@ function node(type, body) {
   return extend({ type: type }, body)
 }
 
+function isBlock(x) {
+  return x.type === 'BlockStatement'
+}
+
 function delayed(a) {
   return extend(a, { 'x-order': DELAYED })
+}
+
+function emptyExpr() {
+  return unary('void', true, lit(0))
 }
 
 function atEnd(a) {
@@ -84,10 +99,6 @@ function ifStmt(test, consequent, alternate) {
                              , alternate: alternate })
 }
 
-function when(test, consequent) {
-  return ifStmt(test, consequent, null)
-}
-
 function binary(op, left, right) {
   return node('BinaryExpression', { operator: op
                                   , left: left
@@ -96,8 +107,7 @@ function binary(op, left, right) {
 
 function unary(op, prefix, arg) {
   return node('UnaryExpression', { operator: op
-                                 , left: left
-                                 , right: right })
+                                 , argument: arg })
 }
 
 function eq(a, b){ return binary('===', a, b) }
@@ -107,7 +117,7 @@ function expr(body) {
 }
 
 function block(body) {
-  return node('BlockStatement', { body: body })
+  return node('BlockStatement', { body: flatten(body) })
 }
 
 function ret(value) {
@@ -194,7 +204,7 @@ function force(value) {
 }
 
 function get(name) {
-  return member(identifier("self"), name)
+  return member(id("_self"), name)
 }
 
 function thunk(expr) {
@@ -215,7 +225,7 @@ function string(text) {
 
 exports.letStmt = letStmt;
 function letStmt(name, value) {
-  return expr(call(smember(identifier("self"), id("$add")), [name, value]))
+  return expr(set(get(name), value))
 }
 
 exports.module = module;
@@ -229,7 +239,7 @@ function module(name, args, body) {
         [
           varsDecl([
             [id("$exports"), obj([])],
-            [identifier("self"), id("$scope")],
+            [id("_self"), id("$scope")],
           ]),
         ].concat(sort(flatten(body)))
          .concat([
@@ -333,20 +343,15 @@ function parseExpr(js) {
   return tokens[0].expression
 }
 
-exports.parseProg = parseProg
-function parseProg(js) {
-  return esprima.parse(js).body
-}
-
 exports.program = program;
 function program(name, module) {
   return prog([
-    varsDecl([[identifier("self"), smember(id("$Phemme"), id("Namespace"))]]),
+    varsDecl([[id("_self"), smember(id("$Phemme"), id("Namespace"))]]),
     module,
     expr(set(
       smember(id("module"), id("exports")),
-      name.value === 'default'?  member(identifier("self"), lit("default"))
-      :                          identifier("self")
+      name.value === 'default'?  member(id("_self"), lit("default"))
+      :                          id("_self")
     ))
   ])
 }
@@ -409,90 +414,151 @@ function adtStmt(name, cases) {
 }
 
 // Pattern matching
-exports.caseStmt = caseStmt
-function caseStmt(v, xs) {
+function withMatch(x, xs, caseVar) {
   return call(
     fn(
       null,
-      [id("$match")],
-      xs.concat([
-        throwStmt(newExpr(id('TypeError'), lit('No cases matched the value.')))
-      ])
+      [caseVar || id("$match")],
+      Array.isArray(xs)? flatten(xs) : [xs]
     ),
-    [v]
+    [x]
   )
+}
+function guardTry(xs) {
+  return node('TryStatement',
+              { block: block(xs)
+              , handler: node('CatchClause',
+                             { param: id('e')
+                             , body: block([
+                               ifStmt(
+                                 unary('!', true, eq(id('e'), lit('$case-failed'))),
+                                 throwStmt(id('e'))
+                               )
+                             ]) })})
+}
+function failCase() {
+  return throwStmt(
+    lit('$case-failed')
+  )
+}
+function whenCase(test, consequent) {
+  return ifStmt(test, consequent, failCase())
+}
+function newCaseVar(oldVar) {
+  var num = Number(oldVar.name.match(/(\d*)$/)[1] || '0');
+  return id('$match' + (num + 1))
+}
+
+
+exports.caseStmt = caseStmt
+function caseStmt(v, xs) {
+  return withMatch(
+    v,
+    flatten(xs).concat([
+      throwStmt(newExpr(id('TypeError'), [lit('No cases matched the value.')]))
+    ])
+  )
+}
+
+exports.casePatt = casePatt
+function casePatt(patt, e) {
+  return guardTry([
+    ret(withMatch(
+      id("$match"),
+      patt(id("$match"), e)
+    ))
+  ])
 }
 
 exports.caseAny = caseAny
 function caseAny() {
-  return function(e) {
+  return function(val, e) {
     return ret(e)
   }
 }
 
 exports.caseVal = caseVal
 function caseVal(v) {
-  return function(e) {
-    return when(
-      eq(id('$match'), v),
+  return function(val, e) {
+    return whenCase(
+      eq(val, v),
       ret(e)
     )
   }
 }
 
+exports.caseVar = caseVar
+function caseVar(a) {
+  return function(val, e) {
+    return [
+      varsDecl([[a, val]]),
+      ret(e)
+    ]
+  }
+}
+
 exports.caseId = caseId
 function caseId(tag) {
-  return function(v) {
-    return when(
-      eq(smember(id("$match"), id("$$ctag")), tag),
-      ret(v)
+  return function(val, e) {
+    return whenCase(
+      eq(smember(val, id("$$ctag")), tag),
+      ret(e)
     )
   }
 }
 
 exports.caseUn = caseUn
-function caseUn(tag, arg) {
-  return function(e) {
-    return when(
-      eq(smember(id("$match"), id("$$ctag")), tag),
-      block([
-        varsDecl([[arg, member(id("$match"), tag)]]),
-        ret(e)
-      ])
+function caseUn(tag, body) {
+  return function(val, e) {
+    var subVar = newCaseVar(val)
+    return whenCase(
+      eq(smember(val, id("$$ctag")), tag),
+      ret(withMatch(
+        member(val, tag),
+        body(subVar, e),
+        subVar
+      ))
     )
   }
 }
 
 exports.caseBin = caseBin
-function caseBin(tag, args) {
-  return function(e) {
-    return when(
-      eq(smember(id("$match"), id("$$ctag")), tag),
-      block([
-        varsDecl([
-          [args[0], smember(id("$match"), id("left"))],
-          [args[1], smember(id("$match"), id("right"))]
-        ]),
-        ret(e)
-      ])
+function caseBin(tag, l, r) {
+  return function(val, e) {
+    var lvar = newCaseVar(val), rvar = newCaseVar(lvar)
+    return whenCase(
+      eq(smember(val, id("$$ctag")), tag),
+      ret(withMatch(
+        smember(val, id("left")),
+        l(
+          lvar,
+          withMatch(
+            smember(val, id("right")),
+            r(rvar, e),
+            rvar
+          )
+        ),
+        lvar
+      ))
     )
   }
 }
 
 exports.caseKw = caseKw
 function caseKw(tag, args) {
-  var names = tag.value.split(':').map(lit);
-  return function(e) {
-    return when(
-      eq(smember(id("$match"), id("$$ctag")), tag),
-      block([
-        varsDecl([
-          [args[0], smember(id("$match"), id("self"))]
-        ].concat(args.slice(1).map(function(a, i) {
-          return [a, names[i]]
-        }))),
-        ret(e)
-      ])
+  var names = [lit("self")].concat(tag.value.split(':').slice(0,-1).map(lit));
+  return function(val, e) {
+    var lvar = val;
+    return whenCase(
+      eq(smember(val, id("$$ctag")), tag),
+      ret(names.reduceRight(function(res, name, i) {
+        lvar = newCaseVar(lvar);
+        return withMatch(
+          member(val, name),
+          args[i](lvar, res),
+          lvar
+        )
+      }, e))
     )
   }
 }
@@ -500,10 +566,7 @@ function caseKw(tag, args) {
 exports.use = use
 function use(e) {
   return delayed(
-    expr(call(
-      smember(id("$Phemme"), id("$destructiveExtend")),
-      [identifier("self"), e]
-    ))
+    expr(call(smember(id("$Phemme"), id("$destructiveExtend")), [id("_self"), e]))
   )
 }
 
@@ -516,10 +579,10 @@ exports.decorator = decorator
 function decorator(f, name, e) {
   return flatten([e]).concat([
     atEnd(
-      expr(set(
-        get(name),
+      letStmt(
+        name,
         call(f, [get(name)])
-      ))
+      )
     )
   ])
 }
@@ -539,33 +602,4 @@ function binding(vars, e) {
     ),
     [call(smember(identifier("self"), id("clone")), [identifier("self")])]
   )
-}
-
-exports.importStmt = importStmt
-function importStmt(p, kw, name) {
-  return expr(call(
-    fn(
-      null,
-      [id("$mod")],
-      [
-        expr(set(id("$mod"), instantiate(kw))),
-        open(name)
-      ]
-    ),
-    [call(id("require"), [p])]
-  ));
-
-  function instantiate(kw) {
-    if (kw === null) return call(member(id("$mod"), lit("default")), []);
-    else             return call(member(id("$mod"), kw[0]), kw[1])
-  }
-
-  function open(name) {
-    if (name !== null) return letStmt(name, id("$mod"))
-    else
-      return expr(call(
-        smember(id("$Phemme"), id("$destructiveExtend")),
-        [identifier("self"), id("$mod")]
-      ))
-  }
 }
