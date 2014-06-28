@@ -27,6 +27,7 @@ ometa Compiler {
   Var :a                            -> _.identifier(a),
   Num :a :b                         -> _.number(a, b),
   Bool :a                           -> _.bool(a),
+  List [cc*:xs]                     -> _.list(xs),
   Str :a                            -> _.string(a),
   App cc:scope cc:id [cc*:args]     -> _.app(scope, id, args),
   FnApp cc:fn [cc*:args]            -> _.call(fn, args),

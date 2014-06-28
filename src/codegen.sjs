@@ -603,3 +603,13 @@ function binding(vars, e) {
     [call(smember(identifier("self"), id("clone")), [identifier("self")])]
   )
 }
+
+exports.list = list
+function list(xs) {
+  return xs.reduceRight(function(result, x) {
+    return call(
+      member(identifier("self"), lit("::")),
+      [x, result]
+    )
+  }, call(member(identifier("self"), lit("Nil")), []))
+}

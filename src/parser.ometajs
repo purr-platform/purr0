@@ -109,8 +109,8 @@ ometa Parser {
   string           = seq('"""') <unescapableChars*>:as seq('"""') -> [#Str, as]
                    | '"' <stringChar*>:as '"'                     -> [#Str, as],
 
-  vector = '[' ws expr:hd (ws ',' ws expr)*:tl ws ']' -> [#Vec, [hd].concat(tl)]
-         | '[' ws ']'                                 -> [#Vec, []],
+  vector = '[' ws expr:hd (ws ',' ws expr)*:tl ws ']' -> [#List, [hd].concat(tl)]
+         | '[' ws ']'                                 -> [#List, []],
 
   map = '{' ws mapExpr:hd (ws ',' ws mapExpr)*:tl ws '}' -> [#Map, [hd].concat(tl)]
       | '{' ws '}'                                       -> [#Map, []],
