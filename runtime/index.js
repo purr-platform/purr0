@@ -1,7 +1,7 @@
 // -- Phemme runtime environment ---------------------------------------
 var $Phemme = global.$Phemme || {}
 void function() {
-  if ('$Phemme' in global)  return
+  if ($Phemme.Namespace)  return
 
   // -- Helpers --------------------------------------------------------
 
