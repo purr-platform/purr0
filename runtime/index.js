@@ -85,6 +85,12 @@ void function() {
     return a
   }
 
+  $Phemme.ensureString = function(a) {
+    if (typeof a !== 'string')
+      throw new TypeError('Not a String value: ' + a)
+    return a
+  }
+
   // -- Namespaces -----------------------------------------------------
   var NS = $Phemme.Namespace = Object.create(null)
 
