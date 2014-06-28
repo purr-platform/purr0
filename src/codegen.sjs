@@ -215,7 +215,7 @@ function string(text) {
 
 exports.letStmt = letStmt;
 function letStmt(name, value) {
-  return expr(set(get(name), value))
+  return expr(call(smember(identifier("self"), id("$add")), [name, value]))
 }
 
 exports.module = module;
@@ -508,10 +508,10 @@ exports.decorator = decorator
 function decorator(f, name, e) {
   return flatten([e]).concat([
     atEnd(
-      letStmt(
-        name,
+      expr(set(
+        get(name),
         call(f, [get(name)])
-      )
+      ))
     )
   ])
 }

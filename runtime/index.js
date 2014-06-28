@@ -20,6 +20,14 @@ if (!('$Phemme' in global)) {
       :      /* otherwise */  typeof type
     }
 
+    function describe(value) {
+      return tagFor(value) === 'number'?   value
+      :      tagFor(value) === 'string'?   JSON.stringify(value)
+      :      tagFor(value) === 'boolean'?  value
+      :      value.show?                   value.show(value)
+      :      /* otherwise */               tagFor(value)
+    }
+
     function makeFn(n, Ctor) {
       var args = Array.apply(null, Array(n)).map(function(_,i){
         return String.fromCharCode(i + 97)
@@ -67,17 +75,29 @@ if (!('$Phemme' in global)) {
     }
 
     // -- Namespaces -----------------------------------------------------
-    root.Namespace = Object.create(null)
-    root.Namespace.clone = function(a) {
+    var NS = root.Namespace = Object.create(null)
+
+    NS.$add = function(name, value) {
+      if (name in this)
+        throw new TypeError(
+          name + " conflicts with an existing binding in the namespace.\n"
+          + "  Original: " + this[name] + "\n"
+          + "  New: " + value
+        )
+
+      this[name] = value
+      return value
+    }
+    NS.clone = function(a) {
       return Object.create(a)
     }
-    root.Namespace["print"] = function(arg) {
+    NS["print"] = function(arg) {
       console.log(arg)
     }
-    root.Namespace.Number   = function(){ return { $$tag: 'number'   } }
-    root.Namespace.String   = function(){ return { $$tag: 'string'   } }
-    root.Namespace.Function = function(){ return { $$tag: 'function' } }
-    root.Namespace.Boolean  = function(){ return { $$tag: 'boolean'  } }
+    NS.Number   = function(){ return { $$tag: 'number'   } }
+    NS.String   = function(){ return { $$tag: 'string'   } }
+    NS.Function = function(){ return { $$tag: 'function' } }
+    NS.Boolean  = function(){ return { $$tag: 'boolean'  } }
 
     // -- Utilities ------------------------------------------------------
     var unsafeExtend = root.$destructiveExtend = function(a, b) {
