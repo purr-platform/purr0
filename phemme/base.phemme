@@ -48,10 +48,11 @@ module {
   [| doc: """The type of things we can enumerate.""" |]
   export interface Enumerable {
     need @Bounded
+    need @Ordered
     method this sucessor
     method this predecessor
     method start up-to: end => let next = start successor
-                                 | max  = start upper-bound
+                                 | max  = end max: start upper-bound
                                in
                                  if next >= max then
                                    @Nil
@@ -70,7 +71,7 @@ module {
   [| doc: """The type of things that can be converted to JSON.""" |]
   export interface JsonSerialisable {
     method this to-json
-    method this from-json
+    method protocol from-json: value
   }
 
   [| doc: """The type of things that form a Semigroup.""" |]
@@ -91,12 +92,14 @@ module {
 
   [| doc: """The type of things that can be applied as functions.""" |]
   export interface Applicative {
+    need @Mappable
     method this of: value
     method this apply-to: a-mappable
   }
 
   [| doc: """The type of things that can be chained.""" |]
   export interface Chainable {
+    need @Applicative
     method this chain: transformation
   }
 
@@ -108,6 +111,8 @@ module {
 
   
   # -- Boolean ---------------------------------------------------------
+  # implicitly `data Boolean = true | false`
+
   implement @Equality for @Boolean {
     method a == b => ffi "_a === _b"
   }
@@ -136,15 +141,98 @@ module {
 
   implement @JsonSerialisable for @Boolean {
     method a to-json => ffi "JSON.stringify(a)"
-    method a from-json => ffi "JSON.parse(a)"
+    method protocol from-json: text => ffi "$Phemme.ensureBoolean(JSON.parse(text))"
   }
 
-  export a /\ b => ffi "_a && _b"
-  export a \/ b => ffi "_a || _b"
-  export not(a) => ffi "!_a"
-  export a negate => ffi "!_a"
-  export test then: consequent else: alternate => if test then consequent()
-                                                  else         alternate()
+  export a /\ b => ffi "$Phemme.ensureBoolean(_a) && $Phemme.ensureBoolean(_b)"
+  export a \/ b => ffi "$Phemme.ensureBoolean(_a) || $Phemme.ensureBoolean(_b)"
+  export not(a) => ffi "!$Phemme.ensureBoolean(_a)"
+  export a negate => ffi "!$Phemme.ensureBoolean(_a)"
+  export test then: consequent else: alternate => if test then
+                                                    consequent()
+                                                  else
+                                                    alternate()
 
+
+  # -- Number ----------------------------------------------------------
+  implement @Equality for @Number {
+    method this == that => ffi "_this === _that"
+    method this =/= that => ffi "_this !== _that"
+  }
+
+  implement @Ordered for @Number {
+    method this compare-to: that => if this < that      then Less
+                                    else if this > that then Greater
+                                    else                     Equal
+    method this < that  => ffi "_this < $Phemme.ensureNumber(_that)"
+    method this > that  => ffi "_this > $Phemme.ensureNumber(_that)"
+    method this <= that => ffi "_this <= $Phemme.ensureNumber(_that)"
+    method this >= that => ffi "_this >= $Phemme.ensureNumber(_that)"
+  }
+
+  implement @Representable for @Number {
+    method this show => ffi "_this.toString()"
+  }
+
+  implement @Bounded for @Number {
+    method this upper-bound => ffi "_this.MIN_VALUE"
+    method this lower-bound => ffi "_this.MIN_VALUE"
+  }
+
+  implement @Enumerable for @Number {
+    method this successor => ffi "_this + 1"
+    method this predecessor => ffi "_this - 1"
+  }
+
+  implement @JsonSerialisable for @Number {
+    method this to-json => ffi "JSON.stringify(_this)"
+    method protocol from-json: value => ffi "$Phemme.ensureNumber(JSON.parse(value))"
+  }
+
+  implement @Semigroup for @Number {
+    method this + that => ffi "_this + $Phemme.ensureNumber(_that)"
+  }
+
+  implement @Monoid for @Number {
+    method this empty => 0
+  }
+
+  export this - that => ffi "$Phemme.ensureNumber(_this) - $Phemme.ensureNumber(_that)"
+
+  export this * that => ffi "$Phemme.ensureNumber(_this) * $Phemme.ensureNumber(_that)"
+
+  export this / that => ffi "$Phemme.ensureNumber(_this) / $Phemme.ensureNumber(_that)"
+
+  export this modulus: that => ffi "$Phemme.ensureNumber(_this) % $Phemme.ensureNumber(_that)"
+
+  export this absolute => ffi "Math.abs($Phemme.ensureNumber(_this))"
+
+  export this floor => ffi "Math.floor($Phemme.ensureNumber(_this))"
+
+  export this ceil => ffi "Math.ceil($Phemme.ensureNumber(_this))"
+
+  export this round => ffi "Math.round($Phemme.ensureNumber(_this))"
+
+
+  export this square-root => ffi "Math.sqrt($Phemme.ensureNumber(_this))"
+
+  export this divided-by: that => quotient - quotient floor
+                                  where quotient = this / that
+
+  export this is-even? => (this modulus: that) == 0
+  export this is-odd? => (this modulus: that) =/= 0
+
+  export this acos => ffi "Math.acos($Phemme.ensureNumber(_this))"
+  export this asin => ffi "Math.asin($Phemme.ensureNumber(_this))"
+  export this atan => ffi "Math.atan($Phemme.ensureNumber(_this))"
+  export this cos => ffi "Math.cos($Phemme.ensureNumber(_this))"
+  export this exp => ffi "Math.exp($Phemme.ensureNumber(_this))"
+  export this log => ffi "Math.log($Phemme.ensureNumber(_this))"
+  export this pow => ffi "Math.pow($Phemme.ensureNumber(_this))"
+  export this sin => ffi "Math.sin($Phemme.ensureNumber(_this))"
+  export this tan => ffi "Math.tan($Phemme.ensureNumber(_this))"
+  
+  # Constants
+  export this PI => ffi "Math.PI"
   
 }

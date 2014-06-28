@@ -73,6 +73,18 @@ void function() {
       )
   }
 
+  $Phemme.ensureBoolean = function(a) {
+    if (typeof a !== 'boolean')
+      throw new TypeError('Not a Boolean value: ' + a)
+    return a
+  }
+
+  $Phemme.ensureNumber = function(a) {
+    if (typeof a !== 'number')
+      throw new TypeError('Not a Number value: ' + a)
+    return a
+  }
+
   // -- Namespaces -----------------------------------------------------
   var NS = $Phemme.Namespace = Object.create(null)
 
