@@ -41,6 +41,7 @@ var reserved = [ ':'  // Method parameter
                , 'for'
                , 'method'
                , 'need'
+               , 'derivation'
                // Data structures
                , 'data'
                , 'struct'
@@ -164,7 +165,10 @@ ometa Parser {
                                      return [i[1]? i : [#Id, 'default'], xs]
                                   }(kwId(ks), kwArgs(ks))),
 
-  iface = kw('interface') ws identifier:a ws '{' (ws ifaceDecl)*:xs ws '}' -> [#IFace, a, xs],
+  iface = kw('interface') ws identifier:a 
+            ws '{' (ws ifaceDecl)*:xs ws '}' 
+        -> [#IFace, a, xs],
+
   ifaceDecl  = needDecl
              | methodDecl,
   needDecl   = kw('need') ws expr:e -> [#INeed, e],

@@ -67,6 +67,7 @@ ometa Compiler {
   CaseKw cc:tag [cc*:args]          -> _.caseKw(tag, args),
 
   Multi cc*:as                      -> as,
+  Nil                               -> null,
 
   scc [:t apply('s' + t):a] -> a,
   cc [:t apply(t):a] -> a,
