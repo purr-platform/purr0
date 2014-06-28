@@ -141,6 +141,7 @@ ometa Parser {
               | iface
               | implem
               | adt
+              | ffiStmt
               | useStmt
               | exportStmt
               | letStmt,
@@ -183,6 +184,8 @@ ometa Parser {
             | exportStmt:b              -> [#Deco, a, b[1][1], b]
             | decorator:b               -> [#Deco, a, b[2], b]
             ),
+
+  ffiStmt = kw('ffi') ws string:a -> [#FFIStmt, a],
 
   // Pattern matching
   matchCase = matchValue

@@ -85,7 +85,7 @@ void function Main() {
   var args = parseArgs(stripComments(doc), { help: false })
 
   ; args.repl?          unimplemented()
-  : args.run?           phemme.run(read(args['<file>']))
+  : args.run?           phemme.run(args['<file>'])
   : args.compile?       show(phemme.prelude() + ';' + phemme(read(args['<file>'])))
   : args.help?          show(doc)
   : args.version?       show('phemme version ' + pkg.version)

@@ -52,13 +52,15 @@ function generate(ast) {
 }
 
 exports.run = run;
-function run(code) {
+function run(file) {
+  var code = read(file, 'utf-8');
   var source  = prelude() + ';\n' + doSource(code) + ';\n' + runner();
   var context = vm.createContext({ process: process
                                  , console: console
+                                 , require: patchRequire(file)
                                  , global:  {}
                                  , module:  { exports: {} }})
-  vm.runInNewContext(source, context)
+  vm.runInNewContext(source, context, file)
 }
 
 exports.prelude = prelude
@@ -68,4 +70,12 @@ function prelude() {
 
 function runner() {
   return 'module.exports().main(process.argv.slice(2))'
+}
+
+function patchRequire(file) {
+  var dir = path.dirname(file)
+  return function(module) {
+    if (/^\./.test(module))  return require(path.join(dir, module))
+    return require(module)
+  }
 }

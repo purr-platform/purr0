@@ -333,6 +333,11 @@ function parseExpr(js) {
   return tokens[0].expression
 }
 
+exports.parseProg = parseProg
+function parseProg(js) {
+  return esprima.parse(js).body
+}
+
 exports.program = program;
 function program(name, module) {
   return prog([
