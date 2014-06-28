@@ -190,6 +190,7 @@ ometa Parser {
   decorator = "[|" ws expr:a ws "|]" ws
             ( module:m                  -> [#Deco, a, m[1][0], m]
             | adt:b                     -> [#Deco, a, b[1], b]
+            | iface:b                   -> [#Deco, a, b[1], b]
             | letStmt:b                 -> [#Deco, a, b[1], b]
             | exportStmt:b              -> [#Deco, a, b[1][1], b]
             | decorator:b               -> [#Deco, a, b[2], b]
