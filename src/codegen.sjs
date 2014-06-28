@@ -617,7 +617,7 @@ function list(xs) {
 exports.ifExpr = ifExpr
 function ifExpr(test, consequent, alternate) {
   return node('ConditionalExpression',
-              test: test,
-              consequent: consequent,
-              alternate: alternate)
+              { test: test,
+                consequent: consequent,
+                alternate: alternate })
 }
