@@ -59,6 +59,9 @@ var reserved = [ ':'  // Method parameter
                , 'ffi'
                , 'true'
                , 'false'
+               , 'if'
+               , 'then'
+               , 'else'
                ]
 
 /**
@@ -218,10 +221,12 @@ ometa Parser {
 
   // Expressions
   letExpr   = kw('let') ws bindingList:xs ws kw('in') ws expr:e -> [#Bind, xs, e],
+  ifExpr    = kw('if') ws expr:a ws kw('then') ws expr:b ws kw('else') ws expr:c -> [#IfExpr, a, b, c],
   whereExpr = appExpr:e ws kw('where') ws bindingList:xs      -> [#Bind, xs, e],
 
 
   expr = letExpr
+       | ifExpr
        | whereExpr,
 
   whereExpr = whereExpr

@@ -613,3 +613,11 @@ function list(xs) {
     )
   }, call(member(identifier("self"), lit("Nil")), []))
 }
+
+exports.ifExpr = ifExpr
+function ifExpr(test, consequent, alternate) {
+  return node('ConditionalExpression',
+              test: test,
+              consequent: consequent,
+              alternate: alternate)
+}
