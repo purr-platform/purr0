@@ -36,12 +36,15 @@ ometa Compiler {
   FFI cc:code                       -> _.parseExpr(code.value),
   FFIStmt cc:code                   -> _.parseProg(code.value),
 
-  Use cc:e                          -> _.use(e),
   Let cc:id cc:val                  -> _.letStmt(id, val),
   Mod [cc:id [cc*:args]] [cc*:body] -> _.module(id, args, body),
   Export cc:id                      -> _.exportStmt(id),
   Program cc:id cc:mod              -> _.program(id, mod),
   Deco cc:f cc:id cc:e              -> _.decorator(f, id, e),
+
+  Import cc:p cc:ks cc:id           -> _.importStmt(p, ks, id),
+  ImpKw cc:id [cc*:args]            -> [id, args],
+  Use cc:e                          -> _.use(e),
 
   IFace cc:id [cc*:decl]            -> _.ifaceStmt(id, decl),
   Impl cc:proto cc:tag [cc*:impl]   -> _.implStmt(proto, tag, impl),
@@ -66,6 +69,7 @@ ometa Compiler {
   CaseKw cc:tag [scc*:args]         -> _.caseKw(tag, args),
 
   Multi cc*:as                      -> as,
+  Nil                               -> null,
 
   scc [:t apply('s' + t):a] -> a,
   cc [:t apply(t):a] -> a,

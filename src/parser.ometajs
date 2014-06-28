@@ -49,6 +49,9 @@ var reserved = [ ':'  // Method parameter
                // Modules
                , 'module'
                , 'use'
+               , 'import'
+               , 'with'
+               , 'as'
                // Scoping & others
                , 'let'
                , 'in'
@@ -141,6 +144,7 @@ ometa Parser {
               | iface
               | implem
               | adt
+              | importDecl
               | ffiStmt
               | useStmt
               | exportStmt
@@ -186,6 +190,13 @@ ometa Parser {
             ),
 
   ffiStmt = kw('ffi') ws string:a -> [#FFIStmt, a],
+
+  importDecl = kw('import') ws string:p
+                 (ws kw('with') (ws keywordApp)+:ks)?
+                 (ws kw('as') ws identifier:n)?
+             -> [#Import, p
+                 , ks? [#ImpKw, kwId(ks), kwArgs(ks)] : [#Nil]
+                 , n || [#Nil]],
 
   // Pattern matching
   matchCase = matchValue

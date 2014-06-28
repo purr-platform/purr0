@@ -194,7 +194,7 @@ function force(value) {
 }
 
 function get(name) {
-  return member(id("_self"), name)
+  return member(identifier("self"), name)
 }
 
 function thunk(expr) {
@@ -229,7 +229,7 @@ function module(name, args, body) {
         [
           varsDecl([
             [id("$exports"), obj([])],
-            [id("_self"), id("$scope")],
+            [identifier("self"), id("$scope")],
           ]),
         ].concat(sort(flatten(body)))
          .concat([
@@ -341,12 +341,12 @@ function parseProg(js) {
 exports.program = program;
 function program(name, module) {
   return prog([
-    varsDecl([[id("_self"), smember(id("$Phemme"), id("Namespace"))]]),
+    varsDecl([[identifier("self"), smember(id("$Phemme"), id("Namespace"))]]),
     module,
     expr(set(
       smember(id("module"), id("exports")),
-      name.value === 'default'?  member(id("_self"), lit("default"))
-      :                          id("_self")
+      name.value === 'default'?  member(identifier("self"), lit("default"))
+      :                          identifier("self")
     ))
   ])
 }
@@ -500,7 +500,10 @@ function caseKw(tag, args) {
 exports.use = use
 function use(e) {
   return delayed(
-    expr(call(smember(id("$Phemme"), id("$destructiveExtend")), [id("_self"), e]))
+    expr(call(
+      smember(id("$Phemme"), id("$destructiveExtend")),
+      [identifier("self"), e]
+    ))
   )
 }
 
@@ -536,4 +539,33 @@ function binding(vars, e) {
     ),
     [call(smember(identifier("self"), id("clone")), [identifier("self")])]
   )
+}
+
+exports.importStmt = importStmt
+function importStmt(p, kw, name) {
+  return expr(call(
+    fn(
+      null,
+      [id("$mod")],
+      [
+        expr(set(id("$mod"), instantiate(kw))),
+        open(name)
+      ]
+    ),
+    [call(id("require"), [p])]
+  ));
+
+  function instantiate(kw) {
+    if (kw === null) return call(member(id("$mod"), lit("default")), []);
+    else             return call(member(id("$mod"), kw[0]), kw[1])
+  }
+
+  function open(name) {
+    if (name !== null) return letStmt(name, id("$mod"))
+    else
+      return expr(call(
+        smember(id("$Phemme"), id("$destructiveExtend")),
+        [identifier("self"), id("$mod")]
+      ))
+  }
 }
