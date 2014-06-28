@@ -1,0 +1,150 @@
+module {
+  # -- Protocols -------------------------------------------------------
+  [| doc: """
+          The type of things that can be structurally compared.
+
+          A minimal implementation for this interface is to provide the
+          `==` operator, which compares two values of the same type
+          structurally, and returns either true or false.
+
+          The implementation may also provide the `=/=` operator, in
+          case the value isn't reflexively equal (e.g.: NaN). 
+          """
+  |]
+  export interface Equality {
+    method this == b
+    method this =/= b => not(this == b)
+  }
+
+  [| doc: """
+          The type of things that have some comparable order.
+
+          A minimal implementation of this type should provide the
+          `compare-to:` function, which returns an `Ordering`.
+          """
+  |]
+  export interface Ordered {
+    need @Equality
+    method this compare-to: b
+    method this < b  => (this compare-to: b) == Less
+    method this <= b => (this compare-to: b) =/= Greater
+    method this > b  => (this compare-to: b) == Greater
+    method this >= b => (this compare-to: b) =/= Less
+    method this max: b => if this > b then this else b
+    method this min: b => if this < b then this else b
+  }
+
+  [| doc: """The type of things that have a textual representation.""" |]
+  export interface Representable {
+    method this show
+  }
+
+  [| doc: """The type of things that have boundaries.""" |]
+  export interface Bounded {
+    method this upper-bound
+    method this lower-bound
+  }
+
+  [| doc: """The type of things we can enumerate.""" |]
+  export interface Enumerable {
+    need @Bounded
+    method this sucessor
+    method this predecessor
+    method start up-to: end => let next = start successor
+                                 | max  = start upper-bound
+                               in
+                                 if next >= max then
+                                   @Nil
+                                 else
+                                   start :: (next up-to: end)
+  }
+
+  [| doc: """The type of things that can be indexed.""" |]
+  export interface Indexable {
+    method this at: index
+    method this includes?: index => case this at: index of
+                                    | Nothing => false
+                                    | _       => true
+  }
+
+  [| doc: """The type of things that can be converted to JSON.""" |]
+  export interface JsonSerialisable {
+    method this to-json
+    method this from-json
+  }
+
+  [| doc: """The type of things that form a Semigroup.""" |]
+  export interface Semigroup {
+    method this + that
+  }
+
+  [| doc: """The type of things that form a Monoid.""" |]
+  export interface Monoid {
+    need @Semigroup
+    method this empty
+  }
+
+  [| doc: """The type of things that can be mapped over.""" |]
+  export interface Mappable {
+    method this map: transformation
+  }
+
+  [| doc: """The type of things that can be applied as functions.""" |]
+  export interface Applicative {
+    method this of: value
+    method this apply-to: a-mappable
+  }
+
+  [| doc: """The type of things that can be chained.""" |]
+  export interface Chainable {
+    method this chain: transformation
+  }
+
+  # -- Basic data types ------------------------------------------------
+  export data Ordering = Less | Equal | Greater
+  export data List = Nil | value :: otherList  
+  export data Maybe = Nothing | Just(value)
+  export data Either = Failure(value) | Success(value)
+
+  
+  # -- Boolean ---------------------------------------------------------
+  implement @Equality for @Boolean {
+    method a == b => ffi "_a === _b"
+  }
+
+  implement @Ordered for @Boolean {
+    method a compare-to: b => case a of
+    | true  => if b == true then @Equal else @Less
+    | false => if b == false then @Equal else @Greater
+  }
+
+  implement @Representable for @Boolean {
+    method a show => ffi "_a.toString()"
+  }
+
+  implement @Bounded for @Boolean {
+    method a upper-bound => true
+    method a lower-bound => false
+  }
+
+  implement @Enumerable for @Boolean {
+    method a successor => case a of
+                          | false => true
+    method a predecessor => case a of
+                            | true => false
+  }
+
+  method @JsonSerialisable for @Boolean {
+    method a to-json => ffi "JSON.stringify(a)"
+    method a from-json => ffi "JSON.parse(a)"
+  }
+
+  export a /\ b => ffi "_a && _b"
+  export a \/ b => ffi "_a || _b"
+  export not(a) => ffi "!_a"
+  export a negate => ffi "!_a"
+  export test then: consequent else: alternate => if test then consequent()
+                                                  else         alternate()
+
+  
+}
