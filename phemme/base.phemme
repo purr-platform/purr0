@@ -134,7 +134,7 @@ module {
                             | true => false
   }
 
-  method @JsonSerialisable for @Boolean {
+  implement @JsonSerialisable for @Boolean {
     method a to-json => ffi "JSON.stringify(a)"
     method a from-json => ffi "JSON.parse(a)"
   }
