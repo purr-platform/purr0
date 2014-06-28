@@ -87,13 +87,15 @@ void function() {
     this[name] = value
     return value
   }
-  NS.load = function(path) {
-    var module = require(path)
-    return 'default' in module?  module['default']()
-    :      /* otherwise */       module
-  }
   NS.clone = function(a) {
     return Object.create(a)
+  }
+  NS['doc:'] = function(_, text){ return function(data) {
+    data.$doc = text
+    return data
+  }}
+  NS.doc = function(data) {
+    return data.$doc || '(No documentation available)'
   }
   NS["print"] = function(arg) {
     console.log(arg)
@@ -151,6 +153,10 @@ void function() {
       )
 
     return impl
+  }
+
+  Protocol.prototype.$derivation = function() {
+    throw new Error(this.$$name + ' does not support automatic derivation.')
   }
 
   Protocol.prototype.$extend = function(base) {
