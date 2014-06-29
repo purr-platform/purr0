@@ -154,12 +154,13 @@ ometa Parser {
 
   exportStmt = kw('export') ws
              ( pattern:p ws fnBody:e -> [p[0], [#Let, p[0], [#Fn, p, e]]]
-             | adt:a                 -> [a[1], a]
-             | iface:a               -> [a[1], a]
+             | adt:a                 -> [a[1], a, #Unpack]
+             | iface:a               -> [a[1], a, #Unpack]
              | module:a              -> [a[1][0], a]
+             | extendedId:a          -> [a, [#Empty]]
              ):exp -> [#Multi,
                        exp[1],
-                       [#Export, exp[0]]],
+                       [#Export, exp[0], exp[2]]],
   
   letStmt = kw('let') ws pattern:p ws fnBody:e -> [#Let, p[0], [#Fn, p, e]],
 

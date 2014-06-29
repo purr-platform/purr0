@@ -368,8 +368,15 @@ function identifier(name) {
 }
 
 exports.exportStmt = exportStmt;
-function exportStmt(name) {
-  return atExportPhase(expr(set(member(id("$exports"), name), get(name))))
+function exportStmt(name, unpack) {
+  return atExportPhase(expr(
+    call(
+      smember(id("$Phemme"), id("doExport")),
+      [id("$exports"), name, get(name)].concat(
+        unpack? [lit(true)] : []
+      )
+    )
+  ))
 }
 
 exports.parseExpr = parseExpr;
@@ -690,4 +697,9 @@ function cond(xs) {
   return xs.map(function(x) {
     return ifStmt(x[0], ret(x[1]))
   })
+}
+
+exports.empty = empty
+function empty() {
+  return []
 }

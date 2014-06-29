@@ -43,7 +43,7 @@ ometa Compiler {
   Use cc:e                          -> _.use(e),
   Let cc:id cc:val                  -> _.letStmt(id, val),
   Mod [cc:id [cc*:args]] [cc*:body] -> _.module(id, args, body),
-  Export cc:id                      -> _.exportStmt(id),
+  Export cc:id anything?:unpack     -> _.exportStmt(id, unpack),
   Program cc:id cc:mod              -> _.program(id, mod),
   Deco cc:f cc:id cc:e              -> _.decorator(f, id, e),
 
@@ -72,6 +72,7 @@ ometa Compiler {
 
   Multi cc*:as                      -> as,
   Nil                               -> null,
+  Empty                             -> _.empty(),
   Partial                           -> _.partial(),
 
   scc [:t apply('s' + t):a] -> a,

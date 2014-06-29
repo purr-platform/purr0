@@ -73,6 +73,19 @@ void function() {
       )
   }
 
+  function listToArray(xs) {
+    var result = []
+    while (xs.$$ctag != 'Nil') {
+      if (xs.$$ctag == '::') {
+        result.push(xs.$0)
+        xs = xs.$1
+      } else {
+        throw new TypeError('Not a List: ' + xs)
+      }
+    }
+    return result
+  }
+
   $Phemme.ensureBoolean = function(a) {
     if (typeof a !== 'boolean')
       throw new TypeError('Not a Boolean value: ' + a)
@@ -91,11 +104,25 @@ void function() {
     return a
   }
 
-  // -- Namespaces -----------------------------------------------------
-  var NS = $Phemme.Namespace = Object.create(null)
+  // -- Utilities ------------------------------------------------------
+  var unsafeExtend = $Phemme.$destructiveExtend = function(a, b) {
+    for (var k in b)
+      if (!(/^$/.test(k) || b[k] == null))  a[k] = b[k]
 
-  NS.$add = function(name, value) {
-    if (name in this)
+    return a
+  }
+
+  $Phemme.doExport = function(target, name, source, unpack) {
+    if (unpack)
+      return unsafeExtend(target, source().$namespace())
+    else
+      return target[name] = source
+  }
+
+  // -- Extensible records ---------------------------------------------
+  var Record = Object.create(null)
+  Record.$add = function(name, value) {
+    if (this[name] != null)
       throw new TypeError(
         name + " conflicts with an existing binding in the namespace.\n"
         + "  Original: " + this[name] + "\n"
@@ -105,14 +132,56 @@ void function() {
     this[name] = value
     return value
   }
-  NS.$get = function(name) {
+  Record.$get = function(name) {
     if (/^$/.test(name) || this[name] == null)
       throw new ReferenceError('No such method: ' + name)
+
     return this[name]
   }
-  NS.clone = function(a) {
-    return Object.create(a)
+  Record.$namespace = function() {
+    return this
   }
+  Record.$fromObject = function(obj) {
+    return unsafeExtend(Object.create(this), obj)
+  }
+
+  var ExtRecord = Object.create(Record)
+  ExtRecord['at:'] = function(self, name) {
+    return self.$get(name)
+  }
+  ExtRecord.clone = function(self) {
+    return Object.create(self)
+  }
+  ExtRecord['with:'] = function(self, otherRecord) {
+    var result = Object.create(self)
+    var data   = otherRecord.$namespace()
+    return unsafeExtend(result, data)
+  }
+  ExtRecord['without:'] = function(self, names) {
+    var result = Object.create(self)
+    listToArray(names).forEach(function(name) {
+      result[name] = null
+    })
+    return result
+  }
+  ExtRecord['rename:to:'] = function(self, origin, newName) {
+    var newObj = Object.create(Record)
+    newObj[newName] = self[origin]
+    return self['without:'](self, origin)
+               ['with:'](self, newObj)
+  }
+  ExtRecord['rename:'] = function(self, names) {
+    var result = Object.create(self)
+    listToArray(names).forEach(function(xs) {
+      var pair = listToArray(xs)
+      result = result['rename:to:'](self, pair[0], pair[1])
+    })
+    return result
+  }
+
+  // -- Namespaces -----------------------------------------------------
+  var NS = $Phemme.Namespace = Object.create(ExtRecord)
+
   NS['doc:'] = function(_, text){ return function(data) {
     data.$doc = text
     return data
@@ -127,17 +196,7 @@ void function() {
   NS.String   = function(){ return { $$tag: 'string'   } }
   NS.Function = function(){ return { $$tag: 'function' } }
   NS.Boolean  = function(){ return { $$tag: 'boolean'  } }
-  NS.Char     = function(number) {
-    return new $Char(number)
-  }
 
-  // -- Utilities ------------------------------------------------------
-  var unsafeExtend = $Phemme.$destructiveExtend = function(a, b) {
-    for (var k in b) {
-      a[k] = b[k]
-    }
-    return a
-  }
 
   // -- Protocols ------------------------------------------------------
   $Phemme.Protocol = Protocol
@@ -198,6 +257,10 @@ void function() {
     this.$parents.push(base)
   }
 
+  Protocol.prototype.$namespace = function() {
+    return this.$methods
+  }
+
   // -- ADTs -----------------------------------------------------------
   $Phemme.ADT = ADT
   function ADT(name) {
@@ -226,6 +289,10 @@ void function() {
 
   ADT.prototype.$seal = function() {
     this.$sealed = true
+  }
+
+  ADT.prototype.$namespace = function() {
+    return this.$ctors
   }
 
 }()
