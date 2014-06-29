@@ -4,6 +4,9 @@ void function() {
   if ($Phemme.Namespace)  return
 
   // -- Helpers --------------------------------------------------------
+  var proto = Object.getPrototypeOf
+  var clone = Object.create
+
 
   // IDs for data tags.
   var newTag = new function() {
@@ -86,6 +89,15 @@ void function() {
     return result
   }
 
+  function findPreviousName(obj, name, flag) {
+    if (obj == null)  return null
+    if (obj.hasOwnProperty(name)) {
+      if (flag)  return obj[name]
+      else       return findPreviousName(proto(obj), name, true)
+    } else
+      return findPreviousName(proto(obj), name, flag)
+  }
+
   $Phemme.ensureBoolean = function(a) {
     if (typeof a !== 'boolean')
       throw new TypeError('Not a Boolean value: ' + a)
@@ -142,7 +154,7 @@ void function() {
     return this
   }
   Record.$fromObject = function(obj) {
-    return unsafeExtend(Object.create(this), obj)
+    return unsafeExtend(clone(this), obj)
   }
 
   var ExtRecord = Object.create(Record)
@@ -150,28 +162,28 @@ void function() {
     return self.$get(name)
   }
   ExtRecord.clone = function(self) {
-    return Object.create(self)
+    return clone(self)
   }
   ExtRecord['with:'] = function(self, otherRecord) {
-    var result = Object.create(self)
+    var result = clone(self)
     var data   = otherRecord.$namespace()
     return unsafeExtend(result, data)
   }
   ExtRecord['without:'] = function(self, names) {
-    var result = Object.create(self)
+    var result = clone(self)
     listToArray(names).forEach(function(name) {
-      result[name] = null
+      result[name] = findPreviousName(self, name)
     })
     return result
   }
   ExtRecord['rename:to:'] = function(self, origin, newName) {
-    var newObj = Object.create(Record)
+    var newObj = clone(Record)
     newObj[newName] = self[origin]
     return self['without:'](self, origin)
                ['with:'](self, newObj)
   }
   ExtRecord['rename:'] = function(self, names) {
-    var result = Object.create(self)
+    var result = clone(self)
     listToArray(names).forEach(function(xs) {
       var pair = listToArray(xs)
       result = result['rename:to:'](self, pair[0], pair[1])
