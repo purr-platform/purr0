@@ -703,3 +703,15 @@ exports.empty = empty
 function empty() {
   return []
 }
+
+exports.map = map
+function map(xs) {
+  return call(
+    smember(smember(id("$Phemme"), id("ExtRecord")), id("$fromObject")),
+    [
+      obj(xs.map(function(x) {
+        return { key: x[0], value: x[1] }
+      }))
+    ]
+  )
+}

@@ -119,6 +119,8 @@ ometa Parser {
   map = '{' ws mapExpr:hd (ws ',' ws mapExpr)*:tl ws '}' -> [#Map, [hd].concat(tl)]
       | '{' ws '}'                                       -> [#Map, []],
 
+  mapExpr = string:a ws "=>" ws expr:b -> [#MapField, a, b],
+ 
   set = '#' vector:xs -> [#Set, xs[1]],
 
   value = number

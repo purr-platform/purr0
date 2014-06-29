@@ -29,6 +29,8 @@ ometa Compiler {
   Bool :a                           -> _.bool(a),
   List [cc*:xs]                     -> _.list(xs),
   Str :a                            -> _.string(a),
+  Map [cc*:elms]                    -> _.map(elms),
+  MapField cc:k cc:v                -> [k, v],
   App cc:scope cc:id [cc*:args]     -> _.app(scope, id, args),
   FnApp cc:fn [cc*:args]            -> _.call(fn, args),
   Member cc:a cc:b                  -> _.member(a, b),

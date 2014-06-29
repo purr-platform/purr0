@@ -4,8 +4,9 @@ void function() {
   if ($Phemme.Namespace)  return
 
   // -- Helpers --------------------------------------------------------
-  var proto = Object.getPrototypeOf
-  var clone = Object.create
+  var proto   = Object.getPrototypeOf
+  var clone   = Object.create
+  var hasProp = Object.hasOwnProperty
 
 
   // IDs for data tags.
@@ -91,7 +92,7 @@ void function() {
 
   function findPreviousName(obj, name, flag) {
     if (obj == null)  return null
-    if (obj.hasOwnProperty(name)) {
+    if (hasProp.call(obj, name)) {
       if (flag)  return obj[name]
       else       return findPreviousName(proto(obj), name, true)
     } else
@@ -110,7 +111,7 @@ void function() {
     return a
   }
 
-  $Phemme.ensureString = function(a) {
+  var ensureString = $Phemme.ensureString = function(a) {
     if (typeof a !== 'string')
       throw new TypeError('Not a String value: ' + a)
     return a
@@ -132,8 +133,9 @@ void function() {
   }
 
   // -- Extensible records ---------------------------------------------
-  var Record = Object.create(null)
+  var Record = $Phemme.Record = Object.create(null)
   Record.$add = function(name, value) {
+    ensureString(name)
     if (this[name] != null)
       throw new TypeError(
         name + " conflicts with an existing binding in the namespace.\n"
@@ -157,8 +159,14 @@ void function() {
     return unsafeExtend(clone(this), obj)
   }
 
-  var ExtRecord = Object.create(Record)
+  var ExtRecord = $Phemme.ExtRecord = Object.create(Record)
+  ExtRecord['at:put:'] = function(self, name, value) {
+    ensureString(name)
+    var result = clone(self)
+    return result.$add(name, value)
+  }
   ExtRecord['at:'] = function(self, name) {
+    ensureString(name)
     return self.$get(name)
   }
   ExtRecord.clone = function(self) {
@@ -172,7 +180,16 @@ void function() {
   ExtRecord['without:'] = function(self, names) {
     var result = clone(self)
     listToArray(names).forEach(function(name) {
+      ensureString(name)
       result[name] = findPreviousName(self, name)
+    })
+    return result
+  }
+  ExtRecord['without-all:'] = function(self, names) {
+    var result = clone(self)
+    listToArray(names).forEach(function(name) {
+      ensureString(name)
+      result[name] = null
     })
     return result
   }
