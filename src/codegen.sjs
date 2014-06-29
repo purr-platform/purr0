@@ -30,7 +30,14 @@ var DELAYED   = 1
 var END       = 2
 var EXPORTING = 3
 
-function Partial() {}
+function Context(name) {
+  this.id   = 0
+  this.name = name
+}
+Context.prototype.newVar = function() {
+  return id(this.name + (++this.id))
+}
+
 
 /**
  * Returns a valid name for JS identifiers.
@@ -409,7 +416,7 @@ function adtStmt(name, cases) {
     var type     = pair[0];
     var key      = pair[1];
     var argNames = key.value.split(':').map(lit)
-    var args     = pair[2].map(λ(x) -> identifier(x.value));
+    var args     = pair[2].map(λ(_, i) -> id('$' + i));
 
     return [
       expr(call(
@@ -424,16 +431,16 @@ function adtStmt(name, cases) {
     switch (kind) {
       case 'Val': return [];
       case 'Bin': return [
-        expr(set(smember(thisExpr(), id('left')), args[0])),
-        expr(set(smember(thisExpr(), id('right')), args[1]))
+        expr(set(smember(thisExpr(), id('$0')), args[0])),
+        expr(set(smember(thisExpr(), id('$1')), args[1]))
       ];
       case 'Un': return [
-        expr(set(member(thisExpr(), names[0]), args[0]))
+        expr(set(smember(thisExpr(), id('$0')), args[0]))
       ]
       case 'Kw': return [
-        expr(set(smember(thisExpr(), id('self')), args[0]))
+        expr(set(smember(thisExpr(), id('$0')), args[0]))
       ].concat(args.slice(1).map(function(a, i) {
-        return expr(set(member(thisExpr(), names[i]), a))
+        return expr(set(smember(thisExpr(), id('$' + (i + 1))), a))
       }));
       default: throw new Error('Unknow data constructor kind: ' + kind)
     }
@@ -441,14 +448,14 @@ function adtStmt(name, cases) {
 }
 
 // Pattern matching
-function withMatch(x, xs, caseVar) {
+function withMatch(vals, xs, vars) {
   return call(
     fn(
       null,
-      [caseVar || id("$match")],
+      vars,
       Array.isArray(xs)? flatten(xs) : [xs]
     ),
-    [x]
+    vals
   )
 }
 function guardTry(xs) {
@@ -483,30 +490,40 @@ function caseStmt(vs, xs) {
     vs,
     flatten(xs).concat([
       throwStmt(newExpr(id('TypeError'), [lit('No cases matched the value.')]))
-    ])
+    ]),
+    vs.map(function(_, i) {
+      return id("$match_val" + i)
+    })
   )
 }
 
 exports.casePatt = casePatt
-function casePatt(patt, e) {
+function casePatt(patts, e) {
+  var ctx = new Context("$match")
+  var vars = patts.map(function(){ return ctx.newVar() })
+
   return guardTry([
-    ret(withMatch(
-      id("$match"),
-      patt(id("$match"), e)
-    ))
+    ret(patts.reduceRight(function(res, patt, i) {
+      var name = ctx.newVar()
+      return withMatch(
+        [id("$match_val" + i)],
+        patt(name, res, ctx),
+        [name]
+      )
+    }, e))
   ])
 }
 
 exports.caseAny = caseAny
 function caseAny() {
-  return function(val, e) {
+  return function(val, e, ctx) {
     return ret(e)
   }
 }
 
 exports.caseVal = caseVal
 function caseVal(v) {
-  return function(val, e) {
+  return function(val, e, ctx) {
     return whenCase(
       eq(val, v),
       ret(e)
@@ -516,7 +533,7 @@ function caseVal(v) {
 
 exports.caseVar = caseVar
 function caseVar(a) {
-  return function(val, e) {
+  return function(val, e, ctx) {
     return [
       varsDecl([[a, val]]),
       ret(e)
@@ -526,7 +543,7 @@ function caseVar(a) {
 
 exports.caseId = caseId
 function caseId(tag) {
-  return function(val, e) {
+  return function(val, e, ctx) {
     return whenCase(
       eq(smember(val, id("$$ctag")), tag),
       ret(e)
@@ -536,14 +553,14 @@ function caseId(tag) {
 
 exports.caseUn = caseUn
 function caseUn(tag, body) {
-  return function(val, e) {
-    var subVar = newCaseVar(val)
+  return function(val, e, ctx) {
+    var subVar = ctx.newVar()
     return whenCase(
       eq(smember(val, id("$$ctag")), tag),
       ret(withMatch(
-        member(val, tag),
-        body(subVar, e),
-        subVar
+        [smember(val, id('$0'))],
+        body(subVar, e, ctx),
+        [subVar]
       ))
     )
   }
@@ -551,21 +568,22 @@ function caseUn(tag, body) {
 
 exports.caseBin = caseBin
 function caseBin(tag, l, r) {
-  return function(val, e) {
-    var lvar = newCaseVar(val), rvar = newCaseVar(lvar)
+  return function(val, e, ctx) {
+    var lvar = ctx.newVar(), rvar = ctx.newVar()
     return whenCase(
       eq(smember(val, id("$$ctag")), tag),
       ret(withMatch(
-        smember(val, id("left")),
+        [smember(val, id("$0"))],
         l(
           lvar,
           withMatch(
-            smember(val, id("right")),
-            r(rvar, e),
-            rvar
-          )
+            [smember(val, id("$1"))],
+            r(rvar, e, ctx),
+            [rvar]
+          ),
+          ctx
         ),
-        lvar
+        [lvar]
       ))
     )
   }
@@ -574,16 +592,15 @@ function caseBin(tag, l, r) {
 exports.caseKw = caseKw
 function caseKw(tag, args) {
   var names = [lit("self")].concat(tag.value.split(':').slice(0,-1).map(lit));
-  return function(val, e) {
-    var lvar = val;
+  return function(val, e, ctx) {
     return whenCase(
       eq(smember(val, id("$$ctag")), tag),
       ret(names.reduceRight(function(res, name, i) {
-        lvar = newCaseVar(lvar);
+        var lvar = ctx.newVar();
         return withMatch(
-          member(val, name),
-          args[i](lvar, res),
-          lvar
+          [smember(val, id('$' + i))],
+          args[i](lvar, res, ctx),
+          [lvar]
         )
       }, e))
     )
