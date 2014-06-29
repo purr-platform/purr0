@@ -298,7 +298,10 @@ function ifaceMethDecl(key, args) {
           identifier(key.value),
           args,
           call(
-            member(call(smember(id("$proto"), id('$get')), [args[0]]), key),
+            member(call(
+              smember(id("$proto"), id('$getImplementation')),
+              [args[0]]
+            ), key),
             args
           )
         )
@@ -395,7 +398,6 @@ function id(a) {
   return node('Identifier', { name: a })
 }
 
-exports.member = member;
 function member(object, property) {
   return node( 'MemberExpression'
              , { object: object
@@ -671,5 +673,13 @@ function partial() {
   return extend(
     fn(null, [id("$0")], [ret(id("$0"))]),
     { 'x-partial': true }
+  )
+}
+
+exports.member = memberExpr;
+function memberExpr(obj, name) {
+  return call(
+    smember(obj, id("$get")),
+    [name]
   )
 }

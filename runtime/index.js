@@ -105,6 +105,11 @@ void function() {
     this[name] = value
     return value
   }
+  NS.$get = function(name) {
+    if (/^$/.test(name) || this[name] == null)
+      throw new ReferenceError('No such method: ' + name)
+    return this[name]
+  }
   NS.clone = function(a) {
     return Object.create(a)
   }
@@ -122,6 +127,9 @@ void function() {
   NS.String   = function(){ return { $$tag: 'string'   } }
   NS.Function = function(){ return { $$tag: 'function' } }
   NS.Boolean  = function(){ return { $$tag: 'boolean'  } }
+  NS.Char     = function(number) {
+    return new $Char(number)
+  }
 
   // -- Utilities ------------------------------------------------------
   var unsafeExtend = $Phemme.$destructiveExtend = function(a, b) {
@@ -138,6 +146,7 @@ void function() {
     this.$defaults = {}
     this.$required = []
     this.$parents  = []
+    this.$methods  = {}
     this.$$name    = name
   }
 
@@ -155,14 +164,21 @@ void function() {
   Protocol.prototype.$require = function(key, fn) {
     this.$required.push(key)
     this[key] = fn
+    this.$methods[key] = fn
     return fn
+  }
+
+  Protocol.prototype.$get = function(name) {
+    if (this.$methods[name] == null)
+      throw new ReferenceError('No such method: ' + name)
+    return this[name]
   }
 
   Protocol.prototype.$addDefault = function(key, fn) {
     this.$defaults[key] = fn
   }
 
-  Protocol.prototype.$get = function(type) {
+  Protocol.prototype.$getImplementation = function(type) {
     var tag  = tagFor(type)
     var impl = this.$impl[tag]
     if (!impl)
@@ -188,6 +204,7 @@ void function() {
     this.$$name  = name
     this.$$tag   = newTag(this)
     this.$sealed = false
+    this.$ctors  = {}
   }
 
   ADT.prototype.$add = function(tag, ctor) {
@@ -198,6 +215,13 @@ void function() {
     ctor.prototype.$$name = this.$$name + "." + tag
     ctor.prototype.$$ctag = tag
     this[tag] = makeFn(ctor.length, ctor)
+    this.$ctors[tag] = this[tag]
+  }
+
+  ADT.prototype.$get = function(name) {
+    if (this.$ctors[name] == null)
+      throw new ReferenceError('No constructor "' + name + '" for ' + this.$$name)
+    return this[name]
   }
 
   ADT.prototype.$seal = function() {
