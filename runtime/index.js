@@ -90,15 +90,6 @@ void function() {
     return result
   }
 
-  function findPreviousName(obj, name, flag) {
-    if (obj == null)  return null
-    if (hasProp.call(obj, name)) {
-      if (flag)  return obj[name]
-      else       return findPreviousName(proto(obj), name, true)
-    } else
-      return findPreviousName(proto(obj), name, flag)
-  }
-
   $Phemme.ensureBoolean = function(a) {
     if (typeof a !== 'boolean')
       throw new TypeError('Not a Boolean value: ' + a)
@@ -133,33 +124,37 @@ void function() {
   }
 
   // -- Extensible records ---------------------------------------------
-  var Record = $Phemme.Record = Object.create(null)
+  var Record = $Phemme.Record = clone(null)
+  Record.$fields = clone(null)
   Record.$add = function(name, value) {
     ensureString(name)
-    if (this[name] != null)
+    if (this.$fields[name] != null)
       throw new TypeError(
         name + " conflicts with an existing binding in the namespace.\n"
-        + "  Original: " + this[name] + "\n"
+        + "  Original: " + this.$fields[name] + "\n"
         + "  New: " + value
       )
 
-    this[name] = value
+    this.$fields[name] = value
     return value
   }
   Record.$get = function(name) {
-    if (/^$/.test(name) || this[name] == null)
+    if (/^$/.test(name) || this.$fields[name] == null)
       throw new ReferenceError('No such method: ' + name)
 
-    return this[name]
+    return this.$fields[name]
   }
   Record.$namespace = function() {
-    return this
+    return this.$fields
   }
   Record.$fromObject = function(obj) {
-    return unsafeExtend(clone(this), obj)
+    var result = clone(this)
+    result.$fields = clone(null)
+    unsafeExtend(result.$fields, obj)
+    return result
   }
 
-  var ExtRecord = $Phemme.ExtRecord = Object.create(Record)
+  var ExtRecord = $Phemme.ExtRecord = clone(Record)
   ExtRecord['at:put:'] = function(self, name, value) {
     ensureString(name)
     var result = clone(self)
@@ -175,27 +170,22 @@ void function() {
   ExtRecord['with:'] = function(self, otherRecord) {
     var result = clone(self)
     var data   = otherRecord.$namespace()
-    return unsafeExtend(result, data)
+    result.$fields = clone(result.$fields)
+    unsafeExtend(result.$fields, data)
+    return result
   }
   ExtRecord['without:'] = function(self, names) {
     var result = clone(self)
+    result.$fields = unsafeExtend(clone(null), result.$fields)
     listToArray(names).forEach(function(name) {
       ensureString(name)
-      result[name] = findPreviousName(self, name)
-    })
-    return result
-  }
-  ExtRecord['without-all:'] = function(self, names) {
-    var result = clone(self)
-    listToArray(names).forEach(function(name) {
-      ensureString(name)
-      result[name] = null
+      delete result.$fields[name]
     })
     return result
   }
   ExtRecord['rename:to:'] = function(self, origin, newName) {
-    var newObj = clone(Record)
-    newObj[newName] = self[origin]
+    var newObj = Record.$fromObject({})
+    newObj.$add(newName, self.$get(origin))
     return self['without:'](self, origin)
                ['with:'](self, newObj)
   }
