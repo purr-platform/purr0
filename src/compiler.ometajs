@@ -34,7 +34,7 @@ ometa Compiler {
   App cc:scope cc:id [cc*:args]     -> _.app(scope, id, args),
   FnApp cc:fn [cc*:args]            -> _.call(fn, args),
   Member cc:a cc:b                  -> _.member(a, b),
-  Lambda [scc*:args] cc:expr        -> _.lambda(null, args, expr, []),
+  Lambda [scc*:args] [cc:e :c]      -> _.lambda(null, args, e, [[]]),
   Fn [scc:id [scc*:args] [cc*:cs]] [cc:e cc:c]  -> _.lambda(id, args, e, [cs, c]),
   FFI cc:code                       -> _.parseExpr(code.value),
   IfExpr cc:t cc:c cc:a             -> _.ifExpr(t, c, a),
@@ -52,7 +52,7 @@ ometa Compiler {
   IFace cc:id [cc*:decl]            -> _.ifaceStmt(id, decl),
   Impl cc:proto cc:tag [cc*:impl]   -> _.implStmt(proto, tag, impl),
   IMeth cc:c cc:a [cc*:args] [cc*:cs] -> _.ifaceMethDecl(a, args, [cs, c]),
-  DMeth [cc:id [cc*:args]] cc:val   -> _.ifaceMethDef(id, args, val),
+  DMeth [cc:id [cc*:args] :__] cc:val -> _.ifaceMethDef(id, args, val),
   INeed cc:e                        -> _.ifaceNeed(e),
   Meth cc:id cc:val                 -> [id, val],
 

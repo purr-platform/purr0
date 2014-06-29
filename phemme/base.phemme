@@ -1,4 +1,46 @@
 module {
+  # -- Decorators ------------------------------------------------------
+  [| doc: "Attachs documentation to an object." |]
+  export _ doc: $text ^string => ffi "(function(_data) {
+    _data.$doc = _text;
+    return _data
+  })"
+
+  [| doc: "Retrieves the documentation from an object." |]
+  export $data doc => ffi "_data.$doc || '(No documentation available)'"
+
+  # -- Utilities -------------------------------------------------------
+  export $error raise => ffi "(function() {
+    throw new Error(_message)
+  })()" where $message = $error show
+
+  export _ otherwise => true
+
+  # -- Contracts -------------------------------------------------------
+  export $x number? =>
+  | ffi "typeof _x === 'number'" => $x
+  | otherwise                    => "Not a number." raise
+
+  export $x string? =>
+  | ffi "typeof _x === 'string'" => $x
+  | otherwise                    => "Not a string." raise
+
+  export $x boolean? =>
+  | ffi "typeof _x === 'boolean'" => $x
+  | otherwise                     => "Not a boolean." raise
+
+  export $x ordering? =>
+  | ffi "_x.$$name === 'Ordering'" => $x
+  | otherwise                      => "Not an Ordering instance." raise
+
+  export $x maybe? =>
+  | ffi "_x.$$name === 'Maybe'" => $x
+  | otherwise                   => "Not a Maybe instance." raise
+
+  export $x list? =>
+  | ffi "_x.$$name === 'List'" => $x
+  | otherwise                  => "Not a List instance." raise
+
   # -- Protocols -------------------------------------------------------
   [| doc: """
           The type of things that can be structurally compared.
@@ -12,8 +54,8 @@ module {
           """
   |]
   export interface Equality {
-    method this == b
-    method this =/= b => not(this == b)
+    method $this == $that -> boolean?
+    method $this =/= $that -> boolean? => not($this == $that)
   }
 
   [| doc: """
@@ -24,85 +66,87 @@ module {
           """
   |]
   export interface Ordered {
-    need @Equality
-    method this compare-to: b
-    method this < b  => (this compare-to: b) == Less
-    method this <= b => (this compare-to: b) =/= Greater
-    method this > b  => (this compare-to: b) == Greater
-    method this >= b => (this compare-to: b) =/= Less
-    method this max: b => if this > b then this else b
-    method this min: b => if this < b then this else b
+    need Equality
+    method $this compare-to: $that -> ordering?
+    method $this <  $that => ($this compare-to: $that) ==  Less
+    method $this <= $that => ($this compare-to: $that) =/= Greater
+    method $this >  $that => ($this compare-to: $that) ==  Greater
+    method $this >= $that => ($this compare-to: $that) =/= Less
+    method $this max: $that => if $this > $that then $this 
+                                                else $that
+    method $this min: $that => if $this < $that then $this 
+                                                else $that
   }
 
   [| doc: """The type of things that have a textual representation.""" |]
   export interface Representable {
-    method this show
+    method $this show -> string?
   }
 
   [| doc: """The type of things that have boundaries.""" |]
   export interface Bounded {
-    method this upper-bound
-    method this lower-bound
+    method $this upper-bound
+    method $this lower-bound
   }
 
   [| doc: """The type of things we can enumerate.""" |]
   export interface Enumerable {
-    need @Bounded
-    need @Ordered
-    method this sucessor
-    method this predecessor
-    method start up-to: end => let next = start successor
-                                 | max  = end max: start upper-bound
-                               in
-                                 if next >= max then
-                                   @Nil
-                                 else
-                                   start :: (next up-to: end)
+    need Bounded
+    need Ordered
+    method $this sucessor
+    method $this predecessor
+    method $start up-to: $end => let $next = $start successor
+                                   | $max  = $end max: $start upper-bound
+                                 in
+                                   if $next >= $max then
+                                     Nil
+                                   else
+                                     $start :: ($next up-to: $end)
   }
 
   [| doc: """The type of things that can be indexed.""" |]
   export interface Indexable {
-    method this at: index
-    method this includes?: index => case this at: index of
-                                    | Nothing => false
-                                    | _       => true
+    method $this at: $index ^number?
+    method $this includes?: $index -> boolean? => case $this at: $index of
+                                                  | Nothing => false
+                                                  | _       => true
   }
 
   [| doc: """The type of things that can be converted to JSON.""" |]
   export interface JsonSerialisable {
-    method this to-json
-    method protocol from-json: value
+    method $this to-json -> string?
+    method $protocol from-json: $value ^string?
   }
 
   [| doc: """The type of things that form a Semigroup.""" |]
   export interface Semigroup {
-    method this + that
+    method $this + $that
   }
 
   [| doc: """The type of things that form a Monoid.""" |]
   export interface Monoid {
-    need @Semigroup
-    method this empty
+    need Semigroup
+    method $this empty
   }
 
   [| doc: """The type of things that can be mapped over.""" |]
   export interface Mappable {
-    method this map: transformation
+    method $this map: $transformation
   }
 
   [| doc: """The type of things that can be applied as functions.""" |]
   export interface Applicative {
-    need @Mappable
-    method this of: value
-    method this apply-to: a-mappable
-    method this <*> a-mappable => this apply-to: a-mappable
+    need Mappable
+    method $this of: $value
+    method $this apply-to: $a-mappable
+    method $this <*> $a-mappable => $this apply-to: $a-mappable
   }
 
   [| doc: """The type of things that can be chained.""" |]
   export interface Chainable {
-    need @Applicative
-    method this chain: transformation
-    method this >>= transformation => this chain: transformation
+    need Applicative
+    method $this chain: $transformation
+    method $this >>= $transformation => $this chain: $transformation
   }
 
   # -- Basic data types ------------------------------------------------
@@ -112,248 +156,247 @@ module {
   # -- Boolean ---------------------------------------------------------
   # implicitly `data Boolean = true | false`
 
-  implement @Equality for @Boolean {
-    method a == b => ffi "_a === _b"
+  implement Equality for Boolean {
+    method $a == $b => ffi "_a === _b"
   }
 
-  implement @Ordered for @Boolean {
-    method a compare-to: b => case a of
-    | true  => if b == true then @Equal else @Less
-    | false => if b == false then @Equal else @Greater
+  implement Ordered for Boolean {
+    method $a compare-to: $b => case $a, $b of
+    | true, false => Less
+    | false, true => Greater
+    | _           => Equal
   }
 
-  implement @Representable for @Boolean {
-    method a show => ffi "_a.toString()"
+  implement Representable for Boolean {
+    method $a show => ffi "_a.toString()"
   }
 
-  implement @Bounded for @Boolean {
-    method a upper-bound => true
-    method a lower-bound => false
+  implement Bounded for Boolean {
+    method $a upper-bound => true
+    method $a lower-bound => false
   }
 
-  implement @Enumerable for @Boolean {
-    method a successor => case a of
-                          | false => true
-    method a predecessor => case a of
-                            | true => false
+  implement Enumerable for Boolean {
+    method $a successor => case $a of
+                           | false => true
+    method $a predecessor => case $a of
+                             | true => false
   }
 
-  implement @JsonSerialisable for @Boolean {
-    method a to-json => ffi "JSON.stringify(a)"
-    method protocol from-json: text => ffi "$Phemme.ensureBoolean(JSON.parse(text))"
+  implement JsonSerialisable for Boolean {
+    method $a to-json => ffi "JSON.stringify(_a)"
+    method $protocol from-json: $text -> boolean? => ffi "JSON.parse(_text)"
   }
 
-  export a /\ b => ffi "$Phemme.ensureBoolean(_a) && $Phemme.ensureBoolean(_b)"
-  export a \/ b => ffi "$Phemme.ensureBoolean(_a) || $Phemme.ensureBoolean(_b)"
-  export not(a) => ffi "!$Phemme.ensureBoolean(_a)"
-  export a negate => ffi "!$Phemme.ensureBoolean(_a)"
-  export test then: consequent else: alternate => if test then
-                                                    consequent()
-                                                  else
-                                                    alternate()
+  export $a ^boolean? && $b ^boolean? => ffi "_a && _b"
+
+  export $a ^boolean? || $b ^boolean? => ffi "_a || _b"
+
+  export not($a ^boolean?) => ffi "!_a"
+
+  export $a ^boolean? negate => ffi "!_a"
+
+  export $test ^boolean? then: $consequent else: $alternate =>
+  | test      => consequent()
+  | otherwise => alternate()
+
 
 
   # -- Number ----------------------------------------------------------
-  implement @Equality for @Number {
-    method this == that => ffi "_this === _that"
-    method this =/= that => ffi "_this !== _that"
+  implement Equality for Number {
+    method $this == $that => ffi "_this === _that"
+    method $this =/= $that => ffi "_this !== _that"
   }
 
-  implement @Ordered for @Number {
-    method this compare-to: that => if this < that      then Less
-                                    else if this > that then Greater
-                                    else                     Equal
-    method this < that  => ffi "_this < $Phemme.ensureNumber(_that)"
-    method this > that  => ffi "_this > $Phemme.ensureNumber(_that)"
-    method this <= that => ffi "_this <= $Phemme.ensureNumber(_that)"
-    method this >= that => ffi "_this >= $Phemme.ensureNumber(_that)"
+  implement Ordered for Number {
+    method $this compare-to: $that ^number? => 
+         | ($this < $that) => Less
+         | ($this > $that) => Greater
+         | otherwise       => Equal
+
+    method $this <  $that ^number? => ffi "_this < _that"
+    method $this >  $that ^number? => ffi "_this > _that"
+    method $this <= $that ^number? => ffi "_this <= _that"
+    method $this >= $that ^number? => ffi "_this >= _that"
   }
 
-  implement @Representable for @Number {
-    method this show => ffi "_this.toString()"
+  implement Representable for Number {
+    method $this show => ffi "_this.toString()"
   }
 
-  implement @Bounded for @Number {
-    method this upper-bound => ffi "_this.MIN_VALUE"
-    method this lower-bound => ffi "_this.MIN_VALUE"
+  implement Bounded for Number {
+    method $this upper-bound => ffi "_this.MIN_VALUE"
+    method $this lower-bound => ffi "_this.MIN_VALUE"
   }
 
-  implement @Enumerable for @Number {
-    method this successor => ffi "_this + 1"
-    method this predecessor => ffi "_this - 1"
+  implement Enumerable for Number {
+    method $this successor => ffi "_this + 1"
+    method $this predecessor => ffi "_this - 1"
   }
 
-  implement @JsonSerialisable for @Number {
-    method this to-json => ffi "JSON.stringify(_this)"
-    method protocol from-json: value => ffi "$Phemme.ensureNumber(JSON.parse(value))"
+  implement JsonSerialisable for Number {
+    method $this to-json => ffi "JSON.stringify(_this)"
+    method $protocol from-json: $value -> number? => ffi "JSON.parse(value)"
   }
 
-  implement @Semigroup for @Number {
-    method this + that => ffi "_this + $Phemme.ensureNumber(_that)"
+  implement Semigroup for Number {
+    method $this + $that ^number? => ffi "_this + _that"
   }
 
-  implement @Monoid for @Number {
-    method this empty => 0
+  implement Monoid for Number {
+    method $this empty => 0
   }
 
-  export this - that => ffi "$Phemme.ensureNumber(_this) - $Phemme.ensureNumber(_that)"
+  export $this ^number? - $that ^number? => ffi "_this - _that"
 
-  export this * that => ffi "$Phemme.ensureNumber(_this) * $Phemme.ensureNumber(_that)"
+  export $this ^number? * $that ^number? => ffi "_this * _that"
 
-  export this / that => ffi "$Phemme.ensureNumber(_this) / $Phemme.ensureNumber(_that)"
+  export $this ^number? / $that ^number? => ffi "_this / _that" # "
 
-  export this modulus: that => ffi "$Phemme.ensureNumber(_this) % $Phemme.ensureNumber(_that)"
+  export $this ^number? modulus: $that ^number? => ffi "_this % _that"
 
-  export this absolute => ffi "Math.abs($Phemme.ensureNumber(_this))"
+  export $this ^number? absolute => ffi "Math.abs(_this)"
 
-  export this floor => ffi "Math.floor($Phemme.ensureNumber(_this))"
+  export $this ^number? floor => ffi "Math.floor(_this)"
 
-  export this ceil => ffi "Math.ceil($Phemme.ensureNumber(_this))"
+  export $this ^number? ceil => ffi "Math.ceil(_this)"
 
-  export this round => ffi "Math.round($Phemme.ensureNumber(_this))"
+  export $this ^number? round => ffi "Math.round(_this)"
 
 
-  export this square-root => ffi "Math.sqrt($Phemme.ensureNumber(_this))"
+  export $this ^number? square-root => ffi "Math.sqrt(_this)"
 
-  export this divided-by: that => quotient - quotient floor
-                                  where quotient = this / that
+  export $this ^number? divided-by: $that ^number? => $quotient - $quotient floor
+                                                      where 
+                                                        $quotient = $this / $that
 
-  export this is-even? => (this modulus: that) == 0
-  export this is-odd? => (this modulus: that) =/= 0
+  export $this ^number? is-even? => ($this modulus: $that) == 0
+  export $this ^number? is-odd? => ($this modulus: $that) =/= 0
 
-  export this acos => ffi "Math.acos($Phemme.ensureNumber(_this))"
-  export this asin => ffi "Math.asin($Phemme.ensureNumber(_this))"
-  export this atan => ffi "Math.atan($Phemme.ensureNumber(_this))"
-  export this cos => ffi "Math.cos($Phemme.ensureNumber(_this))"
-  export this exp => ffi "Math.exp($Phemme.ensureNumber(_this))"
-  export this log => ffi "Math.log($Phemme.ensureNumber(_this))"
-  export this pow => ffi "Math.pow($Phemme.ensureNumber(_this))"
-  export this sin => ffi "Math.sin($Phemme.ensureNumber(_this))"
-  export this tan => ffi "Math.tan($Phemme.ensureNumber(_this))"
+  export $this ^number? acos => ffi "Math.acos(_this)"
+  export $this ^number? asin => ffi "Math.asin(_this)"
+  export $this ^number? atan => ffi "Math.atan(_this)"
+  export $this ^number? cos => ffi "Math.cos(_this)"
+  export $this ^number? exp => ffi "Math.exp(_this)"
+  export $this ^number? log => ffi "Math.log(_this)"
+  export $this ^number? pow => ffi "Math.pow(_this)"
+  export $this ^number? sin => ffi "Math.sin(_this)"
+  export $this ^number? tan => ffi "Math.tan(_this)"
   
   # Constants
-  export this PI => ffi "Math.PI"
+  export $this PI => ffi "Math.PI"
   
 
   # -- Strings ---------------------------------------------------------
   # built-in `String ~= [Char]`
-  implement @Equality for @String {
-    method this == that => ffi "_this === _that"
+  implement Equality for String {
+    method $this == $that => ffi "_this === _that"
   }
 
-  implement @Representable for @String {
-    method this show => ffi "_this"
+  implement Representable for String {
+    method $this show => ffi "_this"
   }
 
   # TODO: use a Character class to represent JS's conventional 1-length strings
   
-  export this upcase => ffi "$Phemme.ensureString(_this).toUpperCase()"
-  export this downcase => ffi "$Phemme.ensureString(_this).toLowerCase()"
-  export this trim => ffi "$Phemme.ensureString(_this).trim()"
-  export this trim-left => ffi "$Phemme.ensureString(_this).trimLeft()"
-  export this trim-right => ffi "$Phemme.ensureString(_this).trimRight()"
+  export $this ^string? upcase     => ffi "_this.toUpperCase()"
+  export $this ^string? downcase   => ffi "_this.toLowerCase()"
+  export $this ^string? trim       => ffi "_this.trim()"
+  export $this ^string? trim-left  => ffi "_this.trimLeft()"
+  export $this ^string? trim-right => ffi "_this.trimRight()"
 
 
   # -- Maybe -----------------------------------------------------------
-  export data Maybe = Nothing | Just(value)
+  export data Maybe = Nothing | Just(_)
 
-  implement @Equality for @Maybe {
-    method this == that => case this of
-                           | Nothing  => case that of
-                                         | Nothing => true
-                                         | Just(_) => false
-                           | Just($a) => case that of
-                                         | Nothing  => false
-                                         | Just($b) => a == b
+  implement Equality for Maybe {
+    method $this ^maybe? == $that ^maybe? => case $this, $that of
+                                             | Nothing, Nothing   => true
+                                             | Just($a), Just($b) => $a == $b
+                                             | _, _               => false
   }
 
-  implement @Representable for @Maybe {
-    method this show => case this of
-                        | Nothing  => "Nothing"
-                        | Just($a) => "Just(" + a show + ")"
+  implement Representable for Maybe {
+    method $this show => case $this of
+                         | Nothing  => "Nothing"
+                         | Just($a) => "Just(" + a show + ")"
   }
 
-  implement @Semigroup for @Maybe {
-    method this + that => case this of
-                          | Nothing  => @Nothing
-                          | Just($a) => case that of
-                                        | Nothing  => @Nothing
-                                        | Just($b) => self.Just(a + b)
+  implement Semigroup for Maybe {
+    method $this + $that => case $this, $that of
+                            | Just($a), Just($b) => ($a + $b) Just
+                            | _, _               => Nothing
   }
 
-  implement @Monoid for @Maybe {
-    method this empty => @Nothing
+  implement Monoid for Maybe {
+    method $this empty => Nothing
   }
 
-  implement @Mappable for @Maybe {
-    method this map: f => case this of
-                          | Nothing  => @Nothing
-                          | Just($a) => self.Just(f(a))
-  }
-
-  implement @Applicative for @Maybe {
-    method protocol of: value => self.Just(value)
-    method this apply-to: that => case this of
-                                  | Nothing  => that
-                                  | Just($f) => that map: f
-  }
-
-  implement @Chainable for @Maybe {
-    method this chain: f => case this of
+  implement Mappable for Maybe {
+    method $this map: $f => case $this of
                             | Nothing  => Nothing
-                            | Just($a) => f(a)
+                            | Just($a) => $f($a) Just
+  }
+
+  implement Applicative for Maybe {
+    method $protocol of: $value => value Just
+    method $this apply-to: $that => case $this of
+                                    | Nothing  => $that
+                                    | Just($f) => $that map: $f
+  }
+
+  implement Chainable for Maybe {
+    method $this chain: $f => case $this of
+                              | Nothing  => Nothing
+                              | Just($a) => $f($a)
   }
 
   # -- Either ----------------------------------------------------------
-  export data Either = Failure(value) | Success(value)
+  export data Either = Failure(_) | Success(_)
 
 
   # -- Function --------------------------------------------------------
-  export a identity => a
-  export a constant => b => a
-  export f ->> g => a => f(g(a))
-  export f <<- g => a => g(f(a))
-  export a |> f => f(a)
-  export f <| a => f(a)
+  export $a identity => $a
+  export $a constant => $b => $a
+  export $f ->> $g => $a => $f($g($a))
+  export $f <<- $g => $a => $g($f($a))
 
-  # -- Lists ----------------------------------------------------------- 
-  export data List = Nil | value :: otherList  
+
+  # -- Lists -----------------------------------------------------------
+  export data List = Nil | _ :: _ ^list?
  
-  export xs filter: f => case xs of
-                         | Nil         => @Nil
-                         | $x :: $rest => if f(x) then $x :: $rest filter: f
-                                                  else $rest filter: f
+  export $xs filter: $f => case $xs of
+                           | Nil         => Nil
+                           | $x :: $rest => if $f($x) then $x :: $rest filter: $f
+                                                      else $rest filter: $f
 
-  export xs first => case xs of
-                     | Nil     => @Nothing
-                     | $a :: _ => self.Just(a)
+  export $xs first => case $xs of
+                     | Nil     => Nothing
+                     | $a :: _ => $a Just
 
-  export xs first! => case xs of
-                      | $a :: _ => a
+  export $xs first! => case $xs of
+                       | $a :: _ => $a
 
-  export xs rest => case xs of
-                    | Nil        => @Nothing
-                    | _ :: $rest => rest
+  export $xs rest => case $xs of
+                     | Nil        => Nothing
+                     | _ :: $rest => $rest
 
-  export xs last => case xs of
-                    | Nil        => @Nothing
-                    | $a :: Nil  => self.Just(a)
-                    | _ :: $rest => $rest last
+  export $xs last => case $xs of
+                     | Nil        => Nothing
+                     | $a :: Nil  => a Just
+                     | _ :: $rest => $rest last
 
-  export xs last! => case xs of
-                     | $a :: Nil  => a
-                     | _ :: $rest => $rest last!
+  export $xs last! => case $xs of
+                      | $a :: Nil  => $a
+                      | _ :: $rest => $rest last!
 
-  export xs is-empty? => case xs of
-                         | Nil    => true
-                         | _ :: _ => false
+  export $xs is-empty? => case $xs of
+                          | Nil    => true
+                          | _ :: _ => false
 
-  export xs length => case xs of
-                      | Nil        => 0
-                      | _ :: $rest => 1 + $rest length
+  export $xs length => case $xs of
+                       | Nil        => 0
+                       | _ :: $rest => 1 + $rest length
 
   
 }
-
-let $a ^number? + $b ^number? -> ^number? => ...
-     # ^ pre         ^ pre       ^ post
