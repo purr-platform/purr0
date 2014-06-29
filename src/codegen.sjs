@@ -30,6 +30,8 @@ var DELAYED   = 1
 var END       = 2
 var EXPORTING = 3
 
+function Partial() {}
+
 /**
  * Returns a valid name for JS identifiers.
  *
@@ -211,6 +213,24 @@ function thunk(expr) {
   return fn(null, [], [ret(expr)])
 }
 
+function isPartial(expr) {
+  return expr['x-partial']
+}
+
+function rewritePartials(args) {
+  var n = 0
+  return args.map(function(arg) {
+    return isPartial(arg)?  id("$" + (n++))
+    :      /* otherwise */  arg
+  })
+}
+
+function generatePartialArgs(args) {
+  return args.filter(isPartial).map(function(_, i) {
+    return id("$" + i)
+  })
+}
+
 
 // High-level stuff
 exports.number = number;
@@ -316,7 +336,14 @@ function lambda(id, args, expr) {
 
 exports.app = app;
 function app(scope, name, args) {
-  return call(member(scope, name), args)
+  if (args.some(isPartial))
+    return fn(
+      null,
+      generatePartialArgs(args),
+      [ret(call(member(scope, name), rewritePartials(args)))]
+    )
+  else
+    return call(member(scope, name), args)
 }
 
 exports.call = call;
@@ -620,4 +647,12 @@ function ifExpr(test, consequent, alternate) {
               { test: test,
                 consequent: consequent,
                 alternate: alternate })
+}
+
+exports.partial = partial
+function partial() {
+  return extend(
+    fn(null, [id("$0")], [ret(id("$0"))]),
+    { 'x-partial': true }
+  )
 }

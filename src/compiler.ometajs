@@ -69,6 +69,7 @@ ometa Compiler {
 
   Multi cc*:as                      -> as,
   Nil                               -> null,
+  Partial                           -> _.partial(),
 
   scc [:t apply('s' + t):a] -> a,
   cc [:t apply(t):a] -> a,

@@ -251,6 +251,7 @@ ometa Parser {
               | lambda
               | identifier:a         -> [#App, [#Var, 'self'], a, [[#Var, 'self']]]
               | '$' identifier:a     -> [#Var, a[1]]
+              | '_'                  -> [#Partial]
               | '(' ws expr:a ws ')' -> a,
 
   keywordApp = keyword:k ws binaryExpr:v -> [k, v],
