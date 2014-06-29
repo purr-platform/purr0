@@ -354,3 +354,6 @@ module {
 
   
 }
+
+let $a ^number? + $b ^number? -> ^number? => ...
+     # ^ pre         ^ pre       ^ post

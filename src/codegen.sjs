@@ -256,22 +256,25 @@ function letStmt(name, value) {
 }
 
 exports.module = module;
-function module(name, args, body) {
+function module(name, args, body, contracts) {
   return letStmt(
     name,
     scoped(
-      fn(
-        identifier(name.value),
-        args,
-        [
-          varsDecl([
-            [id("$exports"), obj([])],
-            [id("_self"), id("$scope")],
-          ]),
-        ].concat(sort(flatten(body)))
-         .concat([
-           ret(id("$exports"))
-         ])
+      compileContract(
+        contracts,
+        fn(
+          identifier(name.value),
+          args,
+          [
+            varsDecl([
+              [id("$exports"), obj([])],
+              [id("_self"), id("$scope")],
+            ]),
+          ].concat(sort(flatten(body)))
+            .concat([
+              ret(id("$exports"))
+            ])
+        )
       )
     )
   )
@@ -285,8 +288,8 @@ function ifaceStmt(name, decls) {
 }
 
 exports.ifaceMethDecl = ifaceMethDecl
-function ifaceMethDecl(key, args) {
-  args = args.map(λ(x) -> identifier(x.value));
+function ifaceMethDecl(key, args, contracts) {
+  args = args.map(λ(x, i) -> id('$' + i));
 
   return letStmt(
     key,
@@ -294,16 +297,19 @@ function ifaceMethDecl(key, args) {
       smember(id("$proto"), id("$require")),
       [
         key,
-        lambda(
-          identifier(key.value),
-          args,
-          ret(call(
-            member(call(
-              smember(id("$proto"), id('$getImplementation')),
-              [args[0]]
-            ), key),
-            args
-          ))
+        compileContract(
+          contracts,
+          lambda(
+            identifier(key.value),
+            args,
+            ret(call(
+              member(call(
+                smember(id("$proto"), id('$getImplementation')),
+                [args[0]]
+              ), key),
+              args
+            ))
+          )
         )
       ]
     )
@@ -339,9 +345,37 @@ function implStmt(proto, tag, impl) {
   }
 }
 
+function hasContracts(xs) {
+  return xs.filter(Boolean).length > 0
+}
+
+function compileContract(contracts, lambda) {
+  contracts = contracts || [[]];
+  var pre    = contracts[0];
+  var pos    = contracts[1];
+  if (!hasContracts(pre) && !pos)  return lambda;
+  
+  var args   = pre.map(function(_,i){ return id('$' + i) });
+  var result = call(lambda, args);
+  return fn(
+    id('$_contract_$'),
+    args,
+    [
+      args.map(function(a, i) {
+        if (!pre[i])  return null
+        else          return expr(set(a, call(pre[i], [a])))
+      }).filter(Boolean),
+      ret(pos? call(pos, [result]) : result)
+    ]
+  )
+}
+
 exports.lambda = lambda;
-function lambda(id, args, expr) {
-  return fn(id, args, Array.isArray(expr)? flatten(expr) : [expr])
+function lambda(id, args, expr, contracts) {
+  return compileContract(
+    contracts,
+    fn(id, args, Array.isArray(expr)? flatten(expr) : [expr])
+  )
 }
 
 exports.app = app;
@@ -426,11 +460,22 @@ function adtStmt(name, cases) {
     var key      = pair[1];
     var argNames = key.value.split(':').map(lit)
     var args     = pair[2].map(λ(_, i) -> id('$' + i));
+    var contract = pair[3]
 
     return [
       expr(call(
         smember(id("$adt"), id("$add")),
-        [key, fn(identifier(key.value), args, makeBody(type, argNames, args))]
+        [
+          key,
+          compileContract(
+            contract,
+            fn(
+              identifier(key.value), 
+              args,
+              makeBody(type, argNames, args)
+            )
+          )
+        ]
       )),
       letStmt(key, member(id("$adt"), key))
     ]

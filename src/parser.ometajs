@@ -29,9 +29,7 @@
  * Reserved symbols in this language.
  */
 var reserved = [ ':'  // Method parameter
-               , '@'  // Self sends
-               , '^'  // Contract
-               , '$'  // Sigil for introducing variables
+               , '->'  // Contract
                , '_'  // Partial / Wildcard
                , '=>' // Function definition
                , '|'  // Case separators
@@ -80,13 +78,17 @@ function kwArgs(xss) {
   return xss.map(function(xs){ return xs[1] })
 }
 
+function kwCont(xss) {
+  return xss.map(function(xs){ return xs[2] })
+}
+
 ometa Parser {
   // Lexical structure
   space   = ^space | comment,
   comment = fromTo('#', '\n'),
   ws      = space*,
   symbol  = ~(letter | digit | space
-             | '$' | ';' | ',' | '.' | ':' | '[' | ']' | '{' | '}' | '(' | ')') char,
+             | '$' | '@' | '^' | ';' | ',' | '.' | ':' | '[' | ']' | '{' | '}' | '(' | ')') char,
   eof     = ~char,
   kw :xs  = seq(xs) ~(letter | digit | symbol | ':'),
 
@@ -136,14 +138,18 @@ ometa Parser {
           | binaryPattern
           | unaryPattern,
 
-  keywordPattern = pattId:a (ws keywordArg)+:ks          -> [kwId(ks), [a].concat(kwArgs(ks))],
-  unaryPattern   = pattId:a ws identifier:b               -> [b, [a]]
-                 | identifier:a ws '(' ws pattId:b ws ')' -> [a, [b]],
-  binaryPattern  = pattId:a ws symbols:b ws pattId:c      -> [b, [a, c]],
+  keywordPattern = pattId:a (ws preC):c1 (ws keywordArg)+:ks                   -> [kwId(ks), [a].concat(kwArgs(ks)), [c1].concat(kwCont(ks))],
+  unaryPattern   = pattId:a (ws preC):c1 ws identifier:b                       -> [b, [a], [c1]]
+                 | identifier:a ws '(' ws pattId:b (ws preC):c1 ws ')'         -> [a, [b], [c1]],
+  binaryPattern  = pattId:a (ws preC):c1 ws symbols:b ws pattId:c (ws preC):c2 -> [b, [a, c], [c1, c2]],
 
-  keywordArg     = keyword:k ws pattId:n -> [k, n],
+  keywordArg     = keyword:k ws pattId:n (ws preC?):c -> [k, n, c],
   pattId = '$' identifier:a -> a
          | '_'              -> [#Id, '_'],
+
+  preC = ('^' contractExpr:e)? -> e || [#Nil],
+  posC = ("->" ws contractExpr:e)? -> e || [#Nil],
+  contractExpr = extendedId:id -> [#Member, [#Var, 'self'], id],
 
   // Declarations
   declaration = module
@@ -170,9 +176,9 @@ ometa Parser {
   useStmt = kw('use') ws expr:e -> [#Use, e],
 
   module = kw('module') ws mparms:p ws '{' (ws declaration)*:xs ws '}' -> [#Mod, p, xs],
-  mparms = (ws keywordArg)*:ks -> (function(i,xs) {
-                                     return [i[1]? i : [#Id, 'default'], xs]
-                                  }(kwId(ks), kwArgs(ks))),
+  mparms = (ws keywordArg)*:ks -> (function(i,xs, cs) {
+                                     return [i[1]? i : [#Id, 'default'], xs, cs]
+                                  }(kwId(ks), kwArgs(ks), kwCont(ks))),
 
   iface = kw('interface') ws identifier:a 
             ws '{' (ws ifaceDecl)*:xs ws '}' 
@@ -182,7 +188,7 @@ ometa Parser {
              | methodDecl,
   needDecl   = kw('need') ws expr:e -> [#INeed, e],
   methodDecl = kw('method') ws pattern:p ws fnBody:e -> [#DMeth, p, [#Fn, p, e]]
-             | kw('method') ws pattern:p                   -> [#IMeth].concat(p),
+             | kw('method') ws pattern:p ws posC:c   -> [#IMeth, c].concat(p),
 
   implem = kw('implement') ws expr:a ws kw('for') ws expr:b
              ws '{' (ws implDecl)*:xs ws '}' -> [#Impl, a, b, xs],
@@ -193,7 +199,7 @@ ometa Parser {
   adtPatt = keywordPattern:p -> [#DataCtor, [#Kw].concat(p)]
           | binaryPattern:p  -> [#DataCtor, [#Bin].concat(p)]
           | unaryPattern:p   -> [#DataCtor, [#Un].concat(p)]
-          | identifier:a     -> [#DataCtor, [#Val, a, []]],
+          | identifier:a     -> [#DataCtor, [#Val, a, [], []]],
   adtPatterns = adtPatt:a (ws '|' ws adtPatt)*:as -> [a].concat(as),
 
   decorator = "[|" ws expr:a ws "|]" ws
@@ -275,9 +281,9 @@ ometa Parser {
   bindingCase = '$' identifier:a ws '=' ws expr:e     -> [#VarBind, a, e]
               | pattern:p ws fnBody:e   -> [#Let, p[0], [#Fn, p, e]],
 
-  fnBody = "=>" ws ( condExpr:e -> e
-                   | expr:e     -> [#Ret, e]
-                   ),
+  fnBody = posC:c ws "=>" ws ( condExpr:e -> [e, c]
+                             | expr:e     -> [[#Ret, e], c]
+                             ),
 
   condExpr = condCase:x (ws condCase)*:xs -> [#Cond, [x].concat(xs)],
   condCase = '|' ws expr:t ws "=>" ws expr:e -> [#CondCase, t, e],
