@@ -96,6 +96,7 @@ ometa Parser {
   idStart    = letter,
   idRest     = letter | digit | symbol,
   symbolChar = symbol | ':',
+  varName    = '$' <idStart idRest*>:a ~':'           -> [#Id, a],
   identifier = <idStart idRest*>:a ~':' ?(isValid(a)) -> [#Id, a],
   keyword    = <idStart idRest*>:a ':'                -> [#Id, a + ':'],
   symbols    = <symbolChar+>:a          ?(isValid(a)) -> [#Id, a],
@@ -138,14 +139,14 @@ ometa Parser {
           | binaryPattern
           | unaryPattern,
 
-  keywordPattern = pattId:a (ws preC):c1 (ws keywordArg)+:ks                   -> [kwId(ks), [a].concat(kwArgs(ks)), [c1].concat(kwCont(ks))],
-  unaryPattern   = pattId:a (ws preC):c1 ws identifier:b                       -> [b, [a], [c1]]
-                 | identifier:a ws '(' ws pattId:b (ws preC):c1 ws ')'         -> [a, [b], [c1]],
-  binaryPattern  = pattId:a (ws preC):c1 ws symbols:b ws pattId:c (ws preC):c2 -> [b, [a, c], [c1, c2]],
+  keywordPattern = pattId:a ws preC:c1 (ws keywordArg)+:ks                   -> [kwId(ks), [a].concat(kwArgs(ks)), [c1].concat(kwCont(ks))],
+  unaryPattern   = pattId:a ws preC:c1 ws identifier:b                       -> [b, [a], [c1]]
+                 | identifier:a ws '(' ws pattId:b ws preC:c1 ws ')'         -> [a, [b], [c1]],
+  binaryPattern  = pattId:a ws preC:c1 ws symbols:b ws pattId:c ws preC:c2 -> [b, [a, c], [c1, c2]],
 
-  keywordArg     = keyword:k ws pattId:n (ws preC?):c -> [k, n, c],
-  pattId = '$' identifier:a -> a
-         | '_'              -> [#Id, '_'],
+  keywordArg     = keyword:k ws pattId:n ws preC:c -> [k, n, c],
+  pattId = varName:a -> a
+         | '_'       -> [#Id, '_'],
 
   preC = ('^' contractExpr:e)? -> e || [#Nil],
   posC = ("->" ws contractExpr:e)? -> e || [#Nil],
