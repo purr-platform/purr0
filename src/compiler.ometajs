@@ -36,6 +36,9 @@ ometa Compiler {
   Fn [scc:id [scc*:args]] cc:expr   -> _.lambda(id, args, expr),
   FFI cc:code                       -> _.parseExpr(code.value),
   IfExpr cc:t cc:c cc:a             -> _.ifExpr(t, c, a),
+  Ret cc:e                          -> _.retExpr(e),
+  Cond [cc*:xs]                     -> _.cond(xs),
+  CondCase cc:t cc:e                -> [t, e],
 
   Use cc:e                          -> _.use(e),
   Let cc:id cc:val                  -> _.letStmt(id, val),

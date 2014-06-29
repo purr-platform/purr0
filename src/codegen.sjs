@@ -199,7 +199,7 @@ function prog(body) {
 
 function scoped(expr) {
   return call(
-    lambda(null, [id("$scope")], expr),
+    lambda(null, [id("$scope")], ret(expr)),
     [call(smember(identifier("self"), id("clone")), [identifier("self")])]
   )
 }
@@ -297,13 +297,13 @@ function ifaceMethDecl(key, args) {
         lambda(
           identifier(key.value),
           args,
-          call(
+          ret(call(
             member(call(
               smember(id("$proto"), id('$getImplementation')),
               [args[0]]
             ), key),
             args
-          )
+          ))
         )
       ]
     )
@@ -341,7 +341,7 @@ function implStmt(proto, tag, impl) {
 
 exports.lambda = lambda;
 function lambda(id, args, expr) {
-  return fn(id, args, [ret(expr)])
+  return fn(id, args, Array.isArray(expr)? flatten(expr) : [expr])
 }
 
 exports.app = app;
@@ -682,4 +682,12 @@ function memberExpr(obj, name) {
     smember(obj, id("$get")),
     [name]
   )
+}
+
+exports.retExpr = ret;
+exports.cond = cond;
+function cond(xs) {
+  return xs.map(function(x) {
+    return ifStmt(x[0], ret(x[1]))
+  })
 }

@@ -153,15 +153,15 @@ ometa Parser {
               | letStmt,
 
   exportStmt = kw('export') ws
-             ( pattern:p ws "=>" ws expr:e -> [p[0], [#Let, p[0], [#Fn, p, e]]]
-             | adt:a                       -> [a[1], a]
-             | iface:a                     -> [a[1], a]
-             | module:a                    -> [a[1][0], a]
+             ( pattern:p ws fnBody:e -> [p[0], [#Let, p[0], [#Fn, p, e]]]
+             | adt:a                 -> [a[1], a]
+             | iface:a               -> [a[1], a]
+             | module:a              -> [a[1][0], a]
              ):exp -> [#Multi,
                        exp[1],
                        [#Export, exp[0]]],
   
-  letStmt = kw('let') ws pattern:p ws "=>" ws expr:e -> [#Let, p[0], [#Fn, p, e]],
+  letStmt = kw('let') ws pattern:p ws fnBody:e -> [#Let, p[0], [#Fn, p, e]],
 
   useStmt = kw('use') ws expr:e -> [#Use, e],
 
@@ -177,13 +177,13 @@ ometa Parser {
   ifaceDecl  = needDecl
              | methodDecl,
   needDecl   = kw('need') ws expr:e -> [#INeed, e],
-  methodDecl = kw('method') ws pattern:p ws "=>" ws expr:e -> [#DMeth, p, [#Fn, p, e]]
+  methodDecl = kw('method') ws pattern:p ws fnBody:e -> [#DMeth, p, [#Fn, p, e]]
              | kw('method') ws pattern:p                   -> [#IMeth].concat(p),
 
   implem = kw('implement') ws expr:a ws kw('for') ws expr:b
              ws '{' (ws implDecl)*:xs ws '}' -> [#Impl, a, b, xs],
   implDecl = methodImpl,
-  methodImpl = kw('method') ws pattern:p ws "=>" ws expr:e -> [#Meth, p[0], [#Fn, p, e]],
+  methodImpl = kw('method') ws pattern:p ws fnBody:e -> [#Meth, p[0], [#Fn, p, e]],
 
   adt = kw('data') ws identifier:id ws '=' ws adtPatterns:xs -> [#Data, id, xs],
   adtPatt = keywordPattern:p -> [#DataCtor, [#Kw].concat(p)]
@@ -258,11 +258,18 @@ ometa Parser {
 
   ffi = kw('ffi') ws string:a -> [#FFI, a],
 
-  lambda = (ws pattId)+:as ws "=>" ws expr:b -> [#Lambda, as, b],
+  lambda = (ws pattId)+:as ws fnBody:b -> [#Lambda, as, b],
 
   bindingList = bindingCase:x (ws '|' ws bindingCase)*:xs -> [x].concat(xs),
   bindingCase = '$' identifier:a ws '=' ws expr:e     -> [#VarBind, a, e]
-              | pattern:p ws "=>" ws expr:e   -> [#Let, p[0], [#Fn, p, e]],
+              | pattern:p ws fnBody:e   -> [#Let, p[0], [#Fn, p, e]],
+
+  fnBody = "=>" ws ( condExpr:e -> e
+                   | expr:e     -> [#Ret, e]
+                   ),
+
+  condExpr = condCase:x (ws condCase)*:xs -> [#Cond, [x].concat(xs)],
+  condCase = '|' ws expr:t ws "=>" ws expr:e -> [#CondCase, t, e],
 
   // Program
   program = ws module:m ws eof -> [#Program, m && m[1][0], m]
