@@ -35,6 +35,7 @@ var reserved = [ ':'  // Method parameter
                , '_'  // Partial / Wildcard
                , '=>' // Function definition
                , '|'  // Case separators
+               , '<|', '|>'  // pipes
                // Protocols
                , 'interface'
                , 'implement'
@@ -235,6 +236,12 @@ ometa Parser {
        | whereExpr,
 
   whereExpr = whereExpr
+            | fpipeExpr,
+
+  fpipeExpr = fpipeExpr:a ws "|>" ws bpipeExpr:b -> [#FnApp, b, [a]]
+            | bpipeExpr,
+
+  bpipeExpr = bpipeExpr:a ws "<|" ws appExpr:b -> [#FnApp, a, [b]]
             | appExpr,
 
   appExpr = keywordExpr
