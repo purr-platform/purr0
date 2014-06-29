@@ -133,12 +133,14 @@ ometa Parser {
           | binaryPattern
           | unaryPattern,
 
-  keywordPattern = identifier:a (ws keywordArg)+:ks          -> [kwId(ks), [a].concat(kwArgs(ks))],
-  unaryPattern   = identifier:a ws identifier:b               -> [b, [a]]
-                 | identifier:a ws '(' ws identifier:b ws ')' -> [a, [b]],
-  binaryPattern  = identifier:a ws symbols:b ws identifier:c -> [b, [a, c]],
+  keywordPattern = pattId:a (ws keywordArg)+:ks          -> [kwId(ks), [a].concat(kwArgs(ks))],
+  unaryPattern   = pattId:a ws identifier:b               -> [b, [a]]
+                 | identifier:a ws '(' ws pattId:b ws ')' -> [a, [b]],
+  binaryPattern  = pattId:a ws symbols:b ws pattId:c      -> [b, [a, c]],
 
-  keywordArg     = keyword:k ws identifier:n -> [k, n],
+  keywordArg     = keyword:k ws pattId:n -> [k, n],
+  pattId = '$' identifier:a -> a
+         | '_'              -> [#Id, '_'],
 
   // Declarations
   declaration = module
@@ -207,7 +209,7 @@ ometa Parser {
   matchCase3 = matchCase3:a ws identifier:b              -> [#CaseUn, b, a]
              | matchCase4,
   matchCase4 = '_'                                       -> [#CaseAny]
-             | '$' ws identifier:a                       -> [#CaseVar, a]
+             | '$' identifier:a                          -> [#CaseVar, a]
              | identifier:a ws '(' ws matchCase:b ws ')' -> [#CaseUn, a, b]
              | identifier:a                              -> [#CaseId, a]
              | number:a                                  -> [#CaseVal, a]
@@ -216,8 +218,8 @@ ometa Parser {
              | '(' ws matchCase:a ws ')'                 -> a,
 
   keywordCase = keyword:k ws matchCase2:x -> [k, x],
-  caseExpr = kw('case') ws expr:a ws kw('of') ws (ws casePatt)+:xs -> [#Case, a, xs],
-  casePatt = '|' ws matchCase:a ws "=>" ws expr:b                  -> [#CPatt, a, b],
+  caseExpr = kw('case') ws listOf(#expr, ','):es ws kw('of') ws (ws casePatt)+:xs -> [#Case, es, xs],
+  casePatt = '|' ws listOf(#matchCase, ','):cs ws "=>" ws expr:b                  -> [#CPatt, cs, b],
 
   // Expressions
   letExpr   = kw('let') ws bindingList:xs ws kw('in') ws expr:e -> [#Bind, xs, e],
@@ -247,18 +249,18 @@ ometa Parser {
               | value
               | caseExpr
               | lambda
-              | '@' ws identifier:a  -> [#App, [#Var, 'self'], a, [[#Var, 'self']]]
-              | identifier:a         -> [#Var, a[1]]
+              | identifier:a         -> [#App, [#Var, 'self'], a, [[#Var, 'self']]]
+              | '$' identifier:a     -> [#Var, a[1]]
               | '(' ws expr:a ws ')' -> a,
 
   keywordApp = keyword:k ws binaryExpr:v -> [k, v],
 
   ffi = kw('ffi') ws string:a -> [#FFI, a],
 
-  lambda = (ws identifier)+:as ws "=>" ws expr:b -> [#Lambda, as, b],
+  lambda = (ws pattId)+:as ws "=>" ws expr:b -> [#Lambda, as, b],
 
   bindingList = bindingCase:x (ws '|' ws bindingCase)*:xs -> [x].concat(xs),
-  bindingCase = identifier:a ws '=' ws expr:e -> [#VarBind, a, e]
+  bindingCase = '$' identifier:a ws '=' ws expr:e     -> [#VarBind, a, e]
               | pattern:p ws "=>" ws expr:e   -> [#Let, p[0], [#Fn, p, e]],
 
   // Program

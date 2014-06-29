@@ -451,9 +451,9 @@ function newCaseVar(oldVar) {
 
 
 exports.caseStmt = caseStmt
-function caseStmt(v, xs) {
+function caseStmt(vs, xs) {
   return withMatch(
-    v,
+    vs,
     flatten(xs).concat([
       throwStmt(newExpr(id('TypeError'), [lit('No cases matched the value.')]))
     ])

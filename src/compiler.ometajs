@@ -57,8 +57,8 @@ ometa Compiler {
   Data cc:id [cc*:cases]            -> _.adtStmt(id, cases),
   DataCtor [:t cc:id [cc*:args]]    -> [t, id, args],
 
-  Case cc:v [cc*:xs]                -> _.caseStmt(v, xs),
-  CPatt cc:patt cc:e                -> _.casePatt(patt, e),
+  Case [cc*:vs] [cc*:xs]            -> _.caseStmt(vs, xs),
+  CPatt [cc*:patts] cc:e            -> _.casePatt(patts, e),
   CaseAny                           -> _.caseAny(),
   CaseVal cc:a                      -> _.caseVal(a),
   CaseVar scc:a                     -> _.caseVar(a),
