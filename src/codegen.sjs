@@ -777,7 +777,7 @@ function importStmt(p, kw, name) {
         open(name)
       ]
     ),
-    [call(id("require"), [p])]
+    [call(builtin("$load"), [p, id("__dirname")])]
   ));
 
   function instantiate(kw) {

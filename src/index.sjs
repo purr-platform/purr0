@@ -29,6 +29,7 @@ var read      = require('fs').readFileSync;
 var path      = require('path');
 var vm        = require('vm');
 var escodegen = require('escodegen');
+var esprima   = require('esprima');
 var Parser    = require('./parser').Parser;
 var Compiler  = require('./compiler').Compiler;
 
@@ -53,30 +54,41 @@ function generate(ast) {
 
 exports.run = run;
 function run(file) {
-  var runtime = require('../runtime');
   var code    = read(file, 'utf-8');
-  var source  = doSource(code) + ';\n' + runner();
+  var source  = doSource(code);
+  var module  = { exports: { } };
+
   var context = vm.createContext({ process: process
                                  , console: console
-                                 , require: patchRequire(file)
-                                 , $Phemme: runtime
-                                 , module:  { exports: {} }});
+                                 , require: require
+                                 , __dirname: path.dirname(path.resolve(file))
+                                 , $Phemme: runtime(file)
+                                 , module:  module });
   vm.runInNewContext(source, context, file)
+  return module.exports
 }
 
-exports.prelude = prelude
-function prelude() {
-  return read(path.join(__dirname, '../runtime/index.js'), 'utf-8')
+function runtime(file) {
+  var runtime   = require('../runtime');
+  runtime.$load = $require;
+  return runtime
 }
 
-function runner() {
-  return 'module.exports($Phemme).main()'
+exports.runFile = runFile
+function runFile(file) {
+  return run(file)(runtime(file)).main()
 }
 
-function patchRequire(file) {
-  var dir = path.dirname(path.resolve(file))
-  return function(module) {
-    if (/^\./.test(module))  return require(path.join(dir, module));
-    return require(module)
-  }
+function $require(module, dir) {
+  if (/^\./.test(module))  module = path.join(dir, module);
+  var dirname = path.dirname(path.resolve(module))
+  return run(module)
+}
+
+function makeModule(dir, code) {
+  dir  = JSON.stringify(dir);
+  code = escodegen.generate(esprima.parse(code));
+  return '(function(__dirname) {'
+       + code
+       + '}(' + dir + '))'
 }
