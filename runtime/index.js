@@ -19,9 +19,8 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-var $Phemme = module.exports = {}
-
 // -- Helpers --------------------------------------------------------
+var equal   = require('deep-equal')
 var proto   = Object.getPrototypeOf
 var clone   = Object.create
 var hasProp = Object.hasOwnProperty
@@ -115,22 +114,32 @@ function ensureString(a) {
 }
 
 // -- Utilities ------------------------------------------------------
-var unsafeExtend = $Phemme.$destructiveExtend = function(a, b) {
+function unsafeExtend(a, b) {
   for (var k in b)
     if (!(/^$/.test(k) || b[k] == null))  a[k] = b[k]
 
   return a
 }
 
-$Phemme.doExport = function(target, name, source, unpack) {
+function doExport(target, name, source, unpack) {
   if (unpack)
-    return unsafeExtend(target, source().$namespace())
-  else
-    return target[name] = source
+    source().$unpack(name, target, source)
+  target[name] = source
+}
+
+function doImport(ns, mod, target) {
+  unsafeExtend(ns, mod)
+  var ps = mod.$_protocols
+  Object.keys(ps).forEach(function(p) {
+    if (p in target.$_protocols)  target.$_protocols[p].$merge(ps[p])
+    else {
+      target.$_protocols[p] = ps[p]
+    }
+  })
 }
 
 // -- Extensible records ---------------------------------------------
-var Record = $Phemme.Record = clone(null)
+var Record = clone(null)
 Record.$fields = clone(null)
 Record.$add = function(name, value) {
   ensureString(name)
@@ -159,8 +168,11 @@ Record.$fromObject = function(obj) {
   unsafeExtend(result.$fields, obj)
   return result
 }
+Record.$clone = function() {
+  return clone(this)
+}
 
-var ExtRecord = $Phemme.ExtRecord = clone(Record)
+var ExtRecord = clone(Record)
 ExtRecord['at:put:'] = function(self, name, value) {
   ensureString(name)
   var result = clone(self)
@@ -204,27 +216,7 @@ ExtRecord['rename:'] = function(self, names) {
   return result
 }
 
-// -- Namespaces -----------------------------------------------------
-var NS = $Phemme.Namespace = Object.create(ExtRecord)
-
-NS['doc:'] = function(_, text){ return function(data) {
-  data.$doc = text
-  return data
-}}
-NS.doc = function(data) {
-  return data.$doc || '(No documentation available)'
-}
-NS["print"] = function(arg) {
-  console.log(arg)
-}
-NS.Number   = function(){ return { $$tag: 'number'   } }
-NS.String   = function(){ return { $$tag: 'string'   } }
-NS.Function = function(){ return { $$tag: 'function' } }
-NS.Boolean  = function(){ return { $$tag: 'boolean'  } }
-
-
 // -- Protocols ------------------------------------------------------
-$Phemme.Protocol = Protocol
 function Protocol(name) {
   this.$impl     = {}
   this.$defaults = {}
@@ -286,8 +278,35 @@ Protocol.prototype.$namespace = function() {
   return this.$methods
 }
 
+Protocol.prototype.$requisites = function() {
+  return this.$parents.map(function(p){ return p.$required.slice() })
+                      .concat([this.$required.slice()])
+                      .reduce(function(xs, ys) {
+                         return xs.concat(ys)
+                       }, [])
+}
+
+Protocol.prototype.$equals = function(another) {
+  var reqs  = this.$requisites().sort()
+  var reqs2 = another.$requisites().sort()
+  return equal(reqs, reqs2)
+}
+
+Protocol.prototype.$merge = function(another) {
+  if (!(this.$equals(another)))
+    throw new Error("Can't unify diverging protocols " + this.$$name + " and " + another.$$name)
+
+  var impl = another.$impl
+  Object.keys(impl).forEach(function(k) {
+    this.$impl[k] = another.$impl[k]
+  }.bind(this))
+}
+
+Protocol.prototype.$unpack = function(name, target, source) {
+  unsafeExtend(target, this.$namespace())
+}
+
 // -- ADTs -----------------------------------------------------------
-$Phemme.ADT = ADT
 function ADT(name) {
   this.$$name  = name
   this.$$tag   = newTag(this)
@@ -319,3 +338,32 @@ ADT.prototype.$seal = function() {
 ADT.prototype.$namespace = function() {
   return this.$ctors
 }
+
+ADT.prototype.$unpack = function(name, target, source) {
+  unsafeExtend(target, this.$namespace())
+  target[name] = source
+}
+
+// -- Namespaces -----------------------------------------------------
+var NS = Object.create(ExtRecord)
+
+// Internal properties
+NS.$destructiveExtend = unsafeExtend
+NS.$doExport = doExport
+NS.$doImport = doImport
+NS.$ExtRecord = ExtRecord
+NS.$Record = Record
+NS.$Protocol = Protocol
+NS.$ADT = ADT
+
+NS["print"] = function(arg) {
+  console.log(arg)
+}
+NS.Number   = function(){ return { $$tag: 'number'   } }
+NS.String   = function(){ return { $$tag: 'string'   } }
+NS.Function = function(){ return { $$tag: 'function' } }
+NS.Boolean  = function(){ return { $$tag: 'boolean'  } }
+
+
+// -- Exporting --------------------------------------------------------
+module.exports = NS

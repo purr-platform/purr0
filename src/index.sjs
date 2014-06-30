@@ -53,13 +53,14 @@ function generate(ast) {
 
 exports.run = run;
 function run(file) {
-  var code = read(file, 'utf-8');
-  var source  = prelude() + ';\n' + doSource(code) + ';\n' + runner();
+  var runtime = require('../runtime');
+  var code    = read(file, 'utf-8');
+  var source  = doSource(code) + ';\n' + runner();
   var context = vm.createContext({ process: process
                                  , console: console
                                  , require: patchRequire(file)
-                                 , global:  {}
-                                 , module:  { exports: {} }})
+                                 , $Phemme: runtime
+                                 , module:  { exports: {} }});
   vm.runInNewContext(source, context, file)
 }
 
@@ -69,13 +70,13 @@ function prelude() {
 }
 
 function runner() {
-  return 'module.exports().main(process.argv.slice(2))'
+  return 'module.exports($Phemme).main()'
 }
 
 function patchRequire(file) {
-  var dir = path.dirname(file)
+  var dir = path.dirname(path.resolve(file))
   return function(module) {
-    if (/^\./.test(module))  return require(path.join(dir, module))
+    if (/^\./.test(module))  return require(path.join(dir, module));
     return require(module)
   }
 }

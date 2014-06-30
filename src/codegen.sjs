@@ -258,9 +258,7 @@ function letStmt(name, value) {
 
 exports.module = module;
 function module(name, args, body, contracts, topLevel) {
-  var NS = topLevel?        builtin("Namespace")
-         : /* otherwise */  id("_self")
-  var Arg = topLevel? [id("$Phemme")] : []
+  if (!topLevel)  throw new Error('Submodules are not supported right now.')
 
   return letStmt(
     name,
@@ -268,11 +266,11 @@ function module(name, args, body, contracts, topLevel) {
       contracts,
       fn(
         identifier(name.value),
-        Arg.concat(args),
+        [id("$Phemme")].concat(args),
         [
           varsDecl([
-            [id("$exports"), obj([])],
-            [id("_self"), call(smember(NS, id("clone")), [NS])],
+            [id("$exports"), obj([{ key: lit('$_protocols'), value: obj([]) }])],
+            [id("_self"), call(smember(id("$Phemme"), id("$clone")), [])]
           ]),
         ].concat(sort(flatten(body)))
           .concat([
@@ -285,8 +283,12 @@ function module(name, args, body, contracts, topLevel) {
 
 exports.ifaceStmt = ifaceStmt;
 function ifaceStmt(name, decls) {
-  return using(id("$proto"), newExpr(builtin("Protocol"), [name]), [
-    letStmt(name, thunk(id("$proto")))
+  return using(id("$proto"), newExpr(builtin("$Protocol"), [name]), [
+    letStmt(name, thunk(id("$proto"))),
+    expr(set(
+      member(smember(id("$exports"), id("$_protocols")), name),
+      id("$proto")
+    ))
   ].concat(sort(flatten(decls))));
 }
 
@@ -408,7 +410,7 @@ exports.exportStmt = exportStmt;
 function exportStmt(name, unpack) {
   return atExportPhase(expr(
     call(
-      builtin("doExport"),
+      builtin("$doExport"),
       [id("$exports"), name, get(name)].concat(
         unpack? [lit(true)] : []
       )
@@ -451,7 +453,7 @@ function member(object, property) {
 
 exports.adtStmt = adtStmt;
 function adtStmt(name, cases) {
-  return using(id("$adt"), newExpr(builtin("ADT"), [name]), [
+  return using(id("$adt"), newExpr(builtin("$ADT"), [name]), [
     letStmt(name, thunk(id("$adt")))
   ].concat(flatten(cases.map(makeCase)))
    .concat([
@@ -755,7 +757,7 @@ function empty() {
 exports.map = map
 function map(xs) {
   return call(
-    smember(builtin("ExtRecord"), id("$fromObject")),
+    smember(builtin("$ExtRecord"), id("$fromObject")),
     [
       obj(xs.map(function(x) {
         return { key: x[0], value: x[1] }
@@ -779,16 +781,16 @@ function importStmt(p, kw, name) {
   ));
 
   function instantiate(kw) {
-    if (kw === null) return call(member(id("$mod"), lit("default")), []);
-    else             return call(member(id("$mod"), kw[0]), kw[1])
+    if (kw === null) return call(id("$mod"), [id('_self')]);
+    else             return call(member(id("$mod"), kw[0]), [id('_self')].concat(kw[1]))
   }
 
   function open(name) {
     if (name !== null) return letStmt(name, id("$mod"))
     else
       return expr(call(
-        builtin("$destructiveExtend"),
-        [identifier("self"), id("$mod")]
+        builtin("$doImport"),
+        [identifier("self"), id("$mod"), id("$exports")]
       ))
   }
 }
