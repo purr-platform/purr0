@@ -162,6 +162,7 @@ ometa Parser {
               | implem
               | adt
               | importDecl
+              | ffiStmt
               | useStmt
               | exportStmt
               | letStmt,
@@ -176,6 +177,8 @@ ometa Parser {
                        exp[1],
                        [#Export, exp[0], exp[2]]],
   
+  ffiStmt = kw('ffi') ws string:a -> [#FFIStmt, a],
+
   letStmt = kw('let') ws pattern:p ws fnBody:e -> [#Let, p[0], [#Fn, p, e]],
 
   useStmt = kw('use') ws expr:e -> [#Use, e],

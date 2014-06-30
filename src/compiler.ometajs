@@ -37,6 +37,7 @@ ometa Compiler {
   Lambda [scc*:args] [cc:e :c]      -> _.lambda(null, args, e, [[]]),
   Fn [scc:id [scc*:args] [cc*:cs]] [cc:e cc:c]  -> _.lambda(id, args, e, [cs, c]),
   FFI cc:code                       -> _.parseExpr(code.value),
+  FFIStmt cc:code                   -> _.parseProg(code.value),
   IfExpr cc:t cc:c cc:a             -> _.ifExpr(t, c, a),
   Ret cc:e                          -> _.retExpr(e),
   Cond [cc*:xs]                     -> _.cond(xs),

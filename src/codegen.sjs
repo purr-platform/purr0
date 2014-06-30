@@ -792,3 +792,8 @@ function importStmt(p, kw, name) {
       ))
   }
 }
+
+exports.parseProg = parseProg
+function parseProg(js) {
+  return esprima.parse(js).body
+}
