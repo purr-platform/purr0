@@ -360,43 +360,56 @@ module {
   export $a constant => $b => $a
   export $f ->> $g => $a => $f($g($a))
   export $f <<- $g => $a => $g($f($a))
+  export $f flip => $a $b => $f($b, $a)
 
 
   # -- Lists -----------------------------------------------------------
   export data List = Nil | _ :: _ ^list?
  
   export $xs filter: $f => case $xs of
-                           | Nil         => Nil
-                           | $x :: $rest => if $f($x) then $x :: $rest filter: $f
-                                                      else $rest filter: $f
+    | Nil         => Nil
+    | $x :: $rest => if $f($x) then $x :: $rest filter: $f
+                               else $rest filter: $f
 
   export $xs first => case $xs of
-                     | Nil     => Nothing
-                     | $a :: _ => $a Just
+    | Nil     => Nothing
+    | $a :: _ => $a Just
 
   export $xs first! => case $xs of
-                       | $a :: _ => $a
+    | $a :: _ => $a
 
   export $xs rest => case $xs of
-                     | Nil        => Nothing
-                     | _ :: $rest => $rest
+    | Nil        => Nothing
+    | _ :: $rest => $rest
 
   export $xs last => case $xs of
-                     | Nil        => Nothing
-                     | $a :: Nil  => a Just
-                     | _ :: $rest => $rest last
+    | Nil        => Nothing
+    | $a :: Nil  => a Just
+    | _ :: $rest => $rest last
 
   export $xs last! => case $xs of
-                      | $a :: Nil  => $a
-                      | _ :: $rest => $rest last!
+    | $a :: Nil  => $a
+    | _ :: $rest => $rest last!
 
   export $xs is-empty? => case $xs of
-                          | Nil    => true
-                          | _ :: _ => false
+    | Nil    => true
+    | _ :: _ => false
 
-  export $xs length => case $xs of
-                       | Nil        => 0
-                       | _ :: $rest => 1 + $rest length
+  export $xs ^list? fold: $f from: $b => ffi "(function() {
+    while (true) {
+      if (_xs.$$ctag === 'Nil')  return _b
+      if (_xs.$$ctag !== '::')  throw new TypeError('Not a List.')
+      var v = _xs.$0
+      _b = _f(_b, v)
+      _xs = _xs.$1
+    }
+  })()"
 
-  
+  export $xs reverse => $xs fold: (_ :: _) flip from: Nil
+
+  export $xs fold-right: $f from: $b => $xs reverse fold: $f from: $b
+
+  export $xs length => $xs fold: ($a _ => $a + 1) from: 0
+
+
 }

@@ -20,8 +20,9 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // -- Dependencies -----------------------------------------------------
-var extend  = require('xtend');
-var esprima = require('esprima')
+var extend     = require('xtend');
+var esprima    = require('esprima');
+var stableSort = require('stable');
 
 // -- Helpers ----------------------------------------------------------
 
@@ -64,7 +65,7 @@ function foldr(f, b, xs, idx) {
 }
 
 function sort(xs) {
-  return xs.slice().sort(function(a, b) {
+  return stableSort(xs.slice(), function(a, b) {
     return (a['x-order'] || 0) - (b['x-order'] || 0)
   })
 }
@@ -256,25 +257,27 @@ function letStmt(name, value) {
 }
 
 exports.module = module;
-function module(name, args, body, contracts) {
+function module(name, args, body, contracts, topLevel) {
+  var NS = topLevel?        builtin("Namespace")
+         : /* otherwise */  id("_self")
+  var Arg = topLevel? [id("$Phemme")] : []
+
   return letStmt(
     name,
-    scoped(
-      compileContract(
-        contracts,
-        fn(
-          identifier(name.value),
-          args,
-          [
-            varsDecl([
-              [id("$exports"), obj([])],
-              [id("_self"), id("$scope")],
-            ]),
-          ].concat(sort(flatten(body)))
-            .concat([
-              ret(id("$exports"))
-            ])
-        )
+    compileContract(
+      contracts,
+      fn(
+        identifier(name.value),
+        Arg.concat(args),
+        [
+          varsDecl([
+            [id("$exports"), obj([])],
+            [id("_self"), call(smember(NS, id("clone")), [NS])],
+          ]),
+        ].concat(sort(flatten(body)))
+          .concat([
+            ret(id("$exports"))
+          ])
       )
     )
   )
@@ -405,7 +408,7 @@ exports.exportStmt = exportStmt;
 function exportStmt(name, unpack) {
   return atExportPhase(expr(
     call(
-      smember(id("$Phemme"), id("doExport")),
+      builtin("doExport"),
       [id("$exports"), name, get(name)].concat(
         unpack? [lit(true)] : []
       )
@@ -424,7 +427,7 @@ function parseExpr(js) {
 exports.program = program;
 function program(name, module) {
   return prog([
-    varsDecl([[id("_self"), smember(id("$Phemme"), id("Namespace"))]]),
+    varsDecl([[id("_self"), obj([])]]),
     module,
     expr(set(
       smember(id("module"), id("exports")),
@@ -664,7 +667,7 @@ function caseKw(tag, args) {
 exports.use = use
 function use(e) {
   return delayed(
-    expr(call(smember(id("$Phemme"), id("$destructiveExtend")), [id("_self"), e]))
+    expr(call(builtin("$destructiveExtend"), [id("_self"), e]))
   )
 }
 
@@ -752,11 +755,40 @@ function empty() {
 exports.map = map
 function map(xs) {
   return call(
-    smember(smember(id("$Phemme"), id("ExtRecord")), id("$fromObject")),
+    smember(builtin("ExtRecord"), id("$fromObject")),
     [
       obj(xs.map(function(x) {
         return { key: x[0], value: x[1] }
       }))
     ]
   )
+}
+
+exports.importStmt = importStmt
+function importStmt(p, kw, name) {
+  return expr(call(
+    fn(
+      null,
+      [id("$mod")],
+      [
+        expr(set(id("$mod"), instantiate(kw))),
+        open(name)
+      ]
+    ),
+    [call(id("require"), [p])]
+  ));
+
+  function instantiate(kw) {
+    if (kw === null) return call(member(id("$mod"), lit("default")), []);
+    else             return call(member(id("$mod"), kw[0]), kw[1])
+  }
+
+  function open(name) {
+    if (name !== null) return letStmt(name, id("$mod"))
+    else
+      return expr(call(
+        builtin("$destructiveExtend"),
+        [identifier("self"), id("$mod")]
+      ))
+  }
 }

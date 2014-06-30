@@ -50,6 +50,9 @@ var reserved = [ ':'  // Method parameter
                // Modules
                , 'module'
                , 'use'
+               , 'import'
+               , 'with'
+               , 'as'
                // Scoping & others
                , 'let'
                , 'in'
@@ -158,6 +161,7 @@ ometa Parser {
               | iface
               | implem
               | adt
+              | importDecl
               | useStmt
               | exportStmt
               | letStmt,
@@ -176,7 +180,7 @@ ometa Parser {
 
   useStmt = kw('use') ws expr:e -> [#Use, e],
 
-  module = kw('module') ws mparms:p ws '{' (ws declaration)*:xs ws '}' -> [#Mod, p, xs],
+  module = kw('module') ws mparms:p ws '{' (ws declaration)*:xs ws '}' -> [#Mod, p, xs, false],
   mparms = (ws keywordArg)*:ks -> (function(i,xs, cs) {
                                      return [i[1]? i : [#Id, 'default'], xs, cs]
                                   }(kwId(ks), kwArgs(ks), kwCont(ks))),
@@ -211,6 +215,13 @@ ometa Parser {
             | exportStmt:b              -> [#Deco, a, b[1][1], b]
             | decorator:b               -> [#Deco, a, b[2], b]
             ),
+
+  importDecl = kw('import') ws string:p
+                 (ws kw('with') (ws keywordApp)+:ks)?
+                 (ws kw('as') ws identifier:n)?
+             -> [#Import, p
+                 , ks? [#ImpKw, kwId(ks), kwArgs(ks)] : [#Nil]
+                 , n || [#Nil]],
 
   // Pattern matching
   matchCase  = matchCase2:x (ws keywordCase)+:ks         -> [#CaseKw, kwId(ks), [x].concat(kwArgs(ks))]
@@ -290,5 +301,5 @@ ometa Parser {
   condCase = '|' ws expr:t ws "=>" ws expr:e -> [#CondCase, t, e],
 
   // Program
-  program = ws module:m ws eof -> [#Program, m && m[1][0], m]
+  program = ws module:m ws eof -> { m[3] = true; [#Program, m[1][0], m] }
 }
