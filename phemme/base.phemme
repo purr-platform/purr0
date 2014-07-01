@@ -1,7 +1,7 @@
 module {
   # -- Decorators ------------------------------------------------------
   [| doc: "Attachs documentation to an object." |]
-  export _ doc: $text ^string => ffi "(function(_data) {
+  export _ doc: $text ^string? => ffi "(function(_data) {
     _data.$doc = _text;
     return _data
   })"
@@ -93,7 +93,7 @@ module {
   export interface Enumerable {
     need Bounded
     need Ordered
-    method $this sucessor
+    method $this successor
     method $this predecessor
     method $start up-to: $end => let $next = $start successor
                                    | $max  = $end max: $start upper-bound
@@ -297,6 +297,14 @@ module {
     method $this show => ffi "_this"
   }
 
+  implement Semigroup for String {
+    method $this + $that ^string? => ffi "_this + _that"
+  }
+
+  implement Monoid for String {
+    method $this empty => ""
+  }
+
   # TODO: use a Character class to represent JS's conventional 1-length strings
   
   export $this ^string? upcase     => ffi "_this.toUpperCase()"
@@ -319,7 +327,7 @@ module {
   implement Representable for Maybe {
     method $this show => case $this of
                          | Nothing  => "Nothing"
-                         | Just($a) => "Just(" + a show + ")"
+                         | Just($a) => "Just(" + $a show + ")"
   }
 
   implement Semigroup for Maybe {

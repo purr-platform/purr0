@@ -140,32 +140,30 @@ function doImport(ns, mod, target) {
 
 // -- Extensible records ---------------------------------------------
 var Record = clone(null)
-Record.$fields = clone(null)
 Record.$add = function(name, value) {
   ensureString(name)
-  if (this.$fields[name] != null)
+  if (this[name] != null)
     throw new TypeError(
       name + " conflicts with an existing binding in the namespace.\n"
-      + "  Original: " + this.$fields[name] + "\n"
+      + "  Original: " + this[name] + "\n"
       + "  New: " + value
     )
 
-  this.$fields[name] = value
+  this[name] = value
   return value
 }
 Record.$get = function(name) {
-  if (/^$/.test(name) || this.$fields[name] == null)
+  if (/^$/.test(name) || this[name] == null)
     throw new ReferenceError('No such method: ' + name)
 
-  return this.$fields[name]
+  return this[name]
 }
 Record.$namespace = function() {
-  return this.$fields
+  return this
 }
 Record.$fromObject = function(obj) {
   var result = clone(this)
-  result.$fields = clone(null)
-  unsafeExtend(result.$fields, obj)
+  unsafeExtend(result, obj)
   return result
 }
 Record.$clone = function() {
@@ -188,16 +186,14 @@ ExtRecord.clone = function(self) {
 ExtRecord['with:'] = function(self, otherRecord) {
   var result = clone(self)
   var data   = otherRecord.$namespace()
-  result.$fields = clone(result.$fields)
-  unsafeExtend(result.$fields, data)
+  unsafeExtend(result, data)
   return result
 }
 ExtRecord['without:'] = function(self, names) {
   var result = clone(self)
-  result.$fields = unsafeExtend(clone(null), result.$fields)
   listToArray(names).forEach(function(name) {
     ensureString(name)
-    delete result.$fields[name]
+    result[name] = null
   })
   return result
 }
