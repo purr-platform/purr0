@@ -28,8 +28,9 @@ var stableSort = require('stable');
 
 var START     = 0
 var DELAYED   = 1
-var END       = 2
-var EXPORTING = 3
+var IMPORT    = 2
+var END       = 3
+var EXPORTING = 4
 
 function Context(name) {
   this.id   = 0
@@ -89,6 +90,10 @@ function emptyExpr() {
 
 function atEnd(a) {
   return extend(a, { 'x-order': END })
+}
+
+function atImportPhase(a) {
+  return extend(a, { 'x-order': IMPORT })
 }
 
 function atExportPhase(a) {
@@ -269,11 +274,22 @@ function module(name, args, body, contracts, topLevel) {
         [id("$Phemme")].concat(args),
         [
           varsDecl([
-            [id("$exports"), obj([{ key: lit('$_protocols'), value: obj([]) }])],
-            [id("_self"), call(smember(id("$Phemme"), id("$clone")), [])]
+            [id("_self"), call(smember(id("$Phemme"), id("$clone")), [])],
+            [id("$exports"), obj([])],
           ]),
-        ].concat(sort(flatten(body)))
+          letStmt(lit("$_protocols"), obj([]))
+        ].concat(
+          sort(flatten(body.concat([            
+            expr(call(
+              builtin("$mergeProtocols"),
+              [id("_self"), id("$Phemme")]
+            )),
+          ]))))
           .concat([
+            expr(set(
+              smember(id("$exports"), id("$_protocols")), 
+              get(lit("$_protocols"))
+            )),
             ret(id("$exports"))
           ])
       )
@@ -286,7 +302,7 @@ function ifaceStmt(name, decls) {
   return using(id("$proto"), newExpr(builtin("$Protocol"), [name]), [
     letStmt(name, thunk(id("$proto"))),
     expr(set(
-      member(smember(id("$exports"), id("$_protocols")), name),
+      member(smember(id("_self"), id("$_protocols")), name),
       id("$proto")
     ))
   ].concat(sort(flatten(decls))));
@@ -768,7 +784,7 @@ function map(xs) {
 
 exports.importStmt = importStmt
 function importStmt(p, kw, name) {
-  return expr(call(
+  return atImportPhase(expr(call(
     fn(
       null,
       [id("$mod")],
@@ -778,7 +794,7 @@ function importStmt(p, kw, name) {
       ]
     ),
     [call(builtin("$load"), [p, id("__dirname")])]
-  ));
+  )));
 
   function instantiate(kw) {
     if (kw === null) return call(id("$mod"), [id('_self')]);
@@ -790,7 +806,7 @@ function importStmt(p, kw, name) {
     else
       return expr(call(
         builtin("$doImport"),
-        [identifier("self"), id("$mod"), id("$exports")]
+        [identifier("self"), id("$mod")]
       ))
   }
 }

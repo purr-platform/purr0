@@ -107,6 +107,12 @@ function listToArray(xs) {
   return result
 }
 
+function each(obj, f) {
+  Object.keys(obj).forEach(function(k) {
+    f(k, obj[k])
+  })
+}
+
 function ensureString(a) {
   if (typeof a !== 'string')
     throw new TypeError('Not a String value: ' + a)
@@ -127,14 +133,16 @@ function doExport(target, name, source, unpack) {
   target[name] = source
 }
 
-function doImport(ns, mod, target) {
+function doImport(ns, mod) {
   unsafeExtend(ns, mod)
-  var ps = mod.$_protocols
-  Object.keys(ps).forEach(function(p) {
-    if (p in target.$_protocols)  target.$_protocols[p].$merge(ps[p])
-    else {
-      target.$_protocols[p] = ps[p]
-    }
+}
+
+function mergeProtocols(a, b) {
+  var source = b.$_protocols
+  var target = a.$_protocols
+  Object.keys(source).forEach(function(p) {
+    if (p in target)  target[p].$merge(source[p])
+    else target[p] = source[p]
   })
 }
 
@@ -142,7 +150,7 @@ function doImport(ns, mod, target) {
 var Record = clone(null)
 Record.$add = function(name, value) {
   ensureString(name)
-  if (this[name] != null)
+  if (hasProp.call(this, name) && this[name] != null)
     throw new TypeError(
       name + " conflicts with an existing binding in the namespace.\n"
       + "  Original: " + this[name] + "\n"
@@ -345,12 +353,62 @@ var NS = Object.create(ExtRecord)
 
 // Internal properties
 NS.$destructiveExtend = unsafeExtend
-NS.$doExport = doExport
-NS.$doImport = doImport
-NS.$ExtRecord = ExtRecord
-NS.$Record = Record
-NS.$Protocol = Protocol
-NS.$ADT = ADT
+NS.$mergeProtocols    = mergeProtocols
+NS.$doExport          = doExport
+NS.$doImport          = doImport
+NS.$ExtRecord         = ExtRecord
+NS.$Record            = Record
+NS.$Protocol          = Protocol
+NS.$ADT               = ADT
+NS.$makeNamespace = function() {
+  var ns = clone(this)
+  ns.$exports   = clone(this)
+  ns.$children  = []
+  ns.$protocols = { $parent: this.$protocols, $exports: {} }
+  ns.$protocols.$implementations = { $exports: {} }
+  ns.$exports.$children  = ns.$children
+  ns.$exports.$protocols = ns.$protocols
+  return ns
+}
+NS.$defProtocol = function(name, protocol, exports) {
+  this.$protocols[name] = protocol
+  if (exports)
+    this.$protocols.$exports[name] = protocol
+}
+NS.$implementProtocol = function(proto, obj, impl, exports) {
+  var impls = this.$protocols.$implementations
+  var tag   = tagFor(obj)
+  impls[tag] = { proto: proto, impl: impl }
+  if (exports)  impls.$exports[tag] = { proto: proto, impl: impl }
+}
+NS.$setupProtocols = function() {
+  var parent = this.$protocols.$parent
+  if (parent) {
+    each(this.$protocols.$exports, function(name, proto) {
+      var outer = parent.$protocols[name]
+      if (outer)  mergeProtocols(outer, proto)
+      else        parent.$protocols[name] = proto
+    })
+  }
+  this.$children.forEach(function(a){ a.$setupProtocols() })
+}
+NS.$setupImplementations = function() {
+  var protos = this.$protocols
+  var parent = protos.$parent
+  if (parent) {
+    each(protos.$implementations, function(type, a) {
+      if (!protos[a.proto])
+        throw new ReferenceError('No such protocol: ' + a.proto)
+      protos[a.proto].$add(type, a.impl)
+    })
+    each(protos.$implementations.$exports, function(type, a) {
+      if (parent.$protocols[a.proto])
+        parent.$protocols[a.proto].$add(type, a.impl)
+    })
+  }
+  this.$children.forEach(function(a){ a.$setupImplementations() })
+}
+
 
 NS["print"] = function(arg) {
   console.log(arg)
