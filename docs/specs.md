@@ -22,31 +22,6 @@ Some of the features it offers:
     Decorators;
 
 
-module List {
-  data List = Nil
-            | a :: b
-
-  @doc: "Something that can be mapped over."
-  interface functor {
-    @doc "Maps one function over a container."
-    method a map: f
-  }
-
-  implement #functor for: List {
-    method Nil map: f       => Nil
-    method (x :: xs) map: f => f(x) :: xs map: f  // f call: x
-  }
-
-  // An ADT with only one case, and record syntax
-  struct Person {
-    field name ^String
-    field age ^Int
-  }
-
-  main => <h1>{ Text: Person[name: "Bob", age: 12] name }</h1>
-}
-
-
 ## 0) Prelude
 
 Phemme is a small domain-specific language for writing highly-concurrent
