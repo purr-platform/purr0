@@ -53,7 +53,7 @@ function generate(ast) {
 }
 
 exports.run = run;
-function run(file) {
+function run(file, rt) {
   var code    = read(file, 'utf-8');
   var source  = doSource(code);
   var module  = { exports: { } };
@@ -62,7 +62,8 @@ function run(file) {
                                  , console: console
                                  , require: require
                                  , __dirname: path.dirname(path.resolve(file))
-                                 , $Phemme: runtime(file)
+                                 , __file: file
+                                 , $Phemme: rt
                                  , module:  module });
   vm.runInNewContext(source, context, file)
   return module.exports
@@ -70,19 +71,24 @@ function run(file) {
 
 function runtime(file) {
   var runtime   = require('../runtime');
-  runtime.$load = $require;
+  runtime.$load = $require.bind(runtime);
   return runtime
 }
 
 exports.runFile = runFile
 function runFile(file) {
-  return run(file)(runtime(file)).main()
+  var rt = runtime(file)
+  rt.$rootPackage = path.dirname(file)
+  rt.$packageMap  = { 'Phemme.Core': path.join(__dirname, '../phemme/base.phemme') }
+  return run(file, rt)(rt).$main()
 }
 
 function $require(module, dir) {
-  if (/^\./.test(module))  module = path.join(dir, module);
-  var dirname = path.dirname(path.resolve(module))
-  return run(module)
+  if (module in this.$packageMap)
+    var file = this.$packageMap[module]
+  else
+    var file = path.join(this.$rootPackage, module.replace(/\./g, '/') + '.phemme')
+  return run(file, this)
 }
 
 function makeModule(dir, code) {

@@ -29,8 +29,10 @@ var stableSort = require('stable');
 var START     = 0
 var DELAYED   = 1
 var IMPORT    = 2
-var END       = 3
-var EXPORTING = 4
+var IMPLEMENT = 3
+var END       = 4
+var EXPORTING = 5
+
 
 function Context(name) {
   this.id   = 0
@@ -94,6 +96,10 @@ function atEnd(a) {
 
 function atImportPhase(a) {
   return extend(a, { 'x-order': IMPORT })
+}
+
+function atImplementationPhase(a) {
+  return extend(a, { 'x-order': IMPLEMENT })
 }
 
 function atExportPhase(a) {
@@ -270,6 +276,7 @@ function letStmt(name, value) {
 exports.module = module;
 function module(name, args, body, contracts, topLevel) {
   if (!topLevel)  throw new Error('Submodules are not supported right now.')
+  var ns = lit(name.value.split(':')[0]);
 
   return lets(
     name,
@@ -280,7 +287,8 @@ function module(name, args, body, contracts, topLevel) {
         [id("$$Phemme")].concat(args),
         [
           varsDecl([
-            [identifier("self"), call(smember(id("$$Phemme"), id("$makeNamespace")), [])],
+            [id("$$package"), ns],
+            [identifier("self"), call(smember(id("$$Phemme"), id("$makeNamespace")), [id("$$package")])],
           ])
         ].concat(sort(flatten(body)))
          .concat([
@@ -293,11 +301,11 @@ function module(name, args, body, contracts, topLevel) {
 
 exports.ifaceStmt = ifaceStmt;
 function ifaceStmt(name, decls) {
-  return using(id("$$proto"), newExpr(builtin("$Protocol"), [name]), [
+  return using(id("$$proto"), newExpr(builtin("$Protocol"), [name, id("$$package")]), [
     letStmt(name, thunk(id("$$proto"))),
-    expr(set(
-      member(smember(identifier("self"), id("$_protocols")), name),
-      id("$$proto")
+    expr(call(
+      smember(identifier("self"), id("$defProtocol")),
+      [id("$$proto")]
     ))
   ].concat(sort(flatten(decls))));
 }
@@ -352,7 +360,12 @@ function ifaceNeed(base) {
 
 exports.implStmt = implStmt;
 function implStmt(proto, tag, impl) {
-  return expr(call(smember(proto, id('$add')), [tag, makeImpl(impl)]));
+  var implementation = makeImpl(impl);
+  
+  return atImplementationPhase(expr(call(
+    smember(identifier("self"), id("$implementProtocol")),
+    [proto, tag, implementation, lit(true)]
+  )));
 
   function makeImpl(xs) {
     return obj(xs.map(function(x) {
@@ -441,8 +454,9 @@ function program(name, module) {
     module,
     expr(set(
       smember(id("module"), id("exports")),
-      name.value === 'default'?  member(identifier("self"), lit("default"))
-      :                          identifier("self")
+      member(identifier("self"), name)
+//      name.value === 'default'?  member(identifier("self"), lit("default"))
+//      :                          identifier("self")
     ))
   ])
 }
@@ -461,7 +475,7 @@ function member(object, property) {
 
 exports.adtStmt = adtStmt;
 function adtStmt(name, cases) {
-  return using(id("$$adt"), newExpr(builtin("$ADT"), [name]), [
+  return using(id("$$adt"), newExpr(builtin("$ADT"), [name, id("$$package")]), [
     letStmt(name, thunk(id("$$adt")))
   ].concat(flatten(cases.map(makeCase)))
    .concat([
@@ -689,12 +703,10 @@ function bool(a) {
 exports.decorator = decorator
 function decorator(f, name, e) {
   return flatten([e]).concat([
-    atEnd(
-      letStmt(
-        name,
-        call(f, [get(name)])
-      )
-    )
+    atEnd(expr(set(
+      get(name),
+      call(f, [get(name)])
+    )))
   ])
 }
 
@@ -782,7 +794,10 @@ function importStmt(p, kw, name) {
       [id("$$mod")],
       [
         expr(set(id("$$mod"), instantiate(kw))),
-        open(name)
+        expr(call(
+          smember(identifier("self"), id("$doImport")),
+          [id("$$mod"), name == null? lit("") : name]
+        ))
       ]
     ),
     [call(builtin("$load"), [p, id("__dirname")])]
@@ -792,15 +807,6 @@ function importStmt(p, kw, name) {
     var pub = smember(identifier("self"), id("$exports"))
     if (kw === null) return call(id("$$mod"), [pub]);
     else             return call(member(id("$$mod"), kw[0]), [pub].concat(kw[1]))
-  }
-
-  function open(name) {
-    if (name !== null) return letStmt(name, id("$$mod"))
-    else
-      return expr(call(
-        builtin("$doImport"),
-        [identifier("self"), id("$$mod")]
-      ))
   }
 }
 

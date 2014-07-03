@@ -1,9 +1,9 @@
-module {
+module Phemme.Core {
   # -- Decorators ------------------------------------------------------
   [| doc: "Attachs documentation to an object." |]
-  export _ doc: $text ^string? => ffi "(function(_data) {
-    _data.$doc = _text;
-    return _data
+  export _ doc: $text ^string? => ffi "(function($data) {
+    $data.$doc = $text;
+    return $data
   })"
 
   [| doc: "Retrieves the documentation from an object." |]
@@ -11,34 +11,34 @@ module {
 
   # -- Utilities -------------------------------------------------------
   export $error raise => ffi "(function() {
-    throw new Error(_message)
+    throw new Error($error)
   })()" where $message = $error show
 
   export _ otherwise => true
 
   # -- Contracts -------------------------------------------------------
   export $x number? =>
-  | ffi "typeof _x === 'number'" => $x
+  | ffi "typeof $x === 'number'" => $x
   | otherwise                    => "Not a number." raise
 
   export $x string? =>
-  | ffi "typeof _x === 'string'" => $x
+  | ffi "typeof $x === 'string'" => $x
   | otherwise                    => "Not a string." raise
 
   export $x boolean? =>
-  | ffi "typeof _x === 'boolean'" => $x
+  | ffi "typeof $x === 'boolean'" => $x
   | otherwise                     => "Not a boolean." raise
 
   export $x ordering? =>
-  | ffi "_x.$$name === 'Ordering'" => $x
+  | ffi "$x.$$name === 'Ordering'" => $x
   | otherwise                      => "Not an Ordering instance." raise
 
   export $x maybe? =>
-  | ffi "_x.$$name === 'Maybe'" => $x
+  | ffi "$x.$$name === 'Maybe'" => $x
   | otherwise                   => "Not a Maybe instance." raise
 
   export $x list? =>
-  | ffi "_x.$$name === 'List'" => $x
+  | ffi "$x.$$name === 'List'" => $x
   | otherwise                  => "Not a List instance." raise
 
   # -- Protocols -------------------------------------------------------
@@ -157,7 +157,7 @@ module {
   # implicitly `data Boolean = true | false`
 
   implement Equality for Boolean {
-    method $a == $b => ffi "_a === _b"
+    method $a == $b => ffi "$a === $b"
   }
 
   implement Ordered for Boolean {
@@ -168,7 +168,7 @@ module {
   }
 
   implement Representable for Boolean {
-    method $a show => ffi "_a.toString()"
+    method $a show => ffi "$a.toString()"
   }
 
   implement Bounded for Boolean {
@@ -184,17 +184,17 @@ module {
   }
 
   implement JsonSerialisable for Boolean {
-    method $a to-json => ffi "JSON.stringify(_a)"
-    method $protocol from-json: $text -> boolean? => ffi "JSON.parse(_text)"
+    method $a to-json => ffi "JSON.stringify($a)"
+    method $protocol from-json: $text -> boolean? => ffi "JSON.parse($text)"
   }
 
-  export $a ^boolean? && $b ^boolean? => ffi "_a && _b"
+  export $a ^boolean? && $b ^boolean? => ffi "$a && $b"
 
-  export $a ^boolean? || $b ^boolean? => ffi "_a || _b"
+  export $a ^boolean? || $b ^boolean? => ffi "$a || $b"
 
-  export not($a ^boolean?) => ffi "!_a"
+  export not($a ^boolean?) => ffi "!$a"
 
-  export $a ^boolean? negate => ffi "!_a"
+  export $a ^boolean? negate => ffi "!$a"
 
   export $test ^boolean? then: $consequent else: $alternate =>
   | test      => consequent()
@@ -204,8 +204,8 @@ module {
 
   # -- Number ----------------------------------------------------------
   implement Equality for Number {
-    method $this == $that => ffi "_this === _that"
-    method $this =/= $that => ffi "_this !== _that"
+    method $this == $that => ffi "$this === $that"
+    method $this =/= $that => ffi "$this !== $that"
   }
 
   implement Ordered for Number {
@@ -214,57 +214,57 @@ module {
          | ($this > $that) => Greater
          | otherwise       => Equal
 
-    method $this <  $that ^number? => ffi "_this < _that"
-    method $this >  $that ^number? => ffi "_this > _that"
-    method $this <= $that ^number? => ffi "_this <= _that"
-    method $this >= $that ^number? => ffi "_this >= _that"
+    method $this <  $that ^number? => ffi "$this < $that"
+    method $this >  $that ^number? => ffi "$this > $that"
+    method $this <= $that ^number? => ffi "$this <= $that"
+    method $this >= $that ^number? => ffi "$this >= $that"
   }
 
   implement Representable for Number {
-    method $this show => ffi "_this.toString()"
+    method $this show => ffi "$this.toString()"
   }
 
   implement Bounded for Number {
-    method $this upper-bound => ffi "_this.MIN_VALUE"
-    method $this lower-bound => ffi "_this.MIN_VALUE"
+    method $this upper-bound => ffi "$this.MIN_VALUE"
+    method $this lower-bound => ffi "$this.MIN_VALUE"
   }
 
   implement Enumerable for Number {
-    method $this successor => ffi "_this + 1"
-    method $this predecessor => ffi "_this - 1"
+    method $this successor => ffi "$this + 1"
+    method $this predecessor => ffi "$this - 1"
   }
 
   implement JsonSerialisable for Number {
-    method $this to-json => ffi "JSON.stringify(_this)"
-    method $protocol from-json: $value -> number? => ffi "JSON.parse(value)"
+    method $this to-json => ffi "JSON.stringify($this)"
+    method $protocol from-json: $value -> number? => ffi "JSON.parse($value)"
   }
 
   implement Semigroup for Number {
-    method $this + $that ^number? => ffi "_this + _that"
+    method $this + $that ^number? => ffi "$this + $that"
   }
 
   implement Monoid for Number {
     method $this empty => 0
   }
 
-  export $this ^number? - $that ^number? => ffi "_this - _that"
+  export $this ^number? - $that ^number? => ffi "$this - $that"
 
-  export $this ^number? * $that ^number? => ffi "_this * _that"
+  export $this ^number? * $that ^number? => ffi "$this * $that"
 
-  export $this ^number? / $that ^number? => ffi "_this / _that" # "
+  export $this ^number? / $that ^number? => ffi "$this / $that" # "
 
-  export $this ^number? modulus: $that ^number? => ffi "_this % _that"
+  export $this ^number? modulus: $that ^number? => ffi "$this % $that"
 
-  export $this ^number? absolute => ffi "Math.abs(_this)"
+  export $this ^number? absolute => ffi "Math.abs($this)"
 
-  export $this ^number? floor => ffi "Math.floor(_this)"
+  export $this ^number? floor => ffi "Math.floor($this)"
 
-  export $this ^number? ceil => ffi "Math.ceil(_this)"
+  export $this ^number? ceil => ffi "Math.ceil($this)"
 
-  export $this ^number? round => ffi "Math.round(_this)"
+  export $this ^number? round => ffi "Math.round($this)"
 
 
-  export $this ^number? square-root => ffi "Math.sqrt(_this)"
+  export $this ^number? square-root => ffi "Math.sqrt($this)"
 
   export $this ^number? divided-by: $that ^number? => $quotient - $quotient floor
                                                       where 
@@ -273,15 +273,15 @@ module {
   export $this ^number? is-even? => ($this modulus: $that) == 0
   export $this ^number? is-odd? => ($this modulus: $that) =/= 0
 
-  export $this ^number? acos => ffi "Math.acos(_this)"
-  export $this ^number? asin => ffi "Math.asin(_this)"
-  export $this ^number? atan => ffi "Math.atan(_this)"
-  export $this ^number? cos => ffi "Math.cos(_this)"
-  export $this ^number? exp => ffi "Math.exp(_this)"
-  export $this ^number? log => ffi "Math.log(_this)"
-  export $this ^number? pow => ffi "Math.pow(_this)"
-  export $this ^number? sin => ffi "Math.sin(_this)"
-  export $this ^number? tan => ffi "Math.tan(_this)"
+  export $this ^number? acos => ffi "Math.acos($this)"
+  export $this ^number? asin => ffi "Math.asin($this)"
+  export $this ^number? atan => ffi "Math.atan($this)"
+  export $this ^number? cos => ffi "Math.cos($this)"
+  export $this ^number? exp => ffi "Math.exp($this)"
+  export $this ^number? log => ffi "Math.log($this)"
+  export $this ^number? pow => ffi "Math.pow($this)"
+  export $this ^number? sin => ffi "Math.sin($this)"
+  export $this ^number? tan => ffi "Math.tan($this)"
   
   # Constants
   export $this PI => ffi "Math.PI"
@@ -290,15 +290,15 @@ module {
   # -- Strings ---------------------------------------------------------
   # built-in `String ~= [Char]`
   implement Equality for String {
-    method $this == $that => ffi "_this === _that"
+    method $this == $that => ffi "$this === $that"
   }
 
   implement Representable for String {
-    method $this show => ffi "_this"
+    method $this show => ffi "$this"
   }
 
   implement Semigroup for String {
-    method $this + $that ^string? => ffi "_this + _that"
+    method $this + $that ^string? => ffi "$this + $that"
   }
 
   implement Monoid for String {
@@ -307,11 +307,11 @@ module {
 
   # TODO: use a Character class to represent JS's conventional 1-length strings
   
-  export $this ^string? upcase     => ffi "_this.toUpperCase()"
-  export $this ^string? downcase   => ffi "_this.toLowerCase()"
-  export $this ^string? trim       => ffi "_this.trim()"
-  export $this ^string? trim-left  => ffi "_this.trimLeft()"
-  export $this ^string? trim-right => ffi "_this.trimRight()"
+  export $this ^string? upcase     => ffi "$this.toUpperCase()"
+  export $this ^string? downcase   => ffi "$this.toLowerCase()"
+  export $this ^string? trim       => ffi "$this.trim()"
+  export $this ^string? trim-left  => ffi "$this.trimLeft()"
+  export $this ^string? trim-right => ffi "$this.trimRight()"
 
 
   # -- Maybe -----------------------------------------------------------
@@ -405,11 +405,11 @@ module {
 
   export $xs ^list? fold: $f from: $b => ffi "(function() {
     while (true) {
-      if (_xs.$$ctag === 'Nil')  return _b
-      if (_xs.$$ctag !== '::')  throw new TypeError('Not a List.')
-      var v = _xs.$0
-      _b = _f(_b, v)
-      _xs = _xs.$1
+      if ($xs.$$ctag === 'Nil')  return $b
+      if ($xs.$$ctag !== '::')  throw new TypeError('Not a List.')
+      var v = $xs.$0
+      $b = _f($b, v)
+      $xs = $xs.$1
     }
   })()"
 

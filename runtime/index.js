@@ -29,8 +29,8 @@ var hasProp = Object.hasOwnProperty
 // IDs for data tags.
 var newTag = new function() {
   var index = 0;
-  return function(type) {
-    return '<#' + type.$$name + ':' + (++index).toString(16) + '>'
+  return function(type, file) {
+    return '<#' + type.$$name + ':' + file + '>'
   }
 }
 
@@ -109,7 +109,7 @@ function listToArray(xs) {
 
 function each(obj, f) {
   Object.keys(obj).forEach(function(k) {
-    f(k, obj[k])
+    if (!/^\$/.test(k))  f(k, obj[k])
   })
 }
 
@@ -122,13 +122,9 @@ function ensureString(a) {
 // -- Utilities ------------------------------------------------------
 function unsafeExtend(a, b) {
   for (var k in b)
-    if (!(/^$/.test(k) || b[k] == null))  a[k] = b[k]
+    if (!(/^\$/.test(k) || b[k] == null))  a[k] = b[k]
 
   return a
-}
-
-function doImport(ns, mod) {
-  unsafeExtend(ns, mod)
 }
 
 function mergeProtocols(a, b) {
@@ -155,7 +151,7 @@ Record.$add = function(name, value) {
   return value
 }
 Record.$get = function(name) {
-  if (/^$/.test(name) || this[name] == null)
+  if (/^\$/.test(name) || this[name] == null)
     throw new ReferenceError('No such method: ' + name)
 
   return this[name]
@@ -215,22 +211,22 @@ ExtRecord['rename:'] = function(self, names) {
 }
 
 // -- Protocols ------------------------------------------------------
-function Protocol(name) {
+function Protocol(name, pkg) {
   this.$impl     = {}
   this.$defaults = {}
   this.$required = []
   this.$parents  = []
   this.$methods  = {}
   this.$$name    = name
+  this.$$tag     = newTag(this, pkg)
 }
 
-Protocol.prototype.$$tag = newTag({ $$name: 'Protocol' })
+Protocol.prototype.$$tag = newTag({ $$name: 'Protocol' }, '<builtin>')
 
 Protocol.prototype.$add = function(type, impl) {
   var base = unsafeExtend({}, this.$defaults)
   var obj  = unsafeExtend(base, impl)
   checkRequisites(this, obj, tagFor(type))
-  checkParents(this, tagFor(type))
 
   this.$impl[tagFor(type)] = obj
 }
@@ -305,9 +301,9 @@ Protocol.prototype.$unpack = function(name, target, source) {
 }
 
 // -- ADTs -----------------------------------------------------------
-function ADT(name) {
+function ADT(name, pkg) {
   this.$$name  = name
-  this.$$tag   = newTag(this)
+  this.$$tag   = newTag(this, pkg)
   this.$sealed = false
   this.$ctors  = {}
 }
@@ -348,63 +344,42 @@ var NS = Object.create(ExtRecord)
 // Internal properties
 NS.$destructiveExtend = unsafeExtend
 NS.$mergeProtocols    = mergeProtocols
-NS.$doImport          = doImport
 NS.$ExtRecord         = ExtRecord
 NS.$Record            = Record
 NS.$Protocol          = Protocol
 NS.$ADT               = ADT
+NS.$protocols         = {}
+NS.$doImport = function(module, name) {
+  if (name)  this[name] = module
+  else       unsafeExtend(this, module)
+}
 NS.$doExport = function(name, unpack) {
   var source = this[name]
   if (unpack)  source().$unpack(name, this.$exports, source)
   this.$exports[name] = source
 }
-NS.$makeNamespace = function() {
+NS.$makeNamespace = function(pkg) {
   var ns = clone(this)
+  ns.$package   = pkg
   ns.$exports   = clone(this)
-  ns.$children  = []
-  ns.$protocols = { $parent: this.$protocols, $exports: {} }
-  ns.$protocols.$implementations = { $exports: {} }
-  ns.$exports.$children  = ns.$children
-  ns.$exports.$protocols = ns.$protocols
+  ns.$exports.$main = function(xs){
+    each(ns.$protocols, function(_, proto) {
+      each(proto.$impl, function(tag) {
+        checkParents(proto, tag)
+      })
+    })
+    return ns.main(xs)
+  }
   return ns
 }
-NS.$defProtocol = function(name, protocol, exports) {
-  this.$protocols[name] = protocol
-  if (exports)
-    this.$protocols.$exports[name] = protocol
+NS.$defProtocol = function(protocol) {
+  this.$protocols[tagFor(protocol)] = protocol
 }
-NS.$implementProtocol = function(proto, obj, impl, exports) {
-  var impls = this.$protocols.$implementations
-  var tag   = tagFor(obj)
-  impls[tag] = { proto: proto, impl: impl }
-  if (exports)  impls.$exports[tag] = { proto: proto, impl: impl }
-}
-NS.$setupProtocols = function() {
-  var parent = this.$protocols.$parent
-  if (parent) {
-    each(this.$protocols.$exports, function(name, proto) {
-      var outer = parent.$protocols[name]
-      if (outer)  mergeProtocols(outer, proto)
-      else        parent.$protocols[name] = proto
-    })
-  }
-  this.$children.forEach(function(a){ a.$setupProtocols() })
-}
-NS.$setupImplementations = function() {
-  var protos = this.$protocols
-  var parent = protos.$parent
-  if (parent) {
-    each(protos.$implementations, function(type, a) {
-      if (!protos[a.proto])
-        throw new ReferenceError('No such protocol: ' + a.proto)
-      protos[a.proto].$add(type, a.impl)
-    })
-    each(protos.$implementations.$exports, function(type, a) {
-      if (parent.$protocols[a.proto])
-        parent.$protocols[a.proto].$add(type, a.impl)
-    })
-  }
-  this.$children.forEach(function(a){ a.$setupImplementations() })
+NS.$implementProtocol = function(proto, obj, impl) {
+  var protocol = this.$protocols[tagFor(proto)]
+  if (!protocol)
+    throw new ReferenceError('No protocol ' + tagFor(proto))
+  protocol.$add(obj, impl)
 }
 
 

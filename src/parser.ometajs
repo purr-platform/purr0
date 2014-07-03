@@ -106,6 +106,9 @@ ometa Parser {
   extendedId = symbols
              | keyword+:ks  -> [#Id, ks.map(function(a){ return a[1] }).join('')]
              | identifier,
+  namespace  = identifier:a ('.' identifier)*:bs -> [#Id, [a].concat(bs).reduce(function(r,a){
+                                                            return r? r + '.' + a[1] : a[1]
+                                                          }, '')],
 
   // Values
   bool = kw('true'):a  -> [#Bool, true]
@@ -184,9 +187,10 @@ ometa Parser {
   useStmt = kw('use') ws expr:e -> [#Use, e],
 
   module = kw('module') ws mparms:p ws '{' (ws declaration)*:xs ws '}' -> [#Mod, p, xs, false],
-  mparms = (ws keywordArg)*:ks -> (function(i,xs, cs) {
-                                     return [i[1]? i : [#Id, 'default'], xs, cs]
-                                  }(kwId(ks), kwArgs(ks), kwCont(ks))),
+  mparms = namespace:ns (ws keywordArg)*:ks -> (function(i, xs, cs) {
+                                                 if (i[1]) ns[1] = ns[1] + ':' + i[1]
+                                                 return [ns, xs, cs]
+                                               }(kwId(ks), kwArgs(ks), kwCont(ks))),
 
   iface = kw('interface') ws identifier:a 
             ws '{' (ws ifaceDecl)*:xs ws '}' 
@@ -219,7 +223,7 @@ ometa Parser {
             | decorator:b               -> [#Deco, a, b[2], b]
             ),
 
-  importDecl = kw('import') ws string:p
+  importDecl = kw('import') ws namespace:p
                  (ws kw('with') (ws keywordApp)+:ks)?
                  (ws kw('as') ws identifier:n)?
              -> [#Import, p
