@@ -40,10 +40,23 @@ function tagFor(type) {
   :      /* otherwise */  typeof type
 }
 
+function parseName(name) {
+  return name.replace(/\$(\d+)_/g, function(_, m) { return String.fromCharCode(m) })
+}
+
+function describeFn(fn) {
+  return '<function:' + fnName(fn) + '>'
+}
+
+function fnName(fn) {
+  return fn.name? parseName(fn.name.slice(1)) : '(anonymous)'
+}
+
 function describe(value) {
   return tagFor(value) === 'number'?   value
   :      tagFor(value) === 'string'?   JSON.stringify(value)
   :      tagFor(value) === 'boolean'?  value
+  :      typeof value === 'function'?  describeFn(value)
   :      value.show?                   value.show(value)
   :      /* otherwise */               tagFor(value)
 }
@@ -389,8 +402,26 @@ NS.$implementProtocol = function(proto, obj, impl) {
     throw new ReferenceError('No protocol ' + tagFor(proto))
   protocol.$add(obj, impl)
 }
-
-
+NS.$checkContract = function f(contract, value, name) {
+  if (!contract(value)) {
+    var fn = name
+    var blame = f.caller.caller
+    throw new Error(
+      'Contract violation: expected ' + fnName(contract) + ', actual: ' + describe(value)
+    + '\nDefined in:  ' + '<function:' + name + '>'
+    + '\nBlame is on: ' + describeFn(blame)
+    )
+  }
+}
+NS.$checkCoContract = function f(contract, value, name) {
+  if (!contract(value)) {
+    throw new Error(
+      'Contract violation: expected ' + fnName(contract) + ', actual: ' + describe(value)
+    + '\nDefined in:  ' + '<function:' + name + '>'
+    + '\nBlame is on: ' + '<function:' + name + '>'
+    )
+  }
+}
 NS["print"] = function(arg) {
   console.log(arg)
 }

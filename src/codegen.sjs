@@ -281,6 +281,7 @@ function module(name, args, body, contracts, topLevel) {
   return lets(
     name,
     compileContract(
+      identifier(name.value),
       contracts,
       fn(
         identifier(name.value),
@@ -321,6 +322,7 @@ function ifaceMethDecl(key, args, contracts) {
       [
         key,
         compileContract(
+          identifier(key.value),
           contracts,
           lambda(
             identifier(key.value),
@@ -377,30 +379,34 @@ function hasContracts(xs) {
   return xs.filter(Boolean).length > 0
 }
 
-function compileContract(contracts, lambda) {
+function compileContract(_id, contracts, lambda) {
   contracts = contracts || [[]];
   var pre    = contracts[0];
   var pos    = contracts[1];
+  var name   = _id? lit(_id.name) : lit('(anonymous)');
   if (!hasContracts(pre) && !pos)  return lambda;
   
   var args   = pre.map(function(_,i){ return id('$$' + i) });
   var result = call(lambda, args);
   return fn(
-    id('$$_contract_$$'),
+    _id,
     args,
     [
       args.map(function(a, i) {
         if (!pre[i])  return null
-        else          return expr(set(a, call(pre[i], [a])))
+        else          return expr(call(builtin("$checkContract"), [pre[i], a, name]))
       }).filter(Boolean),
-      ret(pos? call(pos, [result]) : result)
-    ]
+      varsDecl([[id("$$ret"), call(lambda, args)]]),
+      pos? expr(call(builtin("$checkCoContract"), [pos, id("$$ret"), name])) : null,
+      ret(id("$$ret"))
+    ].filter(Boolean)
   )
 }
 
 exports.lambda = lambda;
 function lambda(id, args, expr, contracts) {
   return compileContract(
+    id,
     contracts,
     fn(id, args, Array.isArray(expr)? flatten(expr) : [expr])
   )
@@ -495,6 +501,7 @@ function adtStmt(name, cases) {
         [
           key,
           compileContract(
+            identifier(key.value),
             contract,
             fn(
               identifier(key.value), 

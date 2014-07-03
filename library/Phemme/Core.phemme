@@ -17,29 +17,12 @@ module Phemme.Core {
   export _ otherwise => true
 
   # -- Contracts -------------------------------------------------------
-  export $x number? =>
-  | ffi "typeof $x === 'number'" => $x
-  | otherwise                    => "Not a number." raise
-
-  export $x string? =>
-  | ffi "typeof $x === 'string'" => $x
-  | otherwise                    => "Not a string." raise
-
-  export $x boolean? =>
-  | ffi "typeof $x === 'boolean'" => $x
-  | otherwise                     => "Not a boolean." raise
-
-  export $x ordering? =>
-  | ffi "$x.$$name === 'Ordering'" => $x
-  | otherwise                      => "Not an Ordering instance." raise
-
-  export $x maybe? =>
-  | ffi "$x.$$name === 'Maybe'" => $x
-  | otherwise                   => "Not a Maybe instance." raise
-
-  export $x list? =>
-  | ffi "$x.$$name === 'List'" => $x
-  | otherwise                  => "Not a List instance." raise
+  export $x number? => ffi "typeof $x === 'number'"
+  export $x string? => ffi "typeof $x === 'string'"
+  export $x boolean? => ffi "typeof $x === 'boolean'" 
+  export $x ordering? => ffi "$x.$$name === 'Ordering'"
+  export $x maybe? => ffi "$x.$$name === 'Maybe'"
+  export $x list? => ffi "$x.$$name === 'List'"
 
   # -- Protocols -------------------------------------------------------
   [| doc: """
