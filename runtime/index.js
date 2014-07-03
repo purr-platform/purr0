@@ -62,12 +62,20 @@ function makeFn(n, Ctor) {
 function checkRequisites(proto, o, type) {
   var implemented = Object.keys(o).sort()
   var missing = proto.$required.filter(function(a) {
-    return implemented.indexOf(a) === -1
-  })
+                  return implemented.indexOf(a) === -1
+                })
   if (missing.length)
     throw new TypeError(
-      type + " doesn't implement all requisites of " + proto.$$name + ".\n"
+      type + " doesn't implement all requisites of " + proto.$$tag + ".\n"
     + "Missing methods: " + missing.join(", ")
+    )
+  var extraneous = implemented.filter(function(a) {
+                     return proto.$required.indexOf(a) === -1
+                   })
+  if (extraneous.length)
+    throw new TypeError(
+      type + " provides methods that are not defined by " + proto.$$tag + ".\n"
+    + "Extraneous methods: " + extraneous.join(", ")
     )
 }
 
@@ -75,7 +83,7 @@ function checkParents(proto, type) {
   proto.$parents.forEach(function(a) {
     if (!(type in a.$impl))
       throw new TypeError(
-        "No implementation of the required interface " + a.$$name
+        "No implementation of the required interface " + a.$$tag
       + " was found for " + type + "."
       )
   })
@@ -89,7 +97,7 @@ function checkConflicts(proto, base) {
   })
   if (conflicts.length)
     throw new TypeError(
-      proto.$$name + " can't extend " + base.$$name + " because the "
+      proto.$$tag + " can't extend " + base.$$tag + " because the "
     + "following requirements conflict: " + conflicts.join(', ')
     )
 }
@@ -253,14 +261,14 @@ Protocol.prototype.$getImplementation = function(type) {
   var impl = this.$impl[tag]
   if (!impl)
     throw new TypeError(
-      'No available implementations of ' + this.$$name + ' for: ' + tag
+      'No available implementations of ' + this.$$tag + ' for: ' + tag
     )
 
   return impl
 }
 
 Protocol.prototype.$derivation = function() {
-  throw new Error(this.$$name + ' does not support automatic derivation.')
+  throw new Error(this.$$tag + ' does not support automatic derivation.')
 }
 
 Protocol.prototype.$extend = function(base) {
@@ -288,7 +296,7 @@ Protocol.prototype.$equals = function(another) {
 
 Protocol.prototype.$merge = function(another) {
   if (!(this.$equals(another)))
-    throw new Error("Can't unify diverging protocols " + this.$$name + " and " + another.$$name)
+    throw new Error("Can't unify diverging protocols " + this.$$tag + " and " + another.$$tag)
 
   var impl = another.$impl
   Object.keys(impl).forEach(function(k) {
@@ -310,7 +318,7 @@ function ADT(name, pkg) {
 
 ADT.prototype.$add = function(tag, ctor) {
   if (this.sealed)
-    throw new Error('Trying to add a constructor to the sealed AST ' + this.$$name)
+    throw new Error('Trying to add a constructor to the sealed AST ' + this.$$tag)
 
   ctor.prototype = Object.create(this)
   ctor.prototype.$$name = this.$$name + "." + tag
@@ -321,7 +329,7 @@ ADT.prototype.$add = function(tag, ctor) {
 
 ADT.prototype.$get = function(name) {
   if (this.$ctors[name] == null)
-    throw new ReferenceError('No constructor "' + name + '" for ' + this.$$name)
+    throw new ReferenceError('No constructor "' + name + '" for ' + this.$$tag)
   return this[name]
 }
 
