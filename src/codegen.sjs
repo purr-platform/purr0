@@ -244,6 +244,9 @@ function generatePartialArgs(args) {
   })
 }
 
+function lets(name, value) {
+  return expr(set(get(name), value))
+}
 
 // High-level stuff
 exports.number = number;
@@ -258,14 +261,17 @@ function string(text) {
 
 exports.letStmt = letStmt;
 function letStmt(name, value) {
-  return expr(set(get(name), value))
+  return expr(call(
+    smember(identifier("self"), id("$add")),
+    [name, value]
+  ))
 }
 
 exports.module = module;
 function module(name, args, body, contracts, topLevel) {
   if (!topLevel)  throw new Error('Submodules are not supported right now.')
 
-  return letStmt(
+  return lets(
     name,
     compileContract(
       contracts,
@@ -274,24 +280,12 @@ function module(name, args, body, contracts, topLevel) {
         [id("$Phemme")].concat(args),
         [
           varsDecl([
-            [id("_self"), call(smember(id("$Phemme"), id("$clone")), [])],
-            [id("$exports"), obj([])],
-          ]),
-          letStmt(lit("$_protocols"), obj([]))
-        ].concat(
-          sort(flatten(body.concat([            
-            expr(call(
-              builtin("$mergeProtocols"),
-              [id("_self"), id("$Phemme")]
-            )),
-          ]))))
-          .concat([
-            expr(set(
-              smember(id("$exports"), id("$_protocols")), 
-              get(lit("$_protocols"))
-            )),
-            ret(id("$exports"))
+            [identifier("self"), call(smember(id("$Phemme"), id("$makeNamespace")), [])],
           ])
+        ].concat(sort(flatten(body)))
+         .concat([
+           ret(smember(identifier("self"), id("$exports")))
+         ])
       )
     )
   )
@@ -426,10 +420,8 @@ exports.exportStmt = exportStmt;
 function exportStmt(name, unpack) {
   return atExportPhase(expr(
     call(
-      builtin("$doExport"),
-      [id("$exports"), name, get(name)].concat(
-        unpack? [lit(true)] : []
-      )
+      smember(identifier("self"), id("$doExport")),
+      [name, lit(!!unpack)]
     )
   ))
 }
@@ -797,8 +789,9 @@ function importStmt(p, kw, name) {
   )));
 
   function instantiate(kw) {
-    if (kw === null) return call(id("$mod"), [id('_self')]);
-    else             return call(member(id("$mod"), kw[0]), [id('_self')].concat(kw[1]))
+    var pub = smember(identifier("self"), id("$exports"))
+    if (kw === null) return call(id("$mod"), [pub]);
+    else             return call(member(id("$mod"), kw[0]), [pub].concat(kw[1]))
   }
 
   function open(name) {

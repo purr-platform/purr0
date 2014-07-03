@@ -127,12 +127,6 @@ function unsafeExtend(a, b) {
   return a
 }
 
-function doExport(target, name, source, unpack) {
-  if (unpack)
-    source().$unpack(name, target, source)
-  target[name] = source
-}
-
 function doImport(ns, mod) {
   unsafeExtend(ns, mod)
 }
@@ -354,12 +348,16 @@ var NS = Object.create(ExtRecord)
 // Internal properties
 NS.$destructiveExtend = unsafeExtend
 NS.$mergeProtocols    = mergeProtocols
-NS.$doExport          = doExport
 NS.$doImport          = doImport
 NS.$ExtRecord         = ExtRecord
 NS.$Record            = Record
 NS.$Protocol          = Protocol
 NS.$ADT               = ADT
+NS.$doExport = function(name, unpack) {
+  var source = this[name]
+  if (unpack)  source().$unpack(name, this.$exports, source)
+  this.$exports[name] = source
+}
 NS.$makeNamespace = function() {
   var ns = clone(this)
   ns.$exports   = clone(this)
