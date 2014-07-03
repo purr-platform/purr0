@@ -304,6 +304,14 @@ exports.ifaceStmt = ifaceStmt;
 function ifaceStmt(name, decls) {
   return using(id("$$proto"), newExpr(builtin("$Protocol"), [name, id("$$package")]), [
     letStmt(name, thunk(id("$$proto"))),
+    letStmt(
+      lit(name.value + "?"),
+      fn(
+        null,
+        [id("$value")],
+        [ret(call(smember(id("$$proto"), id("$hasImplementation")), [id("$value")]))]
+      )
+    ),
     expr(call(
       smember(identifier("self"), id("$defProtocol")),
       [id("$$proto")]
@@ -482,7 +490,13 @@ function member(object, property) {
 exports.adtStmt = adtStmt;
 function adtStmt(name, cases) {
   return using(id("$$adt"), newExpr(builtin("$ADT"), [name, id("$$package")]), [
-    letStmt(name, thunk(id("$$adt")))
+    letStmt(name, thunk(id("$$adt"))),
+    letStmt(
+      lit(name.value + "?"),
+      fn(null, [id("$value")],
+         [ret(eq(
+           call(builtin("$tag"), [id("$value")]),
+           call(builtin("$tag"), [id("$$adt")])))]))
   ].concat(flatten(cases.map(makeCase)))
    .concat([
      expr(call(smember(id("$$adt"), id("$seal")), []))

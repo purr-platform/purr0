@@ -269,6 +269,10 @@ Protocol.prototype.$addDefault = function(key, fn) {
   this.$defaults[key] = fn
 }
 
+Protocol.prototype.$hasImplementation = function(type) {
+  return tagFor(type) in this.$impl
+}
+
 Protocol.prototype.$getImplementation = function(type) {
   var tag  = tagFor(type)
   var impl = this.$impl[tag]
@@ -370,6 +374,7 @@ NS.$Record            = Record
 NS.$Protocol          = Protocol
 NS.$ADT               = ADT
 NS.$protocols         = {}
+NS.$tag               = tagFor
 NS.$doImport = function(module, name) {
   if (name)  this[name] = module
   else       unsafeExtend(this, module)
