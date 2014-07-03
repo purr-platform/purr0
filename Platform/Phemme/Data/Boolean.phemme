@@ -1,0 +1,44 @@
+module Phemme.Data.Boolean {
+  import Phemme.Protocols
+  import Phemme.Core
+
+  implement Equality for Boolean {
+    method $this === $that => ffi "$this === $that"
+  }
+
+  implement Ordered for Boolean {
+    method $this compare-to: $that => case $this, $that of
+      | true, false => Less
+      | false, true => Greater
+      | _           => Equal
+  }
+
+  implement Representable for Boolean {
+    method $this show => ffi "$this.toString()"
+  }
+
+  implement Bounded for Boolean {
+    method $this upper-bound => true
+    method $this lower-bound => false
+  }
+
+  implement Enumerable for Boolean {
+    method $this successor => case $this of
+                              | false => true
+    method $this predecessor => case $this of
+                                | true => false
+  }
+
+  export $this ^Boolean? && $that ^Boolean? => ffi "$this && $that"
+
+  export $this ^Boolean? || $that ^Boolean? => ffi "$this || $that"
+
+  export not($this ^Boolean?) => ffi "!$this"
+
+  export $this ^Boolean? negate => "!$this"
+
+  export $test ^Boolean? then: $consequent ^Function? else: $alternate ^Function? =>
+    | test      => $consequent()
+    | otherwise => $alternate()
+
+}

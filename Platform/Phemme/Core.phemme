@@ -1,0 +1,28 @@
+module Phemme.Core {
+ 
+  [| doc: "Attachs documentation to an object." |]
+  export _ doc: $text ^String? => ffi "(function($data) {
+    $data.$doc = $text;
+    return $data
+  })"
+
+  [| doc: "Retrieves the documentation from an object." |]
+  export $data doc => ffi "_data.$doc || '(No documentation available)'"
+
+  [| doc: "An alias for `true'" |]
+  export _ otherwise => true
+
+  [| doc: "Retrieves the internal `tag' of an object." |]
+  export $x tag => ffi "$self.$tag($x)"
+
+  export $x Number?   => ffi "typeof $x === 'number'"
+  export $x String?   => ffi "typeof $x === 'string'"
+  export $x Boolean?  => ffi "typeof $x === 'boolean'" 
+  export $x Function? => ffi "typeof $x === 'function'"    
+
+  # -- Builtin types ---------------------------------------------------
+  export data Ordering = Less | Equal | Greater
+  export data Maybe    = Nothing | Just(_)
+  export data Either   = Failure(_) | Success(_)
+
+}

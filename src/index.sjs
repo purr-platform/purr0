@@ -79,7 +79,7 @@ function runtime(file) {
 exports.runFile = runFile
 function runFile(file) {
   var rt = runtime(file);
-  rt.$lookupPaths = [path.dirname(file), path.join(__dirname, '../library')];
+  rt.$lookupPaths = [path.dirname(file), path.join(__dirname, '../Platform')];
   rt.$moduleCache = { };
   return run(file, rt)(rt).$main()
 }

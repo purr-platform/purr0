@@ -1,0 +1,88 @@
+module Phemme.Protocols {
+  import Phemme.Core
+
+  export
+  interface Equality {
+    method $this === $that -> Boolean?
+    method $this =/= $that -> Boolean? => ffi "!$x" where $x = $this === $that
+  }
+
+  export
+  interface Ordered {
+    need Equality
+    method $this compare-to: $that -> Ordering?
+    method $this < $that -> Boolean?  => ($this compare-to: $that) === Less
+    method $this > $that -> Boolean?  => ($this compare-to: $that) =/= Greater
+    method $this <= $that -> Boolean? => ($this compare-to: $that) === Greater
+    method $this >= $that -> Boolean? => ($this compare-to: $that) =/= Less
+    method $this max: $that => if $this > $that then $this 
+                                                else $that
+    method $this min: $that => if $this < $that then $this 
+                                                else $that
+  }
+
+  export
+  interface Representable {
+    method $this describe -> String?
+  }
+
+  export
+  interface Bounded {
+    method $this upper-bound
+    method $this lower-bound
+  }
+
+  export
+  interface Enumerable {
+    need Bounded
+    need Ordered
+    method $this successor
+    method $this predecessor
+    method $start up-to: $end =>
+      let $next = $start sucessor
+        | $max  = $end max: $start upper-bound
+      in
+        if $next >= $max then Nil
+                         else $start :: ($next up-to: $end)
+  }
+
+  export
+  interface Indexable {
+    method $this at: $index ^Number? -> Maybe?
+    method $this includes?: $index -> Boolean? => case $this at: $index of
+                                                  | Nothing => false
+                                                  | _       => true
+  }
+
+  export
+  interface Semigroup {
+    method $this + $that ^Semigroup? -> Semigroup?
+  }
+
+  export
+  interface Monoid {
+    need Semigroup
+    method $this empty -> Monoid?
+  }
+
+  export
+  interface Mappable {
+    method $this map: $transformation ^Function? -> Mappable?
+  }
+
+  export
+  interface Applicative {
+    need Mappable
+    method $this of: $value
+    method $this apply-to: $a ^Mappable?
+    method $this <*> $a => $this apply-to: $a
+  }
+
+  export
+  interface Chainable {
+    need Applicative
+    method $this chain: $transformation ^Function?
+    method $this >>= $f => $this chain: $f
+  }
+
+}

@@ -1,0 +1,53 @@
+module Phemme.Data.List {
+
+  import Phemme.Core
+
+  export data List = Nil | _ :: _ ^List?
+ 
+  export $xs filter: $f => case $xs of
+    | Nil         => Nil
+    | $x :: $rest => if $f($x) then $x :: $rest filter: $f
+                               else $rest filter: $f
+
+  export $xs first => case $xs of
+    | Nil     => Nothing
+    | $a :: _ => $a Just
+
+  export $xs first! => case $xs of
+    | $a :: _ => $a
+
+  export $xs rest => case $xs of
+    | Nil        => Nothing
+    | _ :: $rest => $rest
+
+  export $xs last => case $xs of
+    | Nil        => Nothing
+    | $a :: Nil  => a Just
+    | _ :: $rest => $rest last
+
+  export $xs last! => case $xs of
+    | $a :: Nil  => $a
+    | _ :: $rest => $rest last!
+
+  export $xs is-empty? => case $xs of
+    | Nil    => true
+    | _ :: _ => false
+
+  export $xs ^List? fold: $f from: $b => ffi "(function() {
+    while (true) {
+      if ($xs.$$ctag === 'Nil')  return $b
+      if ($xs.$$ctag !== '::')  throw new TypeError('Not a List.')
+      var v = $xs.$0
+      $b = _f($b, v)
+      $xs = $xs.$1
+    }
+  })()"
+
+  export $xs reverse => $xs fold: ($a $b => $b :: $a) from: Nil
+
+  export $xs fold-right: $f from: $b => $xs reverse fold: $f from: $b
+
+  export $xs length => $xs fold: ($a _ => $a + 1) from: 0
+
+
+}
