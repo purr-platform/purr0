@@ -47,8 +47,8 @@ Context.prototype.newVar = function() {
  * @summary String → String
  */
 function sanitiseName(name) {
-  return '_' + name.replace(/(\W)/g, function(x) {
-                                       return '$' + x.charCodeAt(0) })
+  return '$' + name.replace(/(\W)/g, function(x) {
+                                       return '$' + x.charCodeAt(0) + '_' })
 }
 
 function flatten(xs) {
@@ -186,7 +186,7 @@ function newExpr(callee, args) {
 }
 
 function builtin(name) {
-  return smember(id("$Phemme"), id(name))
+  return smember(id("$$Phemme"), id(name))
 }
 
 function set(what, value) {
@@ -205,7 +205,7 @@ function prog(body) {
 
 function scoped(expr) {
   return call(
-    lambda(null, [id("$scope")], ret(expr)),
+    lambda(null, [id("$$scope")], ret(expr)),
     [call(smember(identifier("self"), id("clone")), [identifier("self")])]
   )
 }
@@ -219,7 +219,7 @@ function force(value) {
 }
 
 function get(name) {
-  return member(id("_self"), name)
+  return member(identifier("self"), name)
 }
 
 function thunk(expr) {
@@ -233,14 +233,14 @@ function isPartial(expr) {
 function rewritePartials(args) {
   var n = 0
   return args.map(function(arg) {
-    return isPartial(arg)?  id("$" + (n++))
+    return isPartial(arg)?  id("$$" + (n++))
     :      /* otherwise */  arg
   })
 }
 
 function generatePartialArgs(args) {
   return args.filter(isPartial).map(function(_, i) {
-    return id("$" + i)
+    return id("$$" + i)
   })
 }
 
@@ -277,10 +277,10 @@ function module(name, args, body, contracts, topLevel) {
       contracts,
       fn(
         identifier(name.value),
-        [id("$Phemme")].concat(args),
+        [id("$$Phemme")].concat(args),
         [
           varsDecl([
-            [identifier("self"), call(smember(id("$Phemme"), id("$makeNamespace")), [])],
+            [identifier("self"), call(smember(id("$$Phemme"), id("$makeNamespace")), [])],
           ])
         ].concat(sort(flatten(body)))
          .concat([
@@ -293,23 +293,23 @@ function module(name, args, body, contracts, topLevel) {
 
 exports.ifaceStmt = ifaceStmt;
 function ifaceStmt(name, decls) {
-  return using(id("$proto"), newExpr(builtin("$Protocol"), [name]), [
-    letStmt(name, thunk(id("$proto"))),
+  return using(id("$$proto"), newExpr(builtin("$Protocol"), [name]), [
+    letStmt(name, thunk(id("$$proto"))),
     expr(set(
-      member(smember(id("_self"), id("$_protocols")), name),
-      id("$proto")
+      member(smember(identifier("self"), id("$_protocols")), name),
+      id("$$proto")
     ))
   ].concat(sort(flatten(decls))));
 }
 
 exports.ifaceMethDecl = ifaceMethDecl
 function ifaceMethDecl(key, args, contracts) {
-  args = args.map(λ(x, i) -> id('$' + i));
+  args = args.map(λ(x, i) -> id('$$' + i));
 
   return letStmt(
     key,
     call(
-      smember(id("$proto"), id("$require")),
+      smember(id("$$proto"), id("$require")),
       [
         key,
         compileContract(
@@ -319,7 +319,7 @@ function ifaceMethDecl(key, args, contracts) {
             args,
             ret(call(
               member(call(
-                smember(id("$proto"), id('$getImplementation')),
+                smember(id("$$proto"), id('$getImplementation')),
                 [args[0]]
               ), key),
               args
@@ -336,7 +336,7 @@ function ifaceMethDef(key, args, val) {
   return [
     ifaceMethDecl(key, args),
     expr(call(
-      smember(id("$proto"), id("$addDefault")),
+      smember(id("$$proto"), id("$addDefault")),
       [ key, val ]
     ))
   ]
@@ -345,7 +345,7 @@ function ifaceMethDef(key, args, val) {
 exports.ifaceNeed = ifaceNeed
 function ifaceNeed(base) {
   return atEnd(expr(call(
-    smember(id("$proto"), id("$extend")),
+    smember(id("$$proto"), id("$extend")),
     [ base ]
   )))
 }
@@ -370,10 +370,10 @@ function compileContract(contracts, lambda) {
   var pos    = contracts[1];
   if (!hasContracts(pre) && !pos)  return lambda;
   
-  var args   = pre.map(function(_,i){ return id('$' + i) });
+  var args   = pre.map(function(_,i){ return id('$$' + i) });
   var result = call(lambda, args);
   return fn(
-    id('$_contract_$'),
+    id('$$_contract_$$'),
     args,
     [
       args.map(function(a, i) {
@@ -437,12 +437,12 @@ function parseExpr(js) {
 exports.program = program;
 function program(name, module) {
   return prog([
-    varsDecl([[id("_self"), obj([])]]),
+    varsDecl([[identifier("self"), obj([])]]),
     module,
     expr(set(
       smember(id("module"), id("exports")),
-      name.value === 'default'?  member(id("_self"), lit("default"))
-      :                          id("_self")
+      name.value === 'default'?  member(identifier("self"), lit("default"))
+      :                          identifier("self")
     ))
   ])
 }
@@ -461,23 +461,23 @@ function member(object, property) {
 
 exports.adtStmt = adtStmt;
 function adtStmt(name, cases) {
-  return using(id("$adt"), newExpr(builtin("$ADT"), [name]), [
-    letStmt(name, thunk(id("$adt")))
+  return using(id("$$adt"), newExpr(builtin("$ADT"), [name]), [
+    letStmt(name, thunk(id("$$adt")))
   ].concat(flatten(cases.map(makeCase)))
    .concat([
-     expr(call(smember(id("$adt"), id("$seal")), []))
+     expr(call(smember(id("$$adt"), id("$seal")), []))
    ]));
 
   function makeCase(pair) {
     var type     = pair[0];
     var key      = pair[1];
     var argNames = key.value.split(':').map(lit)
-    var args     = pair[2].map(λ(_, i) -> id('$' + i));
+    var args     = pair[2].map(λ(_, i) -> id('$$' + i));
     var contract = pair[3]
 
     return [
       expr(call(
-        smember(id("$adt"), id("$add")),
+        smember(id("$$adt"), id("$add")),
         [
           key,
           compileContract(
@@ -490,7 +490,7 @@ function adtStmt(name, cases) {
           )
         ]
       )),
-      letStmt(key, member(id("$adt"), key))
+      letStmt(key, member(id("$$adt"), key))
     ]
   }
 
@@ -498,16 +498,16 @@ function adtStmt(name, cases) {
     switch (kind) {
       case 'Val': return [];
       case 'Bin': return [
-        expr(set(smember(thisExpr(), id('$0')), args[0])),
-        expr(set(smember(thisExpr(), id('$1')), args[1]))
+        expr(set(smember(thisExpr(), id('$$0')), args[0])),
+        expr(set(smember(thisExpr(), id('$$1')), args[1]))
       ];
       case 'Un': return [
-        expr(set(smember(thisExpr(), id('$0')), args[0]))
+        expr(set(smember(thisExpr(), id('$$0')), args[0]))
       ]
       case 'Kw': return [
-        expr(set(smember(thisExpr(), id('$0')), args[0]))
+        expr(set(smember(thisExpr(), id('$$0')), args[0]))
       ].concat(args.slice(1).map(function(a, i) {
-        return expr(set(smember(thisExpr(), id('$' + (i + 1))), a))
+        return expr(set(smember(thisExpr(), id('$$' + (i + 1))), a))
       }));
       default: throw new Error('Unknow data constructor kind: ' + kind)
     }
@@ -529,17 +529,17 @@ function guardTry(xs) {
   return node('TryStatement',
               { block: block(xs)
               , handler: node('CatchClause',
-                             { param: id('e')
+                             { param: id('$$e')
                              , body: block([
                                ifStmt(
-                                 unary('!', true, eq(id('e'), lit('$case-failed'))),
-                                 throwStmt(id('e'))
+                                 unary('!', true, eq(id('$$e'), lit('$$case-failed'))),
+                                 throwStmt(id('$$e'))
                                )
                              ]) })})
 }
 function failCase() {
   return throwStmt(
-    lit('$case-failed')
+    lit('$$case-failed')
   )
 }
 function whenCase(test, consequent) {
@@ -547,7 +547,7 @@ function whenCase(test, consequent) {
 }
 function newCaseVar(oldVar) {
   var num = Number(oldVar.name.match(/(\d*)$/)[1] || '0');
-  return id('$match' + (num + 1))
+  return id('$$match' + (num + 1))
 }
 
 
@@ -559,21 +559,21 @@ function caseStmt(vs, xs) {
       throwStmt(newExpr(id('TypeError'), [lit('No cases matched the value.')]))
     ]),
     vs.map(function(_, i) {
-      return id("$match_val" + i)
+      return id("$$match_val" + i)
     })
   )
 }
 
 exports.casePatt = casePatt
 function casePatt(patts, e) {
-  var ctx = new Context("$match")
+  var ctx = new Context("$$match")
   var vars = patts.map(function(){ return ctx.newVar() })
 
   return guardTry([
     ret(patts.reduceRight(function(res, patt, i) {
       var name = ctx.newVar()
       return withMatch(
-        [id("$match_val" + i)],
+        [id("$$match_val" + i)],
         patt(name, res, ctx),
         [name]
       )
@@ -625,7 +625,7 @@ function caseUn(tag, body) {
     return whenCase(
       eq(smember(val, id("$$ctag")), tag),
       ret(withMatch(
-        [smember(val, id('$0'))],
+        [smember(val, id('$$0'))],
         body(subVar, e, ctx),
         [subVar]
       ))
@@ -640,11 +640,11 @@ function caseBin(tag, l, r) {
     return whenCase(
       eq(smember(val, id("$$ctag")), tag),
       ret(withMatch(
-        [smember(val, id("$0"))],
+        [smember(val, id("$$0"))],
         l(
           lvar,
           withMatch(
-            [smember(val, id("$1"))],
+            [smember(val, id("$$1"))],
             r(rvar, e, ctx),
             [rvar]
           ),
@@ -665,7 +665,7 @@ function caseKw(tag, args) {
       ret(names.reduceRight(function(res, name, i) {
         var lvar = ctx.newVar();
         return withMatch(
-          [smember(val, id('$' + i))],
+          [smember(val, id('$$' + i))],
           args[i](lvar, res, ctx),
           [lvar]
         )
@@ -677,7 +677,7 @@ function caseKw(tag, args) {
 exports.use = use
 function use(e) {
   return delayed(
-    expr(call(builtin("$destructiveExtend"), [id("_self"), e]))
+    expr(call(builtin("$destructiveExtend"), [identifier("self"), e]))
   )
 }
 
@@ -736,7 +736,7 @@ function ifExpr(test, consequent, alternate) {
 exports.partial = partial
 function partial() {
   return extend(
-    fn(null, [id("$0")], [ret(id("$0"))]),
+    fn(null, [id("$$0")], [ret(id("$$0"))]),
     { 'x-partial': true }
   )
 }
@@ -779,9 +779,9 @@ function importStmt(p, kw, name) {
   return atImportPhase(expr(call(
     fn(
       null,
-      [id("$mod")],
+      [id("$$mod")],
       [
-        expr(set(id("$mod"), instantiate(kw))),
+        expr(set(id("$$mod"), instantiate(kw))),
         open(name)
       ]
     ),
@@ -790,16 +790,16 @@ function importStmt(p, kw, name) {
 
   function instantiate(kw) {
     var pub = smember(identifier("self"), id("$exports"))
-    if (kw === null) return call(id("$mod"), [pub]);
-    else             return call(member(id("$mod"), kw[0]), [pub].concat(kw[1]))
+    if (kw === null) return call(id("$$mod"), [pub]);
+    else             return call(member(id("$$mod"), kw[0]), [pub].concat(kw[1]))
   }
 
   function open(name) {
-    if (name !== null) return letStmt(name, id("$mod"))
+    if (name !== null) return letStmt(name, id("$$mod"))
     else
       return expr(call(
         builtin("$doImport"),
-        [identifier("self"), id("$mod")]
+        [identifier("self"), id("$$mod")]
       ))
   }
 }
