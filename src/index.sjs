@@ -25,7 +25,8 @@
  * @module phemme
  */
 
-var read      = require('fs').readFileSync;
+var fs        = require('fs')
+var read      = fs.readFileSync;
 var path      = require('path');
 var vm        = require('vm');
 var escodegen = require('escodegen');
@@ -77,18 +78,25 @@ function runtime(file) {
 
 exports.runFile = runFile
 function runFile(file) {
-  var rt = runtime(file)
-  rt.$rootPackage = path.dirname(file)
-  rt.$packageMap  = { 'Phemme.Core': path.join(__dirname, '../phemme/base.phemme') }
+  var rt = runtime(file);
+  rt.$lookupPaths = [path.dirname(file), path.join(__dirname, '../library')];
+  rt.$moduleCache = { };
   return run(file, rt)(rt).$main()
 }
 
 function $require(module, dir) {
-  if (module in this.$packageMap)
-    var file = this.$packageMap[module]
-  else
-    var file = path.join(this.$rootPackage, module.replace(/\./g, '/') + '.phemme')
-  return run(file, this)
+  if (module in this.$moduleCache)
+    return this.$moduleCache[module];
+
+  var file     = module.replace(/\./g, '/') + '.phemme';
+  var fullPath = null
+  for (var i = 0; i < this.$lookupPaths.length; ++i) {
+    fullPath = path.join(this.$lookupPaths[i], file);
+    if (!fs.existsSync(fullPath))  fullPath = null
+    else                           break
+  }
+  if (!fullPath)  throw new Error("Couldn't find the module: " + module);
+  return this.$moduleCache[module] = run(fullPath, this)
 }
 
 function makeModule(dir, code) {
