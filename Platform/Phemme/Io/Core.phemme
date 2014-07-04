@@ -1,0 +1,9 @@
+module Phemme.Io.Core {
+  import Phemme.Protocols
+  import Phemme.Core
+  import Phemme.Data.Task
+
+  let _ ~ _ => Nothing
+  export $x ^Representable? puts => task: ($next => ffi "console.log($text)" ~ $next(Nothing))
+                                    where $text = $x describe
+}
