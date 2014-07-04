@@ -118,8 +118,8 @@ function listToArray(xs) {
   var result = []
   while (xs.$$ctag != 'Nil') {
     if (xs.$$ctag == '::') {
-      result.push(xs.$0)
-      xs = xs.$1
+      result.push(xs.$$0)
+      xs = xs.$$1
     } else {
       throw new TypeError('Not a List: ' + xs)
     }
@@ -357,6 +357,8 @@ NS.$Protocol          = Protocol
 NS.$ADT               = ADT
 NS.$protocols         = {}
 NS.$tag               = tagFor
+NS.$newTag            = newTag
+NS.$listToArray       = listToArray
 NS.$doImport = function(module, name) {
   if (name)  this[name] = module
   else       unsafeExtend(this, module)
