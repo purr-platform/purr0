@@ -8,8 +8,8 @@ module Phemme.Data.Task {
 
   export data Task = _ ^Function? Cleanup: _ ^Function?
 
-  let _ ~ _ => ffi "void 0" # Convenience for running two functions
-  let void  => ffi "void 0"
+  let _ ~ _ => Nothing # Convenience for running two functions
+  let void  => Nothing
 
   # -- Constructors
   export _ task: $f ^Function? => $f Cleanup: (=> void)
