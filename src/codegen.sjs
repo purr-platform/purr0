@@ -404,7 +404,7 @@ function compileContract(_id, contracts, lambda) {
         if (!pre[i])  return null
         else          return expr(call(builtin("$checkContract"), [pre[i], a, name]))
       }).filter(Boolean),
-      varsDecl([[id("$$ret"), call(lambda, args)]]),
+      varsDecl([[id("$$ret"), call(smember(lambda, id("call")), [id("this")].concat(args))]]),
       pos? expr(call(builtin("$checkCoContract"), [pos, id("$$ret"), name])) : null,
       ret(id("$$ret"))
     ].filter(Boolean)
@@ -469,8 +469,6 @@ function program(name, module) {
     expr(set(
       smember(id("module"), id("exports")),
       member(identifier("self"), name)
-//      name.value === 'default'?  member(identifier("self"), lit("default"))
-//      :                          identifier("self")
     ))
   ])
 }
@@ -520,7 +518,9 @@ function adtStmt(name, cases) {
             fn(
               identifier(key.value), 
               args,
-              makeBody(type, argNames, args)
+              makeBody(type, argNames, args).concat([
+                ret(id("this"))
+              ])
             )
           )
         ]
