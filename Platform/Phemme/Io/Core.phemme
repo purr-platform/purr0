@@ -3,7 +3,25 @@ module Phemme.Io.Core {
   import Phemme.Core
   import Phemme.Data.Task
 
+  ffi "var readline = require('readline')"
+
   let _ ~ _ => Nothing
-  export $x ^Representable? puts => task: ($next => ffi "console.log($text)" ~ $next(Nothing))
-                                    where $text = $x describe
+  let void => @Success(Nothing)
+
+  export $x ^Representable? display => task: ($next => ffi "console.log($text)" ~ $next(void))
+                                       where $text = $x describe
+
+  export $text ^String? output => task: ($next => ffi "process.stdout.write($text)" ~ $next(void))
+
+  export _ get-line =>
+    let
+      $rl = ffi "readline.createInterface({ input: process.stdin, output: process.stdout })"
+    in
+      task: ffi "(function($next) {
+                   $rl.question('', function($text) {
+                     $next($self.Success($text))
+                   })
+                 })"
+      cleanup: _ => ffi "$rl.close()"
+ 
 }
