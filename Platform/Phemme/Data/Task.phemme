@@ -36,7 +36,7 @@ module Phemme.Data.Task {
   }
 
   implement Mappable for Task {
-    method $task map: $f => $task >>= (Task.of: ->> $f)
+    method $task map: $f => $task >>= ($a => Task of: $f($a))
   }
 
   implement Applicative for Task {
