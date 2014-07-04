@@ -307,9 +307,9 @@ function ifaceStmt(name, decls) {
     letStmt(
       lit(name.value + "?"),
       fn(
-        null,
+        identifier(name.value + "?"),
         [id("$value")],
-        [ret(call(smember(id("$$proto"), id("$hasImplementation")), [id("$value")]))]
+        [ret(call(builtin("$hasImplementation"), [id("$$proto"), id("$value")]))]
       )
     ),
     expr(call(
@@ -337,8 +337,8 @@ function ifaceMethDecl(key, args, contracts) {
             args,
             ret(call(
               member(call(
-                smember(id("$$proto"), id('$getImplementation')),
-                [args[0]]
+                builtin('$getImplementation'),
+                [id("$$proto"), args[0]]
               ), key),
               args
             ))

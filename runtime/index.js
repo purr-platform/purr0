@@ -57,7 +57,6 @@ function describe(value) {
   :      tagFor(value) === 'string'?   JSON.stringify(value)
   :      tagFor(value) === 'boolean'?  value
   :      typeof value === 'function'?  describeFn(value)
-  :      value.show?                   value.show(value)
   :      /* otherwise */               tagFor(value)
 }
 
@@ -269,21 +268,6 @@ Protocol.prototype.$addDefault = function(key, fn) {
   this.$defaults[key] = fn
 }
 
-Protocol.prototype.$hasImplementation = function(type) {
-  return tagFor(type) in this.$impl
-}
-
-Protocol.prototype.$getImplementation = function(type) {
-  var tag  = tagFor(type)
-  var impl = this.$impl[tag]
-  if (!impl)
-    throw new TypeError(
-      'No available implementations of ' + this.$$tag + ' for: ' + tag
-    )
-
-  return impl
-}
-
 Protocol.prototype.$derivation = function() {
   throw new Error(this.$$tag + ' does not support automatic derivation.')
 }
@@ -376,6 +360,20 @@ NS.$tag               = tagFor
 NS.$doImport = function(module, name) {
   if (name)  this[name] = module
   else       unsafeExtend(this, module)
+}
+NS.$hasImplementation = function(proto, type) {
+  return tagFor(type) in this.$protocols[tagFor(proto)].$impl
+}
+NS.$getImplementation = function(proto, type) {
+  var tag    = tagFor(type)
+  var $proto = this.$protocols[tagFor(proto)]
+  var impl   = $proto.$impl[tag]
+  if (!impl)
+    throw new TypeError(
+      'No available implementations of ' + $proto.$$tag + ' for: ' + tag
+    )
+
+  return impl
 }
 NS.$doExport = function(name, unpack) {
   var source = this[name]
