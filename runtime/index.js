@@ -306,9 +306,7 @@ Protocol.prototype.$requisites = function() {
 }
 
 Protocol.prototype.$equals = function(another) {
-  var reqs  = this.$requisites().sort()
-  var reqs2 = another.$requisites().sort()
-  return equal(reqs, reqs2)
+  return this.$$tag === another.$$tag
 }
 
 Protocol.prototype.$merge = function(another) {
@@ -399,7 +397,11 @@ NS.$makeNamespace = function(pkg) {
   return ns
 }
 NS.$defProtocol = function(protocol) {
-  this.$protocols[tagFor(protocol)] = protocol
+  var tag    = tagFor(protocol)
+  var protos = this.$protocols
+
+  if (tag in protos)  protos[tag].$merge(protocol)
+  else                protos[tag] = protocol
 }
 NS.$implementProtocol = function(proto, obj, impl) {
   var protocol = this.$protocols[tagFor(proto)]
