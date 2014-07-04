@@ -46,7 +46,7 @@ module Phemme.Data.Task {
   }
 
   implement Monoid for Task {
-    method $this empty => task: ($next => [])
+    method $this empty => task: ($next => $next(Nothing Success))
   }
 
   implement Semigroup for Task {
