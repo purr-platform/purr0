@@ -24,7 +24,7 @@ module Phemme.Data.Task {
 
   export $t ^Task? run: $f ^Function? => case $t of
     | $computation Cleanup: $cleanup => $computation( $value => case $value of
-                                                    | Success($a) => $f($a) ~ cleanup()
+                                                    | Success($a) => $f($a) ~ $cleanup()
                                                     )
 
   # -- Protocols
