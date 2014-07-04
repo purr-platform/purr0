@@ -64,6 +64,8 @@ var reserved = [ ':'  // Method parameter
                , 'if'
                , 'then'
                , 'else'
+               , 'do'
+               , 'return'
                ]
 
 /**
@@ -259,6 +261,15 @@ ometa Parser {
   ifExpr    = kw('if') ws expr:a ws kw('then') ws expr:b ws kw('else') ws expr:c -> [#IfExpr, a, b, c],
   whereExpr = appExpr:e ws kw('where') ws bindingList:xs      -> [#Bind, xs, e],
 
+  doExpr = kw('do') ws '{' ws listOf(#doCase, ';'):xs ws '}' -> [#Do, xs],
+  doTailAction = expr:e -> [#DoAct, [#Id, '_'], e],
+  doAction = pattId:a ws "<-" ws expr:e -> [#DoAct, a, e]
+           | doTailAction,
+  doTailPure = kw('return') ws expr:e -> [#DoRet, [#Id, '_'], e],
+  doPure = pattId:a ws "<-" ws expr:e -> [#DoRet, id, e]
+         | doTailPure,
+  doCase = doAction
+         | doPure,
 
   expr = letExpr
        | ifExpr
@@ -287,6 +298,7 @@ ometa Parser {
   primaryExpr = ffi
               | value
               | caseExpr
+              | doExpr
               | lambda
               | identifier:a         -> [#App, [#Var, 'self'], a, [[#Var, 'self']]]
               | '@' extendedId:i     -> [#Member, [#Var, 'self'], i]

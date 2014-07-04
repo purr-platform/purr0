@@ -835,3 +835,33 @@ exports.parseProg = parseProg
 function parseProg(js) {
   return esprima.parse(js).body
 }
+
+exports.doExpr = doExpr
+function doExpr(xs) {
+  var last = xs[xs.length - 1];
+  var ys = xs.slice(0, -1).reduceRight(function(ret, e) {
+    return [e[0], compile(ret[0], e[1], e[2], ret[1])]
+  }, [last[0], last[2]])[1];
+  return ys;
+
+  function compile(tag, id, e, result) {
+    var meth = methFor(tag);
+    return call(
+      member(identifier("self"), lit(meth)),
+      [
+        e, 
+        fn(
+          null,
+          [id],
+          [ret(result)]
+        )
+      ]
+    )
+  }
+
+  function methFor(tag) {
+    return tag === 'Act'?  'chain:'
+    :      tag === 'Ret'?  'map:'
+    :      /* otherwise */ (function(){ throw new Error('Unknown Do case: ' + tag) })()
+  }
+}

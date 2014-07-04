@@ -76,6 +76,10 @@ ometa Compiler {
   CaseBin cc:tag [cc:l cc:r]        -> _.caseBin(tag, l, r),
   CaseKw cc:tag [cc*:args]          -> _.caseKw(tag, args),
 
+  Do [cc*:xs]                       -> _.doExpr(xs),
+  DoAct scc:id cc:e                 -> [#Act, id, e],
+  DoRet scc:id cc:e                 -> [#Ret, id, e],
+
   Multi cc*:as                      -> as,
   Nil                               -> null,
   Empty                             -> _.empty(),
