@@ -21,7 +21,7 @@ module Phemme.Data.Number {
   }
 
   implement Representable for Number {
-    method $this show => ffi "$this.toString()"
+    method $this describe => ffi "$this.toString()"
   }
 
   implement Bounded for Number {

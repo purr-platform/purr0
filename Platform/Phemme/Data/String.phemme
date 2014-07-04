@@ -5,7 +5,7 @@ module Phemme.Data.String {
   }
 
   implement Representable for String {
-    method $this show => ffi "$this"
+    method $this describe => ffi "$this"
   }
 
   implement Semigroup for String {

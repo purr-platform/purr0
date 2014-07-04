@@ -16,9 +16,9 @@ module Phemme.Data.Maybe {
   }
 
   implement Representable for Maybe {
-    method $this show => case $this of
-                         | Nothing  => "Nothing"
-                         | Just($a) => "Just(" + $a show + ")"
+    method $this describe => case $this of
+                             | Nothing  => "Nothing"
+                             | Just($a) => "Just(" + $a describe + ")"
   }
 
   implement Semigroup for Maybe {
