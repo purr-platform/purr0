@@ -40,7 +40,7 @@ module Phemme.Data.Task {
   }
 
   implement Applicative for Task {
-    method _ of: $value => task: ($next => $next(value))
+    method _ of: $value => task: ($next => $next($value Success))
     method $task apply-to: $mappable => $task >>= ($f => $mappable map: $f)
   }
 
