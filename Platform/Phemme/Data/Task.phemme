@@ -14,6 +14,7 @@ module Phemme.Data.Task {
   # -- Constructors
   export _ task: $f ^Function? => $f Cleanup: (=> void)
   export _ task: $f ^Function? cleanup: $g ^Function? => $f Cleanup: $g
+  export _ fail: $x => task: $next => $next($x Failure)
 
   # -- Runs things (meant for the end of the world, a la Haskell's unsafePerformIO)
   export $t ^Task? run: $f ^Function? recover: $g ^Function? => case $t of
