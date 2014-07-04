@@ -77,8 +77,8 @@ ometa Compiler {
   CaseKw cc:tag [cc*:args]          -> _.caseKw(tag, args),
 
   Do [cc*:xs]                       -> _.doExpr(xs),
-  DoAct scc:id cc:e                 -> [#Act, id, e],
-  DoRet scc:id cc:e                 -> [#Ret, id, e],
+  DoAct scc:id cc:e                 -> [id, e],
+  DoRet scc:id cc:e                 -> [id, _.doRet(e)],
 
   Multi cc*:as                      -> as,
   Nil                               -> null,

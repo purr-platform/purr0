@@ -266,10 +266,10 @@ ometa Parser {
   doAction = pattId:a ws "<-" ws expr:e -> [#DoAct, a, e]
            | doTailAction,
   doTailPure = kw('return') ws expr:e -> [#DoRet, [#Id, '_'], e],
-  doPure = pattId:a ws "<-" ws expr:e -> [#DoRet, id, e]
+  doPure = pattId:a ws "<-" ws kw('return') ws expr:e -> [#DoRet, a, e]
          | doTailPure,
-  doCase = doAction
-         | doPure,
+  doCase = doPure
+         | doAction,
 
   expr = letExpr
        | ifExpr

@@ -840,28 +840,36 @@ exports.doExpr = doExpr
 function doExpr(xs) {
   var last = xs[xs.length - 1];
   var ys = xs.slice(0, -1).reduceRight(function(ret, e) {
-    return [e[0], compile(ret[0], e[1], e[2], ret[1])]
-  }, [last[0], last[2]])[1];
-  return ys;
+      return compile(e[0], e[1], ret)
+    }, last[1]);
 
-  function compile(tag, id, e, result) {
-    var meth = methFor(tag);
+  return call(fn(
+    null,
+    [],
+    [
+      varsDecl([[id("$$doType"), xs[0][1]]]),
+      ret(ys)
+    ]
+  ), []);
+
+  function compile(name, e, result) {
     return call(
-      member(identifier("self"), lit(meth)),
+      member(identifier("self"), lit('chain:')),
       [
-        e, 
+        e,
         fn(
           null,
-          [id],
-          [ret(result)]
+          [name],
+          [
+            ret(result)
+          ]
         )
       ]
     )
   }
+}
 
-  function methFor(tag) {
-    return tag === 'Act'?  'chain:'
-    :      tag === 'Ret'?  'map:'
-    :      /* otherwise */ (function(){ throw new Error('Unknown Do case: ' + tag) })()
-  }
+exports.doRet = doRet
+function doRet(x) {
+  return call(member(identifier("self"), lit('of:')), [id("$$doType"), x])
 }
