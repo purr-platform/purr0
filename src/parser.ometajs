@@ -147,7 +147,8 @@ ometa Parser {
 
   keywordPattern = pattId:a ws preC:c1 (ws keywordArg)+:ks                   -> [kwId(ks), [a].concat(kwArgs(ks)), [c1].concat(kwCont(ks))],
   unaryPattern   = pattId:a ws preC:c1 ws identifier:b                       -> [b, [a], [c1]]
-                 | identifier:a ws '(' ws pattId:b ws preC:c1 ws ')'         -> [a, [b], [c1]],
+                 | identifier:a ws '(' ws pattId:b ws preC:c1 ws ')'         -> [a, [b], [c1]]
+                 | preC:c1 ws identifier:a                                   -> [a, [[#Id, '_']], [c1]],
   binaryPattern  = pattId:a ws preC:c1 ws symbols:b ws pattId:c ws preC:c2 -> [b, [a, c], [c1, c2]],
 
   keywordArg     = keyword:k ws pattId:n ws preC:c -> [k, n, c],
