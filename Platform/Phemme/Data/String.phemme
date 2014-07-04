@@ -1,7 +1,10 @@
 module Phemme.Data.String {
 
+  import Phemme.Core
+  import Phemme.Protocols
+
   implement Equality for String {
-    method $this == $that => ffi "$this === $that"
+    method $this === $that => ffi "$this === $that"
   }
 
   implement Representable for String {
