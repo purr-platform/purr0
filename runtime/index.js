@@ -392,7 +392,15 @@ NS.$makeNamespace = function(pkg) {
         checkParents(proto, tag)
       })
     })
-    return ns.main(xs)
+    var task = ns.main(xs)
+    if (task.$$tag !== '<#Task:Phemme.Data.Task>')
+      throw new TypeError('Expected a Task, got: ' + tagFor(task))
+    var computation = task.$$0
+    var cleanup = task.$$1
+    computation(function(val) {
+      cleanup()
+      if (val.$$ctor === 'Failure') throw val.$$0
+    })
   }
   return ns
 }
@@ -428,9 +436,6 @@ NS.$checkCoContract = function f(contract, value, name) {
     + '\nBlame is on: ' + '<function:' + name + '>'
     )
   }
-}
-NS["print"] = function(arg) {
-  console.log(arg)
 }
 NS.Number   = function(){ return { $$tag: 'number'   } }
 NS.String   = function(){ return { $$tag: 'string'   } }
