@@ -17,10 +17,10 @@ module Phemme.Data.Task {
 
   # -- Runs things (meant for the end of the world, a la Haskell's unsafePerformIO)
   export $t ^Task? run: $f ^Function? recover: $g ^Function? => case $t of
-    | $computation Cleanup: $cleanup => $compuation( $value => case $value of
-                                                   | Success($a) => $f($a) ~ $cleanup()
-                                                   | Failure($a) => $g($a) ~ $cleanup()
-                                                   )
+    | $computation Cleanup: $cleanup => $computation( $value => case $value of
+                                                    | Success($a) => $f($a) ~ $cleanup()
+                                                    | Failure($a) => $g($a) ~ $cleanup()
+                                                    )
 
   export $t ^Task? run: $f ^Function? => case $t of
     | $computation Cleanup: $cleanup => $computation( $value => case $value of
