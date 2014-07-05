@@ -1,0 +1,57 @@
+module Data.Vector {
+  import Phemme.Core
+  import Data.List
+
+  ffi """
+  function $$Vector() { }
+  $$Vector.prototype.$$name = 'Vector'
+  $$Vector.prototype.$$tag = $self.$newTag($$Vector.prototype, $$package)
+  $$Vector.$$tag = $$Vector.prototype.$$tag
+  $$Vector.$new = function($xs) {
+    var instance = new $$Vector()
+    instance.$items = $self.$listToArray($xs)
+    return instance
+  }
+  $$Vector.$make = function($xs) {
+    var instance = new $$Vector()
+    instance.$items = $xs
+    return instance
+  }
+  """
+
+  let $xs as-vector => ffi "$$Vector.$make($xs)"
+  export $xs Vector? => ffi "$self.$tagFor($xs) === $$Vector.$$tag"
+
+  export Vector => ffi "$$Vector"
+  export _ Vector: $xs ^List? => ffi "$$Vector.$new($xs)"
+
+  implement Representable for Vector {
+    method $this describe => "<#Vector: " + ffi "$this.$items.map($self.describe).join(', ')" + ">"
+  }
+
+  implement Bounded for Vector {
+    method $this upper-bound => ffi "$this.$items.length"
+    method $this lower-bound => ffi "0"
+  }
+
+  implement Indexable for Vector {
+    method $this at: $index => ffi "(function() {
+      if ($index < 0 || $index >= $this.$items.length)
+        throw new RangeError('Index out of bounds: ' + $index)
+      return $this.$items[$index]
+    })"
+  }
+
+  implement Semigroup for Vector {
+    method $this + $that ^Vector? => ffi "$this.$items.concat($that.$items)" as-vector
+  }
+
+  implement Monoid for Vector {
+    method $this empty => ffi "[]" as-vector
+  }
+
+  implement Mappable for Vector {
+    method $this map: $f => ffi "$this.$items.map(function(a){ return $f(a) })" as-vector
+  }
+
+}
