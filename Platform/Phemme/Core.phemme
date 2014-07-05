@@ -15,6 +15,7 @@ module Phemme.Core {
   [| doc: "Retrieves the internal `tag' of an object." |]
   export $x tag => ffi "$self.$tag($x)"
 
+  # -- Predicates ------------------------------------------------------
   export $x Number?   => ffi "typeof $x === 'number'"
   export $x String?   => ffi "typeof $x === 'string'"
   export $x Boolean?  => ffi "typeof $x === 'boolean'" 
@@ -26,4 +27,154 @@ module Phemme.Core {
   export data Either   = Failure(_) | Success(_)
   export data List     = Nil | _ :: _ ^List?
 
+  # -- Protocols -------------------------------------------------------
+  export
+  interface Equality {
+    method $this === $that -> Boolean?
+    method $this =/= $that -> Boolean? => ffi "!$x" where $x = $this === $that
+  }
+
+  export
+  interface Ordered {
+    need Equality
+    method $this compare-to: $that -> Ordering?
+    method $this < $that -> Boolean?  => ($this compare-to: $that) === Less
+    method $this > $that -> Boolean?  => ($this compare-to: $that) =/= Greater
+    method $this <= $that -> Boolean? => ($this compare-to: $that) === Greater
+    method $this >= $that -> Boolean? => ($this compare-to: $that) =/= Less
+    method $this max: $that =>
+      | this > that => $this
+      | otherise    => $that
+    method $this min: $that =>
+      | this < that => $this
+      | otherwise   => $that
+  }
+
+  export
+  interface Numeric {
+    method $this - $that -> Numeric?
+    method $this * $that -> Numeric?
+    method $this absolute -> Numeric?
+    method $this negate -> Numeric?
+  }
+
+  export
+  interface Integral {
+    need Numeric
+    method $this divide-by: $that -> Integral?
+    method $this modulus: $that -> Integral?
+  }
+
+  export
+  interface Floating {
+    need Numeric
+    method $this / $that -> Floating?
+    method $this truncate -> Floating?
+    method $this round -> Floating?
+    method $this ceiling -> Floating?
+    method $this floor -> Floating?
+    method $this is-nan -> Boolean?
+    method $this is-infinite? -> Boolean?
+    method $this is-finite? -> Boolean? => ffi "!$x" where $x = $this is-infinite?
+    method $this is-negative-zero? -> Boolean?
+  }
+
+  export
+  interface Representable {
+    method $this describe -> String?
+  }
+  
+  export
+  interface Parseable {
+    method $type parse: $representation ^String? 
+  }
+
+  export
+  interface Bounded {
+    method $this upper-bound -> Bounded?
+    method $this lower-bound -> Bounded?
+  }
+
+  export
+  interface Enumerable {
+    need Bounded
+    need Ordered
+    method $this successor -> Enumerable?
+    method $this predecessor -> Enumerable?
+    method $start up-to: $end -> List? =>
+      let $next = $start sucessor
+        | $max  = $end max: $start upper-bound
+      in
+        if $next >= $max then Nil
+                         else $start :: ($next up-to: $end)
+  }
+
+  export
+  interface Indexable {
+    method $this at: $index -> Maybe?
+    method $this includes?: $index -> Boolean? => case $this at: $index of
+                                                  | Nothing => false
+                                                  | _       => true
+  }
+  
+  export
+  interface Container {
+    need Indexable
+    method $this at: $index put: $value -> Container?
+    method $this remove-at: $index -> Container?
+  }
+
+  export
+  interface Sliceable {
+    need Bounded
+    need Indexable
+    method $this slice-from: $start to: $end -> Sliceable?
+  }
+
+  export
+  interface Semigroup {
+    method $this + $that ^Semigroup? -> Semigroup?
+  }
+
+  export
+  interface Monoid {
+    need Semigroup
+    method $this empty -> Monoid?
+  }
+
+  export
+  interface Functor {
+    method $this map: $transformation ^Function? -> Mappable?
+  }
+ 
+  export
+  interface Applicative {
+    need Mappable
+    method $this of: $value
+    method $this apply-to: $a ^Mappable?
+    method $this <*> $a => $this apply-to: $a
+  }
+
+  export
+  interface Chainable {
+    method $this chain: $transformation ^Function?
+    method $this >>= $f => $this chain: $f
+  }
+
+  export
+  interface Alternative {
+    need Applicative
+    method $this none -> Alternative?
+    method $this or: $that -> Alternative?
+    method $this <|> $that -> Alternative?
+  }
+
+  export
+  interface Foldable {
+    need Monoid
+    method $this fold-right: $transformation ^Function? from: $initial-value
+    method $this fold => $this fold-right: _ + _ from: $this empty
+    method $this fold-using: $f => $this fold-right: ($a $b => $f($a) + $b) from: $this empty
+    method $this fold: $f from: $initial => $this fold-right: ($a $b => $f($b, $a)) from: $initial
+  }
 }
