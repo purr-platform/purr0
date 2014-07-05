@@ -119,11 +119,11 @@ ometa Parser {
   digits = <digit+>:a -> Number(a),
   number = digits:a ('.' digits:b)? -> [#Num, a, b || 0],
   
-  stringEscape     = '\\' '"',
+  stringEscape     = '\\' char:a -> a,
   stringChar       = (stringEscape | (~seq('"') char)):a -> a,
   unescapableChars = ~seq('"""') char,
   string           = seq('"""') <unescapableChars*>:as seq('"""') -> [#Str, as]
-                   | '"' <stringChar*>:as '"'                     -> [#Str, as],
+                   | '"' (stringChar)*:as '"'                     -> [#Str, as.join('')],
 
   vector = '[' ws expr:hd (ws ',' ws expr)*:tl ws ']' -> [#List, [hd].concat(tl)]
          | '[' ws ']'                                 -> [#List, []],
