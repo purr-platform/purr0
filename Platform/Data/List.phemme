@@ -1,6 +1,6 @@
 module Data.List {
   import Phemme.Core
-  import Phemme.Boolean
+  import Data.Boolean
 
   # -- Implicitly: data List = Nil | _ :: List
   export Nil
