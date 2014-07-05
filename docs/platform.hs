@@ -329,10 +329,10 @@ module Io.Console where
 
 module Io.FileSystem.Path where
   data Path = Relative | Root | Path \ String
-  deriving Equality, Representable, Parseable, Semigroup, Monoid, Foldable
+  deriving Equality, Representable, Parseable, Semigroup, Monoid
   Path parent -> Path
-  Path filename -> Path
-  Path extension -> String
+  Path filename -> Maybe String
+  Path extension -> Maybe String
   Path relative? -> Boolean
   Path absolute? -> Boolean
   
