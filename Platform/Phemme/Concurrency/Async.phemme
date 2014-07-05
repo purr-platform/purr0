@@ -1,0 +1,88 @@
+module Phemme.Concurrency.Control {
+  import Phemme.Protocols
+  import Phemme.Core
+  import Phemme.Data.Task
+  import Phemme.Data.List
+  import Phemme.Data.Vector
+  import Phemme.Control.Monad
+
+  export _ ~ _ => Nothing
+
+  export never => task: => Nothing
+    
+  export $xs ^List? sequentially => $xs sequence-with: Task
+  
+  export $xs ^List? parallel =>
+    task: ffi """
+    function($next) {
+      var xs       = $self.$listToArray($xs)
+      var len      = xs.length
+      var result   = new Array(len)
+      var resolved = false
+
+      xs.forEach(runComputation)
+      return $self.Nothing()
+
+      function runComputation(task, i) {
+        $self['run:recover:'](function Success(value) {
+          if (resolved)  return
+          result[i] = value
+          len = len - 1
+          if (len === 0) {
+            resolved = true
+            $next($self.Success($self.Vector().$make(result)))
+        }, function Failure(error) {
+          if (resolved)  return
+          resolved = true
+          $next($self.Failure(error))
+        })
+      }
+    })"""
+ 
+  export $t1 ^Task? or: $t2 ^Task? =>
+    task: ffi """
+    function($next) {
+      var resolved = false
+      $self['run:recover:']($t1, succeed, fail)
+      $self['run:recover:']($t2, succeed, fail)
+      return $self.Nothing()
+
+      funciton succeed(v) { transition(self['Success'](v)) }
+      function fail(e)    { transition(self['Failure'](v)) }
+      function transition(v) {
+        if (!resolved) {
+          resolved = true
+          $next(v)
+        }
+      }
+    }"""
+    cleanup: => case $t1, $t2 of
+      | _ Clenup: $c1, _ Cleanup: $c2 => $c1() ~ $c2()
+      
+  export $xs ^List? choose-first => $xs fold: _ or: _ from: never
+
+  export $xs ^List? try-all =>
+    task: ffi """
+    function($next) {
+      var xs = $self.$listToArray($xs)
+      var resolved = false
+      var pending  = xs.length
+      var failures = new Array(pending)
+
+      xs.forEach(function(x, i) {
+        $self['run:recover:'](succeed, accumulateFailure(index))
+      })
+
+      function succeed(value) {
+        $next($self.Success(value))
+      }
+
+      function accumulateFailure(index){ return function(error) {
+        if (resolved)  return
+        failures[index] = error
+        pending = pending - 1
+        if (pending === 0)
+          $next($self.Failure($self.Vector().$make(failures)))
+      }}
+    }"""
+}
