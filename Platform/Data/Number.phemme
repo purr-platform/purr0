@@ -1,0 +1,67 @@
+module Data.Number {
+  import Phemme.Core
+  
+  implement Equality for Number {
+    method $this === $that => ffi "$this === $that"
+    method $this =/= $that => ffi "$this !== $that"
+  }
+
+  implement Ordered for Number {
+    method $this compare-to: $that ^Number? =>
+      | ffi "$this < $that" => Less
+      | ffi "$this > $that" => Greater
+      | otherwise           => Equal
+
+    method $this < $that ^Number? => ffi "$this < $that"
+    method $this > $that ^Number? => ffi "$this > $that"
+    method $this <= $that ^Number? => ffi "$this <= $that"
+    method $this >= $that ^Number? => ffi "$this >= $that"
+  }
+
+  implement Numeric for Number {
+    method $this - $that ^Number? => ffi "$this - $that"
+    method $this * $that ^Number? => ffi "$this * $that"
+    method $this absolute => ffi "Math.abs($this)"
+    method $this negate => ffi "-$this"
+  }
+
+  implement Floating for Number {
+    method $this / $that => ffi "$this / $that"
+    method $this truncate => ffi "Math.max(0, Math.floor($this))"
+    method $this round => ffi "Math.round($this)"
+    method $this ceiling => ffi "Math.ceil($this)"
+    method $this is-nan? => ffi "isNaN($this)"
+    method $this is-finite? => ffi "isFinite($this)"
+    method $this is-negative-zero? => ffi "(x === 0) && ((1/x) === -Infinity)"
+  }
+
+  implement Representable for Number {
+    method $this describe => ffi "$this.toString()"
+  }
+
+  implement Parseable for Number {
+    method $this parse: $repr => let $x = ffi "Number($repr)"
+                                 in
+                                   if $x is-nan? then "Not a number" Failure
+                                                 else $x Success
+  }
+
+  implement Bounded for Number {
+    method upper-bound => ffi "$this.MAX_VALUE"
+    method lower-bound => ffi "$this.MIN_VALUE"
+  }
+
+  implement Enumerable for Number {
+    method $this successor => ffi "$this + 1"
+    method $this predecessor => ffi "$this - 1"
+  }
+
+  implement Semigroup for Number {
+    method $this + $that ^Number? => ffi "$this + $that"
+  }
+
+  implement Monoid for Number {
+    method $this empty => 0
+  }
+
+}

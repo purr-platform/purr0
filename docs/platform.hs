@@ -176,6 +176,12 @@ module Data.String where
   String trim-right -> String
 
 
+module Data.Number where  -- IEEE 754 Double-Precision foating points
+  type Number
+  deriving Equality, Ordered, Numeric, Integral, Floating, Representable, Parseable
+         , Bounded, Enumerable, Semigroup, Monoid
+
+
 module Data.List where
   data List = Nil | a :: List
   deriving Equality, Representable, Bounded, Indexable, Sliceable, Container

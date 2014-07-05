@@ -61,7 +61,7 @@ module Phemme.Core {
   export
   interface Integral {
     need Numeric
-    method $this divide-by: $that -> Integral?
+    method $this divide-by: $that
     method $this modulus: $that -> Integral?
   }
 
@@ -73,9 +73,8 @@ module Phemme.Core {
     method $this round -> Floating?
     method $this ceiling -> Floating?
     method $this floor -> Floating?
-    method $this is-nan -> Boolean?
-    method $this is-infinite? -> Boolean?
-    method $this is-finite? -> Boolean? => ffi "!$x" where $x = $this is-infinite?
+    method $this is-nan? -> Boolean?
+    method $this is-finite? -> Boolean?
     method $this is-negative-zero? -> Boolean?
   }
 
