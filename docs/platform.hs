@@ -39,7 +39,8 @@ data Ordering = Less | Equal | Greater
 data Maybe    = Nothing | a Just
 data Either   = a Failure | a Success
 data List     = Nil | a :: List
-
+data DivisionResult { quotient :: Integral, remainder :: Integral }
+  
 
 -- | Protocols
 class Equality where
@@ -55,8 +56,32 @@ class Equality => Ordered where
   a max: a -> a
   a min: a -> a
 
+class Numeric where
+  a - a -> a
+  a * a -> a
+  a negate -> a
+  a absolute -> a
+
+class Numeric => Integral where
+  a divide-by: a -> DivisionResult
+  a modulus: a -> a
+
+class Numeric => Floating where
+  a / a -> a
+  a truncate -> a
+  a round -> a
+  a ceiling -> a
+  a floor -> a
+  a is-nan? -> a
+  a is-infinite? -> a
+  a is-finite? -> a
+  a is-negative-zero? -> a
+
 class Representable where
   a describe -> String
+
+class Parseable where
+  Parseable parse: String -> Either(String, a)
 
 class Bounded where
   B a lower-bound -> a
