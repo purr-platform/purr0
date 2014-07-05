@@ -1,0 +1,68 @@
+module Data.List {
+  import Phemme.Core
+  import Phemme.Boolean
+
+  # -- Implicitly: data List = Nil | _ :: List
+  export Nil
+  export ::
+  export List
+  export List?
+
+  implement Equality for List {
+    method $this === $that ^List? => case $this, $that of
+      | $x :: $xs, $y :: $ys => ($x === $y) && ($xs === $ys)
+      | Nil, Nil             => true
+  }
+
+  implement Representable for List {
+    method $this describe  => "[" + $this to-string + "]"
+                               where
+                                 $xs to-string => case $xs of
+                                 | $x :: $ys => $x describe + ", " + $ys to-string
+                                 | Nil       => "(nil)"
+  }
+
+  implement Bounded for List {
+    method $this lower-bound => 0
+    method $this upper-bound => $this length
+  }
+  
+  implement Foldable for List {
+    method $this fold: $f from: $b => ffi "(function() {
+      while(true) {
+        if ($this.$$ctag === 'Nil')  return $b
+        if ($this.$$ctag !== '::')   throw new TypeError('Not a List.')
+        var v = $this.$$0
+        $b = $f($b, v)
+        $this = $this.$$1
+      }
+    }())"
+
+    method $this fold-right: $f from: $b => $this reverse fold: $f from: $b
+  }
+
+  implement Semigroup for List {
+    method $this + $that ^List? => case $this, $that of
+      | Nil, $ys       => $ys
+      | $x :: $xs, $ys => $x :: ($xs + $ys)
+  }
+
+  implement Monoid for List {
+    method $this empty => Nil
+  }
+
+  implement Functor for List {
+    method $this map: $f => $this fold-right: ($xs $x => $f($x) :: $xs) from: Nil
+  }
+
+  implement Applicative for List {
+    method $this apply-to: $that => $this >>= ($that map: _)
+  }
+
+  implement Chainable for List {
+    method $this chain: $f => $this map: ($a => $f($a)) |> _ fold: (_ + _) from: Nil
+  }
+
+  export $xs ^List? reverse => $xs fold: ($a $b => $b :: $a) from: Nil
+  export $xs ^List? length => $xs fold: ($a _ => $a + 1) from: 0
+}
