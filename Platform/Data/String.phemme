@@ -7,8 +7,7 @@ module Data.String {
   export String?
 
   ffi """
-  var $$Char = $self.Char()
-  function $asChar(a) { return $$Char.$new(a) }
+  function $asChar(a) { return $self.Char().$new(a) }
   """
 
   implement Equality for String {
