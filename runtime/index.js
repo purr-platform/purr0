@@ -42,14 +42,15 @@ function tagFor(type) {
 
 function parseName(name) {
   return name.replace(/\$(\d+)_/g, function(_, m) { return String.fromCharCode(m) })
+             .replace(/^\$/, '')
 }
 
 function describeFn(fn) {
-  return '<function:' + fnName(fn) + '>'
+  return '<function: ' + fnName(fn) + '>'
 }
 
 function fnName(fn) {
-  return fn.name? parseName(fn.name.slice(1)) : '(anonymous)'
+  return fn.name? parseName(fn.name) : '(anonymous)'
 }
 
 function describe(value) {
@@ -422,8 +423,8 @@ NS.$checkContract = function f(contract, value, name) {
     var fn = name
     var blame = f.caller.caller
     throw new Error(
-      'Contract violation: expected ' + fnName(contract) + ', actual: ' + describe(value)
-    + '\nDefined in:  ' + '<function:' + name + '>'
+      'Contract violation: expected ' + fnName(contract) + ' as input, actual: ' + describe(value)
+    + '\nDefined in:  ' + '<function: ' + parseName(name) + '>'
     + '\nBlame is on: ' + describeFn(blame)
     )
   }
@@ -431,9 +432,9 @@ NS.$checkContract = function f(contract, value, name) {
 NS.$checkCoContract = function f(contract, value, name) {
   if (!contract(value)) {
     throw new Error(
-      'Contract violation: expected ' + fnName(contract) + ', actual: ' + describe(value)
-    + '\nDefined in:  ' + '<function:' + name + '>'
-    + '\nBlame is on: ' + '<function:' + name + '>'
+      'Contract violation: expected ' + fnName(contract) + ' as result, actual: ' + describe(value)
+    + '\nDefined in:  ' + '<function: ' + parseName(name) + '>'
+    + '\nBlame is on: ' + '<function: ' + parseName(name) + '>'
     )
   }
 }
