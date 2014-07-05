@@ -86,7 +86,7 @@ module Phemme.Core {
   
   export
   interface Parseable {
-    method $type parse: $representation ^String? 
+    method $type parse: $representation ^String? -> Either?
   }
 
   export
