@@ -491,7 +491,7 @@ function adtStmt(name, cases) {
     letStmt(name, thunk(id("$$adt"))),
     letStmt(
       lit(name.value + "?"),
-      fn(null, [id("$value")],
+      fn(identifier(name.value + "?"), [id("$value")],
          [ret(eq(
            call(builtin("$tag"), [id("$value")]),
            call(builtin("$tag"), [id("$$adt")])))]))
