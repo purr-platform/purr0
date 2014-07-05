@@ -18,8 +18,9 @@ module Data.List {
     method $this describe  => "[" + $this to-string + "]"
                                where
                                  $xs to-string => case $xs of
+                                 | $x :: Nil => $x describe
                                  | $x :: $ys => $x describe + ", " + $ys to-string
-                                 | Nil       => "(nil)"
+                                 | Nil       => ""
   }
 
   implement Bounded for List {
