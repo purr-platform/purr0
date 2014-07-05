@@ -1,0 +1,53 @@
+module Phemme.Data.Task {
+
+  import Phemme.Core
+  import Data.Function
+
+  export data Task = _ ^Function? Cleanup: _ ^Function?
+
+  let _ ~ _ => Nothing # Convenience for running two functions
+  let void  => Nothing
+
+  # -- Constructors
+  export _ task: $f ^Function? => $f Cleanup: (=> void)
+  export _ task: $f ^Function? cleanup: $g ^Function? => $f Cleanup: $g
+  export _ fail: $x => task: $next => $next($x Failure)
+
+  # -- Runs things (meant for the end of the world, a la Haskell's unsafePerformIO)
+  export $t ^Task? run: $f ^Function? recover: $g ^Function? => case $t of
+    | $computation Cleanup: $cleanup => $computation( $value => case $value of
+                                                    | Success($a) => $f($a) ~ $cleanup()
+                                                    | Failure($a) => $g($a) ~ $cleanup()
+                                                    )
+
+  export $t ^Task? run: $f ^Function? => case $t of
+    | $computation Cleanup: $cleanup => $computation( $value => case $value of
+                                                    | Success($a) => $f($a) ~ $cleanup()
+                                                    )
+
+  # -- Protocols
+  implement Chainable for Task {
+    method $task chain: $f =>
+      task: ($next =>
+             $task run: ($x => $f($x) run: @Success ->> $next recover: @Failure ->> $next)
+                   recover: @Failure ->> $next)
+  }
+
+  implement Mappable for Task {
+    method $task map: $f => $task >>= ($a => Task of: $f($a))
+  }
+
+  implement Applicative for Task {
+    method _ of: $value => task: ($next => $next($value Success))
+    method $task apply-to: $mappable => $task >>= ($f => $mappable map: $f)
+  }
+
+  implement Monoid for Task {
+    method $this empty => task: ($next => $next(Nothing Success))
+  }
+
+  implement Semigroup for Task {
+    method $this + $that ^Task? => $this >>= $a => $that map: $b => $a + $b
+  }
+  
+}
