@@ -1,7 +1,8 @@
 module Data.Char {
   import Phemme.Core
+  import Data.Number
 
-  let a CharCode? => (a > 0) && (a < ffi "0xFFFF")
+  let a CharCode? => ffi "(a > 0) && (a < 0xFFFF)"
 
   ffi """
   function $$Char() {}

@@ -165,13 +165,12 @@ module Data.Char where
   
 module Data.String where
   type String = [Char]
-  deriving Equality, Ordered, Representable, Bounded, Indexable, Sliceable
-         , Semigroup, Monoid, Functor, Foldable
+  deriving Equality, Ordered, Representable, Indexable, Sliceable
+         , Semigroup, Monoid
 
   a String? -> Boolean
   String uppercase -> String
   String lowercase -> String
-  String title-case -> String
   String trim -> String
   String trim-left -> String
   String trim-right -> String

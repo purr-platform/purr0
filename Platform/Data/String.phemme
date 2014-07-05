@@ -1,0 +1,58 @@
+module Data.String {
+  import Phemme.Core
+  import Data.Char
+  import Data.Number
+
+  # -- Implicitly type String = [Char]
+  export String?
+
+  ffi """
+  var $$Char = $self.Char()
+  function $asChar(a) { return $$Char.$new(a) }
+  """
+
+  implement Equality for String {
+    method $this === $that => ffi "$this === $that"
+  }
+
+  implement Ordered for String {
+    method $this compare-to: $that ^String? =>
+      | ffi "$this > $that" => Greater
+      | ffi "$this < $that" => Less
+      | otherwise           => Equal
+  }
+
+  implement Representable for String {
+    method $this describe => $this
+  }
+
+  implement Bounded for String {
+    method $this lower-bound => 0
+    method $this upper-bound => ffi "$this.length"
+  }
+
+  implement Indexable for String {
+    method $this at: $index ^Number? =>
+      | ($index > 0) && ($index < ffi "$this.length") => ffi "$asChar($this[$index])" Just
+      | otherwise                                     => Nothing
+  }
+
+  impelement Sliceable for String {
+    method $this slice-from: $start ^Number? to: $end ^Number? => ffi "$this.slice($start, $end)"
+  }
+
+  implement Semigroup for String {
+    method $this + $that ^String? => ffi "$this + $that"
+  }
+
+  implement Monoid for String {
+    method $this empty => ""
+  }
+
+
+  export $this ^String? uppercase => ffi "$this.toUpperCase()"
+  export $this ^String? lowercase => ffi "$this.toLowerCase()"
+  export $this ^String? trim => ffi "$this.trim()"
+  export $this ^String? trim-left => ffi "$this.trimLeft()"
+  export $this ^String? trim-right => ffi "$this.trimRight()"  
+}
