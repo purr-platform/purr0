@@ -37,7 +37,7 @@ module Data.String {
       | otherwise                                     => Nothing
   }
 
-  impelement Sliceable for String {
+  implement Sliceable for String {
     method $this slice-from: $start ^Number? to: $end ^Number? => ffi "$this.slice($start, $end)"
   }
 
