@@ -400,7 +400,7 @@ NS.$makeNamespace = function(pkg) {
     var cleanup = task.$$1
     computation(function(val) {
       cleanup()
-      if (val.$$ctor === 'Failure') throw val.$$0
+      if (val.$$ctag === 'Failure') throw val.$$0
     })
   }
   return ns
