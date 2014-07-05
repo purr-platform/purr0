@@ -338,7 +338,28 @@ module Io.FileSystem.Path where
   
 
 module Io.FileSystem where
-  -- <TODO>
+  data SymbolicLinkType = Directory | File | Junction
+  
+  Path rename-to: Path -> Task(Error, Unit)
+  Path exists? -> Task(Error, Boolean)
+  Path change-owner: ID group: ID -> Task(Error, Unit)
+  Path change-mode: Mode -> Task(Error, Unit)
+  Path link-to: Path -> Task(Error, Unit)
+  Path link-to: Path type: SymbolicLinkType -> Task(Error, Unit)
+  Path real-path -> Task(Error, Path)
+  Path read-link -> Task(Error, String)
+  Path unlink -> Task(Error, Unit)  -- | has to be a Link
+  Path remove -> Task(Error, Unit)  -- | Can be either File or Directory, recursive.
+  Path make-directory -> Task(Error, Unit)  -- | Recursive
+  Path make-directory: Mode -> Task(Error, Unit) -- | Recursive
+  Path list-directory -> Task(Error, [Path])
+  Path list-directory-recursively -> Task(Error, [Path])
+  Path read-as: Encoding -> Task(Error, String)
+  Path read -> Task(Error, String)  -- | assumes utf-8
+  Path write: String mode: Mode encoding: Encoding -> Task(Error, Unit)
+  Path write: String -> Task(Error, Unit)
+  Path append: String mode: Mode encoding: Encoding -> Task(Error, Unit)
+  Path append: String -> Task(Error, Unit)
 
 
 module Io.Process where

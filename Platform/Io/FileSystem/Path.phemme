@@ -8,6 +8,9 @@ module Io.FileSystem.Path {
   var $join      = $path.join
   """
 
+  let $x get => case $x of
+    | Success($a) => $a
+
   export data Path = Relative
                    | Root
                    | _ ^Path? \ _ ^Segment?
@@ -32,14 +35,14 @@ module Io.FileSystem.Path {
   implement Parseable for Path {
     method _ parse: $text => ffi """$p.split('/').reduce(function(xs, x) {
                                     return $self['\\'](xs, x)
-                                  }, $top)"""
+                                  }, $top)""" Success
                                   where $p   = $normalise($text)
                                       | $top = if ffi "/^\\//.test($p)" then Root
                                                                         else Relative
   }
 
   implement Semigroup for Path {
-    method $this + $that ^Path? => Path parse: $join($this describe, $that describe)
+    method $this + $that ^Path? => Path parse: $join($this describe, $that describe) |> _ get
   }
 
   implement Monoid for Path {

@@ -5,9 +5,9 @@ module Concurrency.Async {
   import Data.Vector
   import Control.Monad
 
-  export _ ~ _ => Nothing
+  export _ ~ _ => Unit
 
-  export never => task: => Nothing
+  export never => task: => Unit
     
   export $xs ^List? sequentially => $xs sequence-with: Task
   
@@ -20,7 +20,6 @@ module Concurrency.Async {
       var resolved = false
 
       xs.forEach(runComputation)
-      return $self.Nothing()
 
       function runComputation(task, i) {
         $self['run:recover:'](function Success(value) {
@@ -44,7 +43,6 @@ module Concurrency.Async {
       var resolved = false
       $self['run:recover:']($t1, succeed, fail)
       $self['run:recover:']($t2, succeed, fail)
-      return $self.Nothing()
 
       funciton succeed(v) { transition(self['Success'](v)) }
       function fail(e)    { transition(self['Failure'](v)) }

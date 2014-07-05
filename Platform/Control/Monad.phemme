@@ -16,7 +16,7 @@ module Control.Monad {
     | test      => $monad empty
     | otherwise => $monad
 
-  export $monad ^Mappable? void => $monad map: => Nothing
+  export $monad ^Mappable? void => $monad map: => Unit
 
   export $monad ^Chainable? flatten -> Chainable? => $monad >>= $x => $x
 

@@ -4,8 +4,8 @@ module Io.Console {
 
   ffi "var readline = require('readline')"
 
-  let _ ~ _ => Nothing
-  let void => @Success(Nothing)
+  let _ ~ _ => Unit
+  let void => @Success(Unit)
 
   export $x ^Representable? display => 
     task: ($next => ffi "console.log($text)" ~ $next(void))

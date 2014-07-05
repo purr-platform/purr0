@@ -19,7 +19,8 @@ module Phemme.Core {
   export $x Number?   => ffi "typeof $x === 'number'"
   export $x String?   => ffi "typeof $x === 'string'"
   export $x Boolean?  => ffi "typeof $x === 'boolean'" 
-  export $x Function? => ffi "typeof $x === 'function'"    
+  export $x Function? => ffi "typeof $x === 'function'"
+  export $x Unit?     => ffi "$x == null"
 
   # -- Builtin types ---------------------------------------------------
   export data Ordering = Less | Equal | Greater

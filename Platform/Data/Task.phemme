@@ -5,8 +5,8 @@ module Phemme.Data.Task {
 
   export data Task = _ ^Function? Cleanup: _ ^Function?
 
-  let _ ~ _ => Nothing # Convenience for running two functions
-  let void  => Nothing
+  let _ ~ _ => Unit # Convenience for running two functions
+  let void  => Unit
 
   # -- Constructors
   export _ task: $f ^Function? => $f Cleanup: (=> void)
@@ -43,7 +43,7 @@ module Phemme.Data.Task {
   }
 
   implement Monoid for Task {
-    method $this empty => task: ($next => $next(Nothing Success))
+    method $this empty => task: ($next => $next(Unit Success))
   }
 
   implement Semigroup for Task {

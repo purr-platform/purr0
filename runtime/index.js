@@ -35,7 +35,7 @@ var newTag = new function() {
 }
 
 function tagFor(type) {
-  return type == null?    '<nil>'
+  return type == null?    '<unit>'
   :      type.$$tag?      type.$$tag
   :      /* otherwise */  typeof type
 }
@@ -54,11 +54,11 @@ function fnName(fn) {
 }
 
 function describe(value) {
-  return tagFor(value) === 'number'?   value
-  :      tagFor(value) === 'string'?   JSON.stringify(value)
-  :      tagFor(value) === 'boolean'?  value
-  :      typeof value === 'function'?  describeFn(value)
-  :      /* otherwise */               tagFor(value)
+  return tagFor(value) === '<number>'?   value
+  :      tagFor(value) === '<string>'?   JSON.stringify(value)
+  :      tagFor(value) === '<boolean>'?  value
+  :      typeof value === '<function>'?  describeFn(value)
+  :      /* otherwise */                 tagFor(value)
 }
 
 function makeFn(n, Ctor) {
@@ -438,10 +438,11 @@ NS.$checkCoContract = function f(contract, value, name) {
     )
   }
 }
-NS.Number   = function(){ return { $$tag: 'number'   } }
-NS.String   = function(){ return { $$tag: 'string'   } }
-NS.Function = function(){ return { $$tag: 'function' } }
-NS.Boolean  = function(){ return { $$tag: 'boolean'  } }
+NS.Number   = function(){ return { $$tag: '<number>'   } }
+NS.String   = function(){ return { $$tag: '<string>'   } }
+NS.Function = function(){ return { $$tag: '<function>' } }
+NS.Boolean  = function(){ return { $$tag: '<boolean>'  } }
+NS.Unit     = function(){ return { $$tag: '<unit>'     } }
 
 
 // -- Exporting --------------------------------------------------------
