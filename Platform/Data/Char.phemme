@@ -2,11 +2,11 @@ module Data.Char {
   import Phemme.Core
   import Data.Number
 
-  let a CharCode? => ffi "(a > 0) && (a < 0xFFFF)"
+  let $a CharCode? => ffi "($a > 0) && ($a < 0xFFFF)"
 
   ffi """
   function $$Char() {}
-  $$Char.$$tag = newTag('Char', $$package)
+  $$Char.$$tag = $self.$newTag('Char', $$package)
   $$Char.$$name = 'Char'
   $$Char.prototype.$$tag = $$Char.$$tag
   $$Char.$new = function(chr) {
