@@ -133,13 +133,12 @@ class Monoid => Foldable where
 -- | Data structures  
 module Data.Boolean where
   data Boolean = false | true
-  deriving Equality, Ordered, Representable, Bounded, Enumerable
+  deriving Equality, Ordered, Representable, Parseable, Bounded, Enumerable
 
   a Boolean? -> Boolean
   Boolean && Boolean -> Boolean
   Boolean || Boolean -> Boolean
   not(Boolean) -> Boolean
-  Boolean negate -> Boolean
   Boolean then: (-> b) else: (-> b) -> b
 
 
