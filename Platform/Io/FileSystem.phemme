@@ -1,0 +1,201 @@
+module Io.FileSystem {
+  import Phemme.Core
+  import Data.Task
+  import Io.FileSystem.Path
+
+  ffi "var $fs = require('fs')"
+
+  # -- Helpers
+  let $x ^String? asPath => case Path parse: $x of
+    | Success($a) => $a
+
+
+  # -- Data structures
+  export data LinkType = Directory | File | Junction
+
+  implement Representable for LinkType {
+    method $this describe => case $this of
+      | Directory => "<LinkType:Directory>"
+      | File      => "<LinkType:File>"
+      | Junction  => "<LinkType:Junction>"
+  }
+
+  implement Equality for LinkType {
+    method $this === $that => case $this, $that of
+      | Directory, Directory => true
+      | File,      File      => true
+      | Junction,  Junction  => true
+      | otherwise            => false
+  }
+
+
+  # -- Path-level operations
+  export $p ^Path? exists? =>
+    task: ffi """(function($next) {
+      $fs.exists($self.describe($p), function(a) { $next($self.Success(a)) })
+    })"""
+
+  export $p ^Path? rename-to: $p2 ^Path =>
+    task: ffi """(function($next) {
+      $fs.rename($self.describe($p), $self.describe($p2), function(error) {
+        if (error)  $next($self.Failure(error))
+        else        $next($self.Success(null))
+      })
+    })"""
+
+  export $p ^Path? change-owner: $owner group: $group =>
+    task: ffi """(function($next) {
+      $fs.chown($self.describe($p), $owner, $group, function(error) {
+        if (error)  $next($self.Failure(error))
+        else        $next($self.Success(null))
+      })
+    })"""
+
+  export $p ^Path? change-mode: $mode =>
+    task: ffi """(function($next) {
+      $fs.chmod($self.describe($p), $mode, function(error) {
+        if (error)  $next($self.Failure(error))
+        else        $next($self.Success(null))
+      })
+    })"""
+
+
+  # -- Link operations
+  export $p ^Path? link-to: $p2 ^Path? =>
+    task: ffi """(function($next) {
+      $fs.link($self.describe($p2), $self.describe($p), function(error) {
+        if (error)  $next($self.Failure(error))
+        else        $next($self.Success(null))
+      })
+    })"""
+
+  export $p ^Path? link-to: $p2 ^Path? type: $type ^LinkType? =>
+    task: ffi """(function($next) {
+      $fs.symlink($self.describe($p2), $self.describe($p), $self['render-type']($type), function(error) {
+        if (error)  $next($self.Failure(error))
+        else        $next($self.Success(null))
+      })
+    })"""
+    where render-type($a) => case $a of
+      | Directory => "dir"
+      | File      => "file"
+      | Junction  => "junction"
+
+  export $p ^Path? read-link =>
+    task: ffi """(function($next) {
+      $fs.readlink($self.describe($p), function(error, data) {
+        if (error)  $next($self.Failure(error))
+        else        $next($self.Success($self.asPath(data)))
+      })
+    })"""
+
+  export $p ^Path? real-path =>
+    task: ffi """(function($next) {
+      $fs.realpath($self.describe($p), function(error, path) {
+        if (error)  $next($self.Failure(error))
+        else        $next($self.Success($self.asPath(path)))
+      })
+    })"""
+
+  # TODO: we need Structs to be able to expose this method
+  let $p ^Path? stat =>
+    task: ffi """(function($next) {
+      $fs.stat($self.describe($p), function(error, stats) {
+        if (error)  $next($self.Failure(error))
+        else        $next($self.Success(stats))
+      })
+    })"""
+
+  export $p ^Path? file? => do {
+    $stats <- $p stat;
+    return ffi "$stats.isFile()"
+  }
+
+  export $p ^Path? directory? => do {
+    $stats <- $p stat;
+    return ffi "$stats.isDirectory()"
+  }
+    
+
+  # -- Node-level operations
+  export $p ^Path? read-as: $encoding ^String? =>
+    task: ffi """(function($next) {
+      $fs.readFile($self.describe($p),  { encoding: $encoding }, function(error, data) {
+        if (error) $next($self.Failure(error))
+        else       $next($self.Success(data))
+      })
+    })"""
+
+  export $p ^Path? read => $p read-as: "utf8"
+
+  export $p ^Path? write: $data ^String? mode: $mode encoding: $encoding =>
+    task: ffi """(function($next) {
+      $fs.writeFile($self.describe($p), $data, { mode: $mode, encoding: $encoding }, function(error) {
+        if (error)  $next($self.Failure(error))
+        else        $next($self.Success(null))
+      })
+    })"""
+
+  export $p ^Path? write: $data ^String? => $p write: $data mode: 438 encoding: "utf8" # 0666
+
+  export $p ^Path? append: $data ^String? mode: $mode encoding: $encoding =>
+    task: ffi """(function($next) {
+      $fs.appendFile($self.describe($p), $data, { mode: $mode, encoding: $encoding }, function(error) {
+        if (error)  $next($self.Failure(error))
+        else        $next($self.Success(null))
+      })
+    })"""
+
+  export $p ^Path? append: $data ^String? => $p append: $data mode: 438 encoding: "utf8" # 0666
+
+  
+
+
+  let $p remove-file =>
+    task: ffi """(function($next) {
+      $fs.unlink($self.describe($p), function(error) {
+        if (error)  $next($self.Failure(error))
+        else        $next($self.Success(null))
+      })
+    })"""
+
+  let $p remove-directory =>
+    task: ffi """(function($next) {
+      $fs.rmdir($self.describe($p), function(error) {
+        if (error)  $next($self.Failure(error))
+        else        $next($self.Success(null))
+      })
+    })"""
+
+  export $p ^Path? remove => $p stat >>= $stats =>
+    | ffi "$stats.isFile()"      => $p remove-file
+    | ffi "$stats.isDirectory()" => $p remove-directory
+    | otherwise                  => "Can only remove files or directories" raise
+
+  let $p ^Path? mkdir: $mode =>
+    task: ffi """(function($next) {
+      $fs.mkdir($self.describe($p), $mode, function(error) {
+        if (error)  $next($self.Failure(error))
+        else        $next($self.Success(null))
+      })
+    })"""
+
+  export $p ^Path? make-directory: $mode =>
+    if $p parent exists? then $p mkdir: $mode
+                         else do {
+                           $p parent make-directory: $mode;
+                           $p make-directory: $mode
+                         }
+
+  export $p ^Path? make-directory => $p make-directory: 511 # 0777
+
+  export $p ^Path? list-directory =>
+    task: ffi """(function($next) {
+      $fs.readdir($self.describe($p), function(error, files) {
+        if (error)  $next($self.Failure(error))
+        else        $next($self.Success($self.$arrayToList(files.map($self.asPath))))
+      })
+    })"""
+
+
+}

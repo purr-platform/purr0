@@ -342,14 +342,16 @@ module Io.FileSystem where
   
   Path rename-to: Path -> Task(Error, Unit)
   Path exists? -> Task(Error, Boolean)
-  Path change-owner: ID group: ID -> Task(Error, Unit)
+  Path change-owner: UserID group: GroupID -> Task(Error, Unit)
   Path change-mode: Mode -> Task(Error, Unit)
   Path link-to: Path -> Task(Error, Unit)
   Path link-to: Path type: SymbolicLinkType -> Task(Error, Unit)
   Path real-path -> Task(Error, Path)
   Path read-link -> Task(Error, String)
-  Path unlink -> Task(Error, Unit)  -- | has to be a Link
-  Path remove -> Task(Error, Unit)  -- | Can be either File or Directory, recursive.
+  Path file? -> Task(Error, Boolean)
+  Path directory? -> Task(Error, Boolean)
+  Path remove -> Task(Error, Unit)  -- | Can be either File or Directory
+  Path remove-recursively -> Task(Error, Unit)
   Path make-directory -> Task(Error, Unit)  -- | Recursive
   Path make-directory: Mode -> Task(Error, Unit) -- | Recursive
   Path list-directory -> Task(Error, [Path])
