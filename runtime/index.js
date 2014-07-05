@@ -37,7 +37,7 @@ var newTag = new function() {
 function tagFor(type) {
   return type == null?    '<unit>'
   :      type.$$tag?      type.$$tag
-  :      /* otherwise */  typeof type
+  :      /* otherwise */  '<' + (typeof type) + '>'
 }
 
 function parseName(name) {
