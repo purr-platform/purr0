@@ -73,9 +73,9 @@ module Phemme.Core {
     method $this round -> Floating?
     method $this ceiling -> Floating?
     method $this floor -> Floating?
-    method $this is-nan? -> Boolean?
-    method $this is-finite? -> Boolean?
-    method $this is-negative-zero? -> Boolean?
+    method $this nan? -> Boolean?
+    method $this finite? -> Boolean?
+    method $this negative-zero? -> Boolean?
   }
 
   export
