@@ -244,7 +244,7 @@ ometa Parser {
   matchCase3 = matchCase3:a ws identifier:b              -> [#CaseUn, b, a]
              | matchCase4,
   matchCase4 = '_'                                       -> [#CaseAny]
-             | '$' identifier:a                          -> [#CaseVar, a]
+             | varName:a                                 -> [#CaseVar, a]
              | identifier:a ws '(' ws matchCase:b ws ')' -> [#CaseUn, a, b]
              | identifier:a                              -> [#CaseId, a]
              | number:a                                  -> [#CaseVal, a]
