@@ -143,14 +143,14 @@ module Phemme.Core {
 
   export
   interface Functor {
-    method $this map: $transformation ^Function? -> Mappable?
+    method $this map: $transformation ^Function? -> Functor?
   }
  
   export
   interface Applicative {
-    need Mappable
+    need Functor
     method $this of: $value
-    method $this apply-to: $a ^Mappable?
+    method $this apply-to: $a ^Functor?
     method $this <*> $a => $this apply-to: $a
   }
 
