@@ -33,7 +33,7 @@ module Phemme.Data.Task {
                    recover: @Failure ->> $next)
   }
 
-  implement Mappable for Task {
+  implement Functor for Task {
     method $task map: $f => $task >>= ($a => Task of: $f($a))
   }
 

@@ -30,7 +30,7 @@ module Data.Maybe {
     method $this empty => Nothing
   }
 
-  implement Mappable for Maybe {
+  implement Functor for Maybe {
     method $this map: $f => case $this of
                             | Nothing  => Nothing
                             | Just($a) => $f($a) Just

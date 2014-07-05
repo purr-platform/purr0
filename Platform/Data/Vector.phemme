@@ -50,7 +50,7 @@ module Data.Vector {
     method $this empty => ffi "[]" as-vector
   }
 
-  implement Mappable for Vector {
+  implement Functor for Vector {
     method $this map: $f => ffi "$this.$items.map(function(a){ return $f(a) })" as-vector
   }
 
