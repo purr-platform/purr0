@@ -287,10 +287,25 @@ ometa Parser {
   appExpr = keywordExpr
           | binaryExpr,
 
-  keywordExpr = binaryExpr?:a (ws keywordApp)+:as        -> [#App, [#Var, 'self'], kwId(as), [a || [#Var, 'self']].concat(kwArgs(as))],
-  binaryExpr  = binaryExpr:a ws symbols:s ws unaryExpr:b -> [#App, [#Var, 'self'], s, [a, b]]
+
+  nsMember = ('@' identifier:a ('.' identifier)*:xs -> [[#Member, [#Var, 'self'], a], xs]
+             | varName:a ('.' identifier)*:xs       -> [[#Var, a[1]], xs]
+             ):ys -> ys[1].reduce(function(bs, b) {
+                       return [#Member, bs, b]
+                     }, ys[0]),
+
+  nsKw = nsMember:n '.' keywordApp:p -> [n, p]
+       | keywordApp:p                -> [[#Var, 'self'], p],
+  nsSym = nsMember:n '.' symbols:s -> [n, s]
+        | symbols:s                -> [[#Var, 'self'], s],
+
+  keywordExpr = binaryExpr?:a ws nsKw:x (ws keywordApp)*:as -> (function() {
+    var kws = [x[1]].concat(as)
+    return [#App, x[0], kwId(kws), [a || x[0]].concat(kwArgs(kws))]
+  }()),
+  binaryExpr  = binaryExpr:a ws nsSym:s ws unaryExpr:b -> [#App, s[0], s[1], [a, b]]
               | unaryExpr,
-  unaryExpr   = unaryExpr:a ws identifier:i              -> [#App, [#Var, 'self'], i, [a]]
+  unaryExpr   = unaryExpr:a ws identifier:i            -> [#App, [#Var, 'self'], i, [a]]
               | postfixExpr,
   postfixExpr = postfixExpr:a ws '.' ws extendedId:i                 -> [#Member, a, i]
               | postfixExpr:a ws '(' ws listOf(#expr, ','):bs ws ')' -> [#FnApp, a, bs]
