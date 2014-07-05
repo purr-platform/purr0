@@ -132,7 +132,7 @@ class Monoid => Foldable where
 
 -- | Data structures  
 module Data.Boolean where
-  data Boolean = true | false
+  data Boolean = false | true
   deriving Equality, Ordered, Representable, Bounded, Enumerable
 
   a Boolean? -> Boolean
