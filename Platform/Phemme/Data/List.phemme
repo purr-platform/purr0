@@ -2,7 +2,10 @@ module Phemme.Data.List {
 
   import Phemme.Core
 
-  export data List = Nil | _ :: _ ^List?
+  export Nil
+  export ::
+  export List
+  export List?
  
   export $xs filter: $f => case $xs of
     | Nil         => Nil

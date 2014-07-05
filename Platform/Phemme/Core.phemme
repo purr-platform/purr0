@@ -24,5 +24,6 @@ module Phemme.Core {
   export data Ordering = Less | Equal | Greater
   export data Maybe    = Nothing | Just(_)
   export data Either   = Failure(_) | Success(_)
+  export data List     = Nil | _ :: _ ^List?
 
 }

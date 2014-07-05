@@ -7,6 +7,7 @@ module Phemme.Data.Maybe {
   export Nothing
   export Just
   export Maybe
+  export Maybe?
 
   implement Equality for Maybe {
     method $this === $that ^Maybe? => case $this, $that of
