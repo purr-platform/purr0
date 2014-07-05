@@ -72,10 +72,10 @@ class Numeric => Floating where
   a round -> a
   a ceiling -> a
   a floor -> a
-  a is-nan? -> a
-  a is-infinite? -> a
-  a is-finite? -> a
-  a is-negative-zero? -> a
+  a nan? -> a
+  a infinite? -> a
+  a finite? -> a
+  a negative-zero? -> a
 
 class Representable where
   a describe -> String
@@ -147,16 +147,16 @@ module Data.Char where
   deriving Equality, Ordered, Bounded, Representable, Enumerable
 
   a Char? -> Boolean
-  Char is-control? -> Boolean
-  Char is-space? -> Boolean
-  Char is-lower? -> Boolean
-  Char is-upper? -> Boolean
-  Char is-alpha? -> Boolean
-  Char is-alpha-numeric? -> Boolean
-  Char is-digit? -> Boolean
-  Char is-octal-digit? -> Boolean
-  Char is-hexadecimal-digit? -> Boolean
-  Char is-letter? -> Boolean
+  Char control? -> Boolean
+  Char space? -> Boolean
+  Char lower? -> Boolean
+  Char upper? -> Boolean
+  Char alpha? -> Boolean
+  Char alpha-numeric? -> Boolean
+  Char digit? -> Boolean
+  Char octal-digit? -> Boolean
+  Char hexadecimal-digit? -> Boolean
+  Char letter? -> Boolean
   Char uppercase -> Char
   Char lowercase -> Char
   Char code -> Int
@@ -325,6 +325,16 @@ module Io.Console where
   Representable display-info -> Task(_, Unit)
   String write -> Task(_, Unit)
   String get-line -> Task(_, String)
+  
+
+module Io.FileSystem.Path where
+  data Path = Relative | Root | Path \ String
+  deriving Equality, Representable, Parseable, Semigroup, Monoid, Foldable
+  Path parent -> Path
+  Path filename -> Path
+  Path extension -> String
+  Path relative? -> Boolean
+  Path absolute? -> Boolean
   
 
 module Io.FileSystem where

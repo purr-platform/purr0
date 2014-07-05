@@ -30,9 +30,9 @@ module Data.Number {
     method $this truncate => ffi "Math.max(0, Math.floor($this))"
     method $this round => ffi "Math.round($this)"
     method $this ceiling => ffi "Math.ceil($this)"
-    method $this is-nan? => ffi "isNaN($this)"
-    method $this is-finite? => ffi "isFinite($this)"
-    method $this is-negative-zero? => ffi "(x === 0) && ((1/x) === -Infinity)"
+    method $this nan? => ffi "isNaN($this)"
+    method $this finite? => ffi "isFinite($this)"
+    method $this negative-zero? => ffi "(x === 0) && ((1/x) === -Infinity)"
   }
 
   implement Representable for Number {

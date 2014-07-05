@@ -50,14 +50,14 @@ module Data.Char {
   export $this ^Char? code => ffi "$this.$chr.charCodeAt(0)"
   export $num ^CharCode? to-char => ffi "$this.$chr.fromCharCode($num)"
 
-  export $this ^Char? is-control? => ffi "/[\cA-\cZ]/.test($this.$chr)"
-  export $this ^Char? is-space? => ffi "/\s/.test($this.$chr)"
-  export $this ^Char? is-lower? => $this === $this lowercase
-  export $this ^Char? is-upper? => $this === $this uppercase
-  export $this ^Char? is-alpha? => ffi "/[\w]/.test($this.$chr)"
-  export $this ^Char? is-alpha-numeric? => ffi "/[\w\d]/.test($this.$chr)"
-  export $this ^Char? is-digit? => ffi "/\d/.test($this.$chr)"
-  export $this ^Char? is-octal-digit? => ffi "/[0-7]/.test($this.$chr)"
-  export $this ^Char? is-hexadecimal-digit? => ffi "/[\da-fA-F]/.test($this.$chr)"
-  export $this ^Char? is-letter? => ffi "/[a-zA-Z]/.test($this.$chr)"
+  export $this ^Char? control? => ffi "/[\cA-\cZ]/.test($this.$chr)"
+  export $this ^Char? space? => ffi "/\s/.test($this.$chr)"
+  export $this ^Char? lower? => $this === $this lowercase
+  export $this ^Char? upper? => $this === $this uppercase
+  export $this ^Char? alpha? => ffi "/[\w]/.test($this.$chr)"
+  export $this ^Char? alpha-numeric? => ffi "/[\w\d]/.test($this.$chr)"
+  export $this ^Char? digit? => ffi "/\d/.test($this.$chr)"
+  export $this ^Char? octal-digit? => ffi "/[0-7]/.test($this.$chr)"
+  export $this ^Char? hexadecimal-digit? => ffi "/[\da-fA-F]/.test($this.$chr)"
+  export $this ^Char? letter? => ffi "/[a-zA-Z]/.test($this.$chr)"
 }
