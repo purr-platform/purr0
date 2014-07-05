@@ -15,7 +15,7 @@ module Io.FileSystem.Path {
                    | Root
                    | _ ^Path? \ _ ^Segment?
 
-  export $a Segment? => ffi "/[^\\/]/.test($a)"
+  export $a Segment? => ffi "!/\\//.test($a)"
 
   implement Equality for Path {
     method $this === $that ^Path? => case $this, $that of
