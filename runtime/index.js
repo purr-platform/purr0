@@ -360,6 +360,13 @@ NS.$protocols         = {}
 NS.$tag               = tagFor
 NS.$newTag            = newTag
 NS.$listToArray       = listToArray
+NS.$arrayToList = function(array) {
+  var Nil  = this.Nil
+  var Cons = this['::']
+  return array.reduceRight(function(xs, x) {
+    return Cons(x, xs)
+  }, Nil())
+}
 NS.$doImport = function(module, name) {
   if (name)  this[name] = module
   else       unsafeExtend(this, module)
