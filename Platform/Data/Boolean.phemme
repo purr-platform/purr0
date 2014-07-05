@@ -2,6 +2,7 @@ module Data.Boolean {
   import Phemme.Core
 
   # -- Implicitly: data Boolean = false | true
+  export Boolean?
 
   implement Equality for Boolean {
     method $this === $that => ffi "$this === $that"
