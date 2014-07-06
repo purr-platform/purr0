@@ -99,7 +99,7 @@ module Web.Server {
   export data Address = { address ^String?, family ^String?, port ^Number? }
 
 
-  export $app listen: $port ^Number? =>
+  export $app ^Function? listen: $port ^Number? =>
     task: ffi """(function($next) {
       var state = {}
       state.server = $http.createServer($wrapApplication($app))

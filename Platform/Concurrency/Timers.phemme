@@ -8,30 +8,22 @@ module Concurrency.Timers {
 
   export $n ^Time? delay =>
     task: ffi """(function($next) {
-      var state = {}
-      state.timerId = setTimeout(function(){
-        if (state.ignore)  return
-        $next($self.Success(null)) 
+      return setTimeout(function(){
+        $next($self.Yield(null)) 
       }, $n)
-      return state
     })"""
-    cleanup: ffi """(function(state) {
-      state.ignore = true
-      clearTimeout(state.timerId)
+    cleanup: ffi """(function(timerId) {
+      clearTimeout(timerId)
     })"""
 
   export $n ^Time? timeout =>
     task: ffi """(function($next) {
-      var state = {}
-      state.timerId = setTimeout(function(){
-        if (state.ignore)  return
-        $next($self.Failure('Timeouted after ' + $n + ' milliseconds.')) 
+      return setTimeout(function(){
+        $next($self.Throw('Timeouted after ' + $n + ' milliseconds.')) 
       }, $n)
-      return state
     })"""
-    cleanup: ffi """(function(state) {
-      state.ignore = true
-      clearTimeout(state.timerId)
+    cleanup: ffi """(function(timerId) {
+      clearTimeout(timerId)
     })"""
 
 }

@@ -4,8 +4,8 @@ module Io.Console {
 
   ffi "var readline = require('readline')"
 
-  let _ ~ _ => Unit
-  let void => @Success(Unit)
+  let _ ~ $x => $x
+  let void => Unit Yield
 
   export $x ^Representable? display => 
     task: ($next => ffi "console.log($text)" ~ $next(void))
@@ -26,15 +26,15 @@ module Io.Console {
   export $text ^String? write => 
     task: ($next => ffi "process.stdout.write($text)" ~ $next(void))
 
-  export _ get-line =>
-    let
-      $rl = ffi "readline.createInterface({ input: process.stdin, output: process.stdout })"
-    in
-      task: ffi "(function($next) {
-                   $rl.question('', function($text) {
-                     $next($self.Success($text))
-                   })
-                 })"
-      cleanup: _ => ffi "$rl.close()"
+  export _ get-line: $prompt ^String? =>
+    task: ffi """(function($next) {
+      var rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+      rl.question($prompt, function($text) {
+        $next($self.Yield($text))
+      })
+      return rl
+    })"""
+    cleanup: $rl => ffi "$rl.close()"
 
+  export _ get-line => get-line: ""
 }

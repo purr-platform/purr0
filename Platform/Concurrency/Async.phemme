@@ -15,87 +15,75 @@ module Concurrency.Async {
       var xs       = $self.$listToArray($xs)
       var len      = xs.length
       var result   = new Array(len)
-      var resolved = false
 
-      xs.forEach(runComputation)
+      return [xs, xs.map(runComputation)]
 
       function runComputation(task, i) {
         $self['run:recover:'](function Success(value) {
-          if (resolved)  return
           result[i] = value
           len = len - 1
           if (len === 0) {
-            resolved = true
-            $next($self.Success($self.Vector().$make(result)))
+            $next($self.Yield($self.Vector().$make(result)))
           }
         }, function Failure(error) {
-          if (resolved)  return
-          resolved = true
-          $next($self.Failure(error))
+          $next($self.Throw(error))
         })
       }
     })"""
+    cleanup: ffi """(function($state) {
+      $state.forEach(function(x){ x[0].$$1(x[1]) })
+    })
+    """
 
   export $t1 ^Task? or: $t2 ^Task? =>
     task: ffi """
     (function($next) {
-      var resolved = false
-      var a = $self['run:recover:']($t1, succeed($t1), fail($t1))
-      var b = $self['run:recover:']($t2, succeed($t2), fail($t2))
+      var a = $self['run:recover:']($t1, succeed, fail)
+      var b = $self['run:recover:']($t2, succeed, fail)
 
-      return [a, b]
+      return [[$t1, a], [$t2, b]]
 
-      function succeed(x){ return function(v) { transition(x, $self.Success(v)) }}
-      function fail(x){ return function(e)    { transition(x, $self.Failure(e)) }}
-      function transition(x, v) {
-        if (!resolved) {
-          resolved = true
-          if ($t1 !== x)  $t1.$$1(a)
-          if ($t2 !== x)  $t2.$$1(b)
-          $next(v)
-        }
-      }
+      function succeed(v) { $next($self.Yield(v)) }
+      function fail(e)    { $next($self.Throw(e)) }
     })"""
-    cleanup: $state => case $t1, $t2 of
-      | _ Cleanup: $c1, _ Cleanup: $c2 => $c1(ffi "$state[0]") ~ $c2(ffi "$state[1]")
+    cleanup: ffi """(function($state) {
+      $state.forEach(function(x){ x[0].$$1(x[1]) })
+    })"""
 
   export $xs ^List? choose-first => $xs fold: _ or: _ from: never
 
   export $xs ^List? try-all =>
     task: ffi """
     (function($next) {
-      var xs = $self.$listToArray($xs)
-      var resolved = false
+      var xs       = $self.$listToArray($xs)
       var pending  = xs.length
       var failures = new Array(pending)
 
-      var ys = xs.map(function(x, i) {
-        return $self['run:recover:'](x, succeed(x, i), accumulateFailure(i))
+      return xs.map(function(x, i) {
+        return [x, $self['run:recover:'](x, succeed, accumulateFailure(i))]
       })
 
-      function succeed(x, i){ return function(value) {
-        resolved = true
-        xs.forEach(function(y){
-          if (y !== x)  y.$$1(ys[i])
-        })
-        $next($self.Success(value))
-      }}
+      function succeed(value) {
+        $next($self.Yield(value))
+      }
 
       function accumulateFailure(index){ return function(error) {
-        if (resolved)  return
         failures[index] = error
         pending = pending - 1
         if (pending === 0)
-          $next($self.Failure($self.Vector().$make(failures)))
+          $next($self.Throw($self.Vector().$make(failures)))
       }}
     })"""
+    cleanup: ffi """(function($state) {
+      $state.forEach(function(x){ x[0].$$1(x[1]) })
+    })""" 
 
   implement BooleanAlgebra for Task {
     method $this || $that ^Task? => $this or: $that
     method $this && $that ^Task? => [$this, $that] parallel
     method not($this) =>
-      task: $next => $this run: ($v => $next($v Failure))
-                           recover: ($e => $next($e Success))
+      task: $next => $this run: ($v => $next($v Yield))
+                           recover: ($e => $next($e Throw))
   }
 
 
