@@ -43,8 +43,8 @@ module Concurrency.Async {
       $self['run:recover:']($t1, succeed, fail)
       $self['run:recover:']($t2, succeed, fail)
 
-      function succeed(v) { transition($self['Success'](v)) }
-      function fail(e)    { transition($self['Failure'](e)) }
+      function succeed(v) { transition($self.Success(v)) }
+      function fail(e)    { transition($self.Failure(e)) }
       function transition(v) {
         if (!resolved) {
           resolved = true
@@ -53,7 +53,7 @@ module Concurrency.Async {
       }
     })"""
     cleanup: => case $t1, $t2 of
-      | _ Clenup: $c1, _ Cleanup: $c2 => $c1() ~ $c2()
+      | _ Cleanup: $c1, _ Cleanup: $c2 => $c1() ~ $c2()
 
   export $xs ^List? choose-first => $xs fold: _ or: _ from: never
 
