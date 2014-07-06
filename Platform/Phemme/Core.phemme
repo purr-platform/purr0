@@ -172,7 +172,7 @@ module Phemme.Core {
   interface Alternative {
     need Applicative
     method $this none -> Alternative?
-    method $this or: $that -> Alternative?
+    method $this else: $that -> Alternative?
     method $this <|> $that -> Alternative?
   }
 
