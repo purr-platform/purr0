@@ -896,6 +896,10 @@ function structStmt(name, fields) {
     letStmt(name, thunk(id("$$record"))),
     varsDecl([
       [
+        id("$$methods"),
+        obj([])
+      ],
+      [
         id("$$tag"),
         call(builtin("$newTag"), [id("$$record"), id("$$package")])
       ],
@@ -937,6 +941,17 @@ function structStmt(name, fields) {
         ])
       )
     )),
+    expr(set(
+      smember(smember(id("$$record"), id("prototype")), id("$namespace")),
+      set(
+        smember(id("$$record"), id("$namespace")),
+        fn(
+          null,
+          [],
+          [ret(id("$$methods"))]
+        )
+      )
+    )),
     fields.map(decl)      
   ])
 
@@ -944,15 +959,18 @@ function structStmt(name, fields) {
     var fname = field[0];
     return letStmt(
       fname,
-      compileContract(
-        identifier(fname.value),
-        [[id('$$pred')]],
-        fn(
+      set(
+        member(id("$$methods"), fname),
+        compileContract(
           identifier(fname.value),
-          [id("$$this")],
-          [
-            ret(member(id("$$this"), lit("_" + fname.value)))
-          ]
+          [[id('$$pred')]],
+          fn(
+            identifier(fname.value),
+            [id("$$this")],
+            [
+              ret(member(id("$$this"), lit("_" + fname.value)))
+            ]
+          )
         )
       )
     )

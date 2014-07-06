@@ -180,6 +180,18 @@ Record.$get = function(name) {
 Record.$namespace = function() {
   return this
 }
+Record.$toObject = function() {
+  return unsafeExtend({}, this.$namespace())
+}
+Record.$toPlainObject = function() {
+  var r = {}
+  for (var k in this) {
+    if (k[0] === '$')  continue
+    var v = this[k]
+    if (v != null && typeof v !== 'function')  r[k] = v
+  }
+  return r
+}
 Record.$fromObject = function(obj) {
   var result = clone(this)
   unsafeExtend(result, obj)
@@ -397,7 +409,11 @@ NS.$getImplementation = function(proto, type) {
 }
 NS.$doExport = function(name, unpack) {
   var source = this[name]
-  if (unpack)  source().$unpack(name, this.$exports, source)
+  if (unpack) {
+    var s = source()
+    if (s.$unpack)  s.$unpack(name, this.$exports, source)
+    else  unsafeExtend(this.$exports, s.$namespace())
+  }
   this.$exports[name] = source
 }
 NS.$makeNamespace = function(pkg) {
