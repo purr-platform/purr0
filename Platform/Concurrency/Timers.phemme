@@ -7,27 +7,31 @@ module Concurrency.Timers {
   let $n Time? => ($n > 0) && ($n < 2147483647) # Max Int32
 
   export $n ^Time? delay =>
-    let $timerId = Unit
-    in
-      task: ffi """(function($next) {
-        $timerId = setTimeout(function(){ 
-          $next($self.Success(null)) 
-        }, $n)
-      })"""
-      cleanup: ffi """(function() {
-        clearTimeout($timerId)
-      })"""
+    task: ffi """(function($next) {
+      var state = {}
+      state.timerId = setTimeout(function(){
+        if (state.ignore)  return
+        $next($self.Success(null)) 
+      }, $n)
+      return state
+    })"""
+    cleanup: ffi """(function(state) {
+      state.ignore = true
+      clearTimeout(state.timerId)
+    })"""
 
   export $n ^Time? timeout =>
-    let $timerId = Unit
-    in
-      task: ffi """(function($next) {
-        $timerId = setTimeout(function(){ 
-          $next($self.Failure('Timeouted after ' + $n + ' milliseconds.')) 
-        }, $n)
-      })"""
-      cleanup: ffi """(function() {
-        clearTimeout($timerId)
-      })"""
+    task: ffi """(function($next) {
+      var state = {}
+      state.timerId = setTimeout(function(){
+        if (state.ignore)  return
+        $next($self.Failure('Timeouted after ' + $n + ' milliseconds.')) 
+      }, $n)
+      return state
+    })"""
+    cleanup: ffi """(function(state) {
+      state.ignore = true
+      clearTimeout(state.timerId)
+    })"""
 
 }

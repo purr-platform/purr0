@@ -40,20 +40,24 @@ module Concurrency.Async {
     task: ffi """
     (function($next) {
       var resolved = false
-      $self['run:recover:']($t1, succeed, fail)
-      $self['run:recover:']($t2, succeed, fail)
+      var a = $self['run:recover:']($t1, succeed($t1), fail($t1))
+      var b = $self['run:recover:']($t2, succeed($t2), fail($t2))
 
-      function succeed(v) { transition($self.Success(v)) }
-      function fail(e)    { transition($self.Failure(e)) }
-      function transition(v) {
+      return [a, b]
+
+      function succeed(x){ return function(v) { transition(x, $self.Success(v)) }}
+      function fail(x){ return function(e)    { transition(x, $self.Failure(e)) }}
+      function transition(x, v) {
         if (!resolved) {
           resolved = true
+          if ($t1 !== x)  $t1.$$1(a)
+          if ($t2 !== x)  $t2.$$1(b)
           $next(v)
         }
       }
     })"""
-    cleanup: => case $t1, $t2 of
-      | _ Cleanup: $c1, _ Cleanup: $c2 => $c1() ~ $c2()
+    cleanup: $state => case $t1, $t2 of
+      | _ Cleanup: $c1, _ Cleanup: $c2 => $c1(ffi "$state[0]") ~ $c2(ffi "$state[1]")
 
   export $xs ^List? choose-first => $xs fold: _ or: _ from: never
 
@@ -65,13 +69,17 @@ module Concurrency.Async {
       var pending  = xs.length
       var failures = new Array(pending)
 
-      xs.forEach(function(x, i) {
-        $self['run:recover:'](x, succeed, accumulateFailure(i))
+      var ys = xs.map(function(x, i) {
+        return $self['run:recover:'](x, succeed(x, i), accumulateFailure(i))
       })
 
-      function succeed(value) {
+      function succeed(x, i){ return function(value) {
+        resolved = true
+        xs.forEach(function(y){
+          if (y !== x)  y.$$1(ys[i])
+        })
         $next($self.Success(value))
-      }
+      }}
 
       function accumulateFailure(index){ return function(error) {
         if (resolved)  return

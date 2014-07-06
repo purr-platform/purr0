@@ -7,6 +7,7 @@ module Phemme.Data.Task {
 
   let _ ~ _ => Unit # Convenience for running two functions
   let void  => Unit
+  let delayed($f) => ffi "setImmediate($f)"
 
   # -- Constructors
   export _ task: $f ^Function? => $f Cleanup: (=> void)
@@ -16,14 +17,16 @@ module Phemme.Data.Task {
 
   # -- Runs things (meant for the end of the world, a la Haskell's unsafePerformIO)
   export $t ^Task? run: $f ^Function? recover: $g ^Function? => case $t of
-    | $computation Cleanup: $cleanup => $computation( $value => case $value of
-                                                    | Success($a) => $f($a) ~ $cleanup()
-                                                    | Failure($a) => $g($a) ~ $cleanup()
-                                                    )
+    | $computation Cleanup: $cleanup =>
+        let $state = $computation( $value => case $value of
+                                 | Success($a) => $f($a)
+                                 | Failure($a) => $g($a) ~ (=> $cleanup($state)) delayed
+                                 )
+        in $state
 
   export $t ^Task? run: $f ^Function? => case $t of
     | $computation Cleanup: $cleanup => $computation( $value => case $value of
-                                                    | Success($a) => $f($a) ~ $cleanup()
+                                                    | Success($a) => $f($a)
                                                     )
 
   # -- Protocols

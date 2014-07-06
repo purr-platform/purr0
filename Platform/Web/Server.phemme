@@ -100,17 +100,24 @@ module Web.Server {
 
 
   export $app listen: $port ^Number? =>
-    let $server = ffi "$http.createServer($wrapApplication($app))"
-    in
-      task: ffi """(function($next) {
-        $server.listen($port, function(error) {
-          if (error)  $next($self.Failure(error))
-          else {
-            var addr = this.address() 
-            $next($self.Success($self.Address().$new({ address : addr.address
-                                                     , family  : addr.family
-                                                     , port    : addr.port })))
-          }
-        })
-      })"""
+    task: ffi """(function($next) {
+      var state = {}
+      state.server = $http.createServer($wrapApplication($app))
+      state.server.listen($port, function(error) {
+        if (state.ignore)  return
+
+        if (error)  $next($self.Failure(error))
+        else {
+          var addr = this.address() 
+          $next($self.Success($self.Address().$new({ address : addr.address
+                                                   , family  : addr.family
+                                                   , port    : addr.port })))
+        }
+      })
+      return state
+    })"""
+    cleanup: ffi """(function($state) {
+      $state.ignore = true
+      $state.server.close()
+    })"""
 }
