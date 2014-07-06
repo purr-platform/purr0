@@ -1,0 +1,116 @@
+module Web.Server {
+  import Phemme.Core
+  import Data.Task
+
+  ffi """
+  var $http  = require('http')
+  var $https = require('https')
+
+  function $wrapApplication(app) {
+    return function(req, res) {
+      var request = $$Request.$new(req)
+      var task = app(request)
+      $self['run:recover:'](task, function(value) {
+        if ($self.$tag(value) !== $self.Response().$$tag) {
+          console.error('Expected a Response, got: ' + $self.$tag(value))
+          res.writeHead(500)
+          res.end()
+        } else {
+          var status  = value.$$0
+          var headers = value.$$1.$toPlainObject()
+          var body    = value.$$2
+
+          res.writeHead(status, headers)
+          res.write(body)
+          res.end()
+        }
+      }, function(error) {
+        console.log(error)
+        res.writeHead(500)
+        res.end()
+      })
+    }
+  }
+
+  function $$Request() { }
+  $$Request.$$name = 'Request'
+  $$Request.$$tag = $self.$newTag($$Request, $$package)
+  $$Request.prototype.$$tag = $$Request.$$tag
+  $$Request.$new = function(req) {
+    var $$this = new $$Request()
+    $$this._req = req
+    return $$this
+  }
+  $$Request.prototype['http-method'] = function(self) {
+    return self._req.method
+  }
+  $$Request.prototype['http-version'] = function(self) {
+    return self._req.httpVersion
+  }
+  $$Request.prototype.headers = function(self) {
+    return self._req.headers
+  }
+  $$Request.prototype.url = function(self) {
+    return self._req.url
+  }
+  $$Request.prototype.body = function(self) {
+    return $self['task:']($self, function($next) {
+      var data   = ''
+      var source = self._req
+
+      source.on('readable', grabChunk)
+      source.on('end', fulfill)
+      source.on('error', fail)
+
+      function fail(error) {
+        cleanup()
+        $next($self.Failure(error))
+      }
+      function fulfill() {
+        cleanup()
+        $next($self.Success(data))
+      }
+      function grabChunk() {
+        var chunk = source.read()
+        if (chunk != null) data += chunk.toString()
+      }
+      function cleanup() {
+        source.removeListener('readable', grabChunk)
+        source.removeListener('end', fulfill)
+        source.removeListener('error', fail)
+      }
+    })
+  }
+  """
+
+  export Request => ffi "$$Request"
+  export $x Request? => ffi "$self.$tag($x) === $$Request.$$tag"
+  export $this ^Request? body => ffi "$this.body($this)"
+  export $this ^Request? http-method => ffi "$this['http-method']($this)"
+  export $this ^Request? url => ffi "$this.url($this)"
+  export $this ^Request? http-version => ffi "$this['http-version']($this)"
+  export $this ^Request? headers => ffi "$this.headers($this)"
+
+  export data Response = $status ^Number? Headers: _ Body: _
+
+  export Status: $a Headers: $b Body: $c => $a Headers: $b Body: $c
+  export Body: $c => 200 Headers: {} Body: $c
+
+  export data Address = { address ^String?, family ^String?, port ^Number? }
+
+
+  export $app listen: $port ^Number? =>
+    let $server = ffi "$http.createServer($wrapApplication($app))"
+    in
+      task: ffi """(function($next) {
+        $server.listen($port, function(error) {
+          if (error)  $next($self.Failure(error))
+          else {
+            var addr = this.address() 
+            $next($self.Success($self.Address().$new({ address : addr.address
+                                                     , family  : addr.family
+                                                     , port    : addr.port })))
+          }
+        })
+      })"""
+}
