@@ -88,7 +88,7 @@ module Phemme.Core {
 
   export
   interface Representable {
-    method $this describe -> String?
+    method $this to-string -> String?
   }
   
   export

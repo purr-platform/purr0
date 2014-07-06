@@ -84,7 +84,7 @@ class Numeric => Floating where
   a negative-zero? -> a
 
 class Representable where
-  a describe -> String
+  a to-string -> String
 
 class Parseable where
   Parseable parse: String -> Either(String, a)

@@ -26,10 +26,10 @@ module Io.FileSystem.Path {
   }
 
   implement Representable for Path {
-    method $this describe => case $this of
+    method $this to-string => case $this of
       | Relative => "."
       | Root     => $normalise("/")
-      | $as \ $a => $join($as describe, $a)
+      | $as \ $a => $join($as to-string, $a)
   }
 
   implement Parseable for Path {
@@ -42,7 +42,7 @@ module Io.FileSystem.Path {
   }
 
   implement Semigroup for Path {
-    method $this + $that ^Path? => Path parse: $join($this describe, $that describe) |> _ get
+    method $this + $that ^Path? => Path parse: $join($this to-string, $that to-string) |> _ get
   }
 
   implement Monoid for Path {

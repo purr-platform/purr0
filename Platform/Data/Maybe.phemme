@@ -15,9 +15,9 @@ module Data.Maybe {
   }
 
   implement Representable for Maybe {
-    method $this describe => case $this of
+    method $this to-string => case $this of
                              | Nothing  => "Nothing"
-                             | Just($a) => "Just(" + $a describe + ")"
+                             | Just($a) => "Just(" + $a to-string + ")"
   }
 
   implement Semigroup for Maybe {

@@ -37,7 +37,7 @@ module Data.Number {
   }
 
   implement Representable for Number {
-    method $this describe => ffi "$this.toString()"
+    method $this to-string => ffi "$this.toString()"
   }
 
   implement Parseable for Number {

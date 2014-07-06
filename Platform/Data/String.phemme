@@ -22,7 +22,7 @@ module Data.String {
   }
 
   implement Representable for String {
-    method $this describe => $this
+    method $this to-string => $this
   }
 
   implement Bounded for String {

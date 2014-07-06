@@ -15,11 +15,11 @@ module Data.List {
   }
 
   implement Representable for List {
-    method $this describe  => "[" + $this to-string + "]"
+    method $this to-string  => "[" + $this to-string1 + "]"
                                where
-                                 $xs to-string => case $xs of
-                                 | $x :: Nil => $x describe
-                                 | $x :: $ys => $x describe + ", " + $ys to-string
+                                 $xs to-string1 => case $xs of
+                                 | $x :: Nil => $x to-string
+                                 | $x :: $ys => $x to-string + ", " + $ys to-string1
                                  | Nil       => ""
   }
 

@@ -26,7 +26,7 @@ module Data.Vector {
   export _ Vector: $xs ^List? => ffi "$$Vector.$new($xs)"
 
   implement Representable for Vector {
-    method $this describe => "<#Vector: " + ffi "$this.$items.map($self.describe).join(', ')" + ">"
+    method $this to-string => "<#Vector: " + ffi "$this.$items.map($self['to-string']).join(', ')" + ">"
   }
 
   implement Bounded for Vector {

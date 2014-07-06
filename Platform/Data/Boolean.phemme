@@ -16,7 +16,7 @@ module Data.Boolean {
   }
 
   implement Representable for Boolean {
-    method $this describe => ffi "$this.toString()"
+    method $this to-string => ffi "$this.toString()"
   }
 
   implement Parseable for Boolean {

@@ -37,7 +37,7 @@ module Data.Char {
   }
 
   implement Representable for Char {
-    method $this describe => ffi "'<#Char:' + $this.$chr + '>'"
+    method $this to-string => ffi "'<#Char:' + $this.$chr + '>'"
   }
 
   implement Enumerable for Char {

@@ -9,19 +9,19 @@ module Io.Console {
 
   export $x ^Representable? display => 
     task: ($next => ffi "console.log($text)" ~ $next(void))
-    where $text = $x describe
+    where $text = $x to-string
 
   export $x ^Representable? display-error =>
     task: ($next => ffi "console.error($text)" ~ $next(void))
-    where $text = $x describe
+    where $text = $x to-string
 
   export $x ^Representable? display-warning =>
     task: ($next => ffi "console.warn($text)" ~ $next(void))
-    where $text = $x describe
+    where $text = $x to-string
 
   export $x ^Representable? display-info =>
     task: ($next => ffi "console.info($text)" ~ $next(void))
-    where $text = $x describe
+    where $text = $x to-string
 
   export $text ^String? write => 
     task: ($next => ffi "process.stdout.write($text)" ~ $next(void))
