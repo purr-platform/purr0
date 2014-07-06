@@ -1,6 +1,6 @@
 module Control.Monad {
   import Phemme.Core
-  import Phemme.List
+  import Data.List
 
   export $xs ^List? sequence-with: $Type ^Applicative? =>
     $xs fold-right: _ >> _ from: ($Type of: [])
