@@ -367,6 +367,16 @@ NS.$arrayToList = function(array) {
     return Cons(x, xs)
   }, Nil())
 }
+NS.$Struct = {
+  $clone: function(){ return clone(this) },
+  $get: function(name){
+    var r = this['_' + name];
+    if (r == null)
+      throw new ReferenceError('No such field: ' + name)
+    return r
+  },
+  $$tag: newTag({ $$name: 'Struct' }, '<builtin>')
+}
 NS.$doImport = function(module, name) {
   if (name)  this[name] = module
   else       unsafeExtend(this, module)

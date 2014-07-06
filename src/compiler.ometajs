@@ -80,6 +80,10 @@ ometa Compiler {
   DoAct scc:id cc:e                 -> [id, e],
   DoRet scc:id cc:e                 -> [id, _.doRet(e)],
 
+  Struct cc:id [cc*:xs]             -> _.structStmt(id, xs),
+  StructF cc:n cc:c                 -> [n, c],
+  New cc:a cc:m                     -> _.makeStruct(a, m),
+
   Multi cc*:as                      -> as,
   Nil                               -> null,
   Empty                             -> _.empty(),

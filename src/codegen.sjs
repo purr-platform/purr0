@@ -133,6 +133,10 @@ function unary(op, prefix, arg) {
 
 function eq(a, b){ return binary('===', a, b) }
 
+function not(e){ return unary('!', true, e) }
+
+function like(a, b){ return binary('==', a, b) }
+
 function expr(body) {
   return node('ExpressionStatement', { expression: body })
 }
@@ -872,4 +876,99 @@ function doExpr(xs) {
 exports.doRet = doRet
 function doRet(x) {
   return call(member(identifier("self"), lit('of:')), [id("$$doType"), x])
+}
+
+exports.structStmt = structStmt
+function structStmt(name, fields) {
+  return using(id("$$record"), fn(identifier(name.value), [], []), [
+    expr(set(
+      smember(id("$$record"), id("$$name")),
+      name
+    )),
+    letStmt(name, thunk(id("$$record"))),
+    varsDecl([
+      [
+        id("$$tag"),
+        call(builtin("$newTag"), [id("$$record"), id("$$package")])
+      ],
+      [
+        id("$$pred"),
+        fn(identifier(name.value + '?'), [id("$$0")], [
+          ret(eq(
+            call(builtin("$tag"), [id("$$0")]),
+            id("$$tag")
+          ))
+        ])
+      ],
+    ]),
+    letStmt(
+      lit(name.value + '?'),
+      id("$$pred")
+    ),
+    expr(set(
+      smember(id("$$record"), id("$$tag")),
+      id("$$tag")
+    )),
+    expr(set(
+      smember(id("$$record"), id("prototype")),
+      call(smember(builtin("$Struct"), id("$clone")), [])
+    )),
+    expr(set(
+      smember(smember(id("$$record"), id("prototype")), id("$$tag")),
+      id("$$tag")
+    )),
+    expr(set(
+      smember(id("$$record"), id("$new")),
+      fn(
+        identifier(name.value + ' new:'),
+        [id("$$map")],
+        [
+          varsDecl([[id("$$this"), newExpr(id("$$record"), [])]])
+        ].concat(flatten(fields.map(compileField))).concat([
+          ret(id("$$this"))
+        ])
+      )
+    )),
+    fields.map(decl)      
+  ])
+
+  function decl(field) {
+    var fname = field[0];
+    return letStmt(
+      fname,
+      compileContract(
+        identifier(fname.value),
+        [[id('$$pred')]],
+        fn(
+          identifier(fname.value),
+          [id("$$this")],
+          [
+            ret(member(id("$$this"), lit("_" + fname.value)))
+          ]
+        )
+      )
+    )
+  }
+
+  function compileField(field, i) {
+    var fname = field[0];
+    var fctr  = field[1];
+    var _id   = id("$$" + i);
+
+    return [
+      varsDecl([[_id, member(id("$$map"), fname)]]),
+      ifStmt(
+        like(_id, lit(null)),
+        throwStmt(newExpr(id('ReferenceError'), [lit('Missing required field: ' + fname.value)])),
+        null
+      ),
+      fctr? expr(call(builtin("$checkContract"), [fctr, _id, name])) : null,
+      expr(set(member(id("$$this"), lit('_' + fname.value)), _id))
+    ].filter(Boolean)
+  }
+}
+
+exports.makeStruct = makeStruct
+function makeStruct(expr, map) {
+  return call(smember(expr, id("$new")), [map])
 }

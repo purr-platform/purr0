@@ -43,8 +43,6 @@ var reserved = [ ':'  // Method parameter
                , 'derivation'
                // Data structures
                , 'data'
-               , 'struct'
-               , 'field'
                , 'case'
                , 'of'
                // Modules
@@ -102,6 +100,7 @@ ometa Parser {
   idRest     = letter | digit | symbol,
   symbolChar = symbol | ':',
   varName    = '$' <idStart idRest*>:a ~':'           -> [#Id, a],
+  uId        = <idStart idRest*>:a                    -> [#Id, a],
   identifier = <idStart idRest*>:a ~':' ?(isValid(a)) -> [#Id, a],
   keyword    = <idStart idRest*>:a ':'                -> [#Id, a + ':'],
   symbols    = <symbolChar+>:a          ?(isValid(a)) -> [#Id, a],
@@ -131,7 +130,8 @@ ometa Parser {
   map = '{' ws mapExpr:hd (ws ',' ws mapExpr)*:tl ws '}' -> [#Map, [hd].concat(tl)]
       | '{' ws '}'                                       -> [#Map, []],
 
-  mapExpr = string:a ws "=>" ws expr:b -> [#MapField, a, b],
+  mapExpr = uId:a ws "=>" ws expr:b    -> [#MapField, a, b]
+          | string:a ws "=>" ws expr:b -> [#MapField, a, b],
  
   set = '#' vector:xs -> [#Set, xs[1]],
 
@@ -213,12 +213,16 @@ ometa Parser {
   implDecl = methodImpl,
   methodImpl = kw('method') ws pattern:p ws fnBody:e -> [#Meth, p[0], [#Fn, p, e]],
 
-  adt = kw('data') ws identifier:id ws '=' ws adtPatterns:xs -> [#Data, id, xs],
+  adt = kw('data') ws identifier:id ws '=' ws struct:xs  -> [#Struct, id, xs]
+      | kw('data') ws identifier:id ws '=' ws adtPatterns:xs -> [#Data, id, xs],
   adtPatt = keywordPattern:p -> [#DataCtor, [#Kw].concat(p)]
           | binaryPattern:p  -> [#DataCtor, [#Bin].concat(p)]
           | unaryPattern:p   -> [#DataCtor, [#Un].concat(p)]
           | identifier:a     -> [#DataCtor, [#Val, a, [], []]],
   adtPatterns = adtPatt:a (ws '|' ws adtPatt)*:as -> [a].concat(as),
+
+  struct = '{' ws listOf(#structField, ','):xs ws '}' -> xs,
+  structField = uId:a ws preC:c1-> [#StructF, a, c1],
 
   decorator = "[|" ws expr:a ws "|]" ws
             ( module:m                  -> [#Deco, a, m[1][0], m]
@@ -309,6 +313,7 @@ ometa Parser {
               | postfixExpr,
   postfixExpr = postfixExpr:a ws '.' ws extendedId:i                 -> [#Member, a, i]
               | postfixExpr:a ws '(' ws listOf(#expr, ','):bs ws ')' -> [#FnApp, a, bs]
+              | postfixExpr:a ws map:m                               -> [#New, a, m]
               | primaryExpr,
   primaryExpr = ffi
               | value
