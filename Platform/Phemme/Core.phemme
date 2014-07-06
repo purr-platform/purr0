@@ -52,6 +52,13 @@ module Phemme.Core {
   }
 
   export
+  interface BooleanAlgebra {
+    method $this || $that -> BooleanAlgebra?
+    method $this && $that -> BooleanAlgebra?
+    method not($this) -> BooleanAlgebra?
+  }
+
+  export
   interface Numeric {
     method $this - $that -> Numeric?
     method $this * $that -> Numeric?

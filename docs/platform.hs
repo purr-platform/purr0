@@ -56,6 +56,12 @@ class Equality => Ordered where
   a max: a -> a
   a min: a -> a
 
+class BooleanAlgebra where
+  a || a -> a  -- Disjunction
+  a && a -> a  -- Conjunction
+  not(a) -> a  -- Negation
+  
+
 class Numeric where
   a - a -> a
   a * a -> a
@@ -133,12 +139,9 @@ class Monoid => Foldable where
 -- | Data structures  
 module Data.Boolean where
   data Boolean = false | true
-  deriving Equality, Ordered, Representable, Parseable, Bounded, Enumerable
+  deriving Equality, Ordered, Representable, Parseable, Bounded, Enumerable, BooleanAlgebra
 
   a Boolean? -> Boolean
-  Boolean && Boolean -> Boolean
-  Boolean || Boolean -> Boolean
-  not(Boolean) -> Boolean
   Boolean then: (-> b) else: (-> b) -> b
 
 
@@ -282,6 +285,10 @@ module Data.Stack where
 
 
 module Data.Date where
+  -- <TODO>
+
+
+module Data.Error where
   -- <TODO>
 
 

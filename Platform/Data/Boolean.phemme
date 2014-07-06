@@ -38,11 +38,11 @@ module Data.Boolean {
                                 | true => false
   }
 
-  export $this ^Boolean? && $that ^Boolean? => ffi "$this && $that"
-
-  export $this ^Boolean? || $that ^Boolean? => ffi "$this || $that"
-
-  export not($this ^Boolean?) => ffi "!$this"
+  implement BooleanAlgebra for Boolean {
+    method $this && $that ^Boolean? => ffi "$this && $that"
+    method $this || $that ^Boolean? => ffi "$this || $that"
+    method not($this) => ffi "!$this"
+  }
 
   export $test ^Boolean? then: $consequent ^Function? else: $alternate ^Function? =>
     | ($test)   => $consequent()
