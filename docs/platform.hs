@@ -314,7 +314,8 @@ module Concurrency.Asyc where
 
 
 module Concurrency.Timer where
-  -- <TODO>
+  Int32 delay -> Task(Error, Unit)
+  Int32 timeout -> Task(Error, Unit)
 
 
 module Concurrency.Channel where
