@@ -26,7 +26,7 @@ module Io.Console {
   export $text ^String? write => 
     task: ($next => ffi "process.stdout.write($text)" ~ $next(void))
 
-  export _ get-line: $prompt ^String? =>
+  export get-line: $prompt ^String? =>
     task: ffi """(function($next) {
       var rl = readline.createInterface({ input: process.stdin, output: process.stdout })
       rl.question($prompt, function($text) {
@@ -36,5 +36,5 @@ module Io.Console {
     })"""
     cleanup: $rl => ffi "$rl.close()"
 
-  export _ get-line => get-line: ""
+  export get-line => get-line: ""
 }
