@@ -43,8 +43,8 @@ module Concurrency.Async {
       $self['run:recover:']($t1, succeed, fail)
       $self['run:recover:']($t2, succeed, fail)
 
-      function succeed(v) { transition(self['Success'](v)) }
-      function fail(e)    { transition(self['Failure'](v)) }
+      function succeed(v) { transition($self['Success'](v)) }
+      function fail(e)    { transition($self['Failure'](v)) }
       function transition(v) {
         if (!resolved) {
           resolved = true
