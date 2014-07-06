@@ -62,6 +62,8 @@ function run(file, rt) {
   var context = vm.createContext({ process: process
                                  , console: console
                                  , require: require
+                                 , setTimeout: setTimeout
+                                 , clearTimeout: clearTimeout
                                  , __dirname: path.dirname(path.resolve(file))
                                  , __file: file
                                  , $Phemme: rt
