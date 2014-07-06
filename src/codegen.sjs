@@ -459,9 +459,13 @@ function exportStmt(name, unpack) {
 
 exports.parseExpr = parseExpr;
 function parseExpr(js) {
-  var tokens = esprima.parse(js).body;
+  try {
+    var tokens = esprima.parse(js).body;
+  } catch(e) {
+    throw new SyntaxError("Couldn't parse the expression:\n" + js + "\n\nReason: " + e.message)
+  }
   if (tokens.length !== 1 || tokens[0].type !== 'ExpressionStatement')
-    throw new SyntaxError('Expected a single expression.');
+    throw new SyntaxError('Expected a single expression in:\n' + js);
   return tokens[0].expression
 }
 
@@ -837,7 +841,11 @@ function importStmt(p, kw, name) {
 
 exports.parseProg = parseProg
 function parseProg(js) {
-  return esprima.parse(js).body
+  try {
+    return esprima.parse(js).body
+  } catch(e) {
+    throw new SyntaxError("Couldn't parse the JavaScript program:\n" + js + "\n\nReason: " + e.message)
+  }
 }
 
 exports.doExpr = doExpr
