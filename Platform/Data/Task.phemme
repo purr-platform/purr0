@@ -12,6 +12,7 @@ module Phemme.Data.Task {
   export _ task: $f ^Function? => $f Cleanup: (=> void)
   export _ task: $f ^Function? cleanup: $g ^Function? => $f Cleanup: $g
   export _ fail: $x => task: $next => $next($x Failure)
+  export never => task: => Unit
 
   # -- Runs things (meant for the end of the world, a la Haskell's unsafePerformIO)
   export $t ^Task? run: $f ^Function? recover: $g ^Function? => case $t of
@@ -49,5 +50,5 @@ module Phemme.Data.Task {
   implement Semigroup for Task {
     method $this + $that ^Task? => $this >>= $a => $that map: $b => $a + $b
   }
-  
+   
 }

@@ -7,13 +7,11 @@ module Concurrency.Async {
 
   export _ ~ _ => Unit
 
-  export never => task: => Unit
-    
   export $xs ^List? sequentially => $xs sequence-with: Task
-  
+
   export $xs ^List? parallel =>
     task: ffi """
-    function($next) {
+    (function($next) {
       var xs       = $self.$listToArray($xs)
       var len      = xs.length
       var result   = new Array(len)
@@ -29,6 +27,7 @@ module Concurrency.Async {
           if (len === 0) {
             resolved = true
             $next($self.Success($self.Vector().$make(result)))
+          }
         }, function Failure(error) {
           if (resolved)  return
           resolved = true
@@ -36,15 +35,15 @@ module Concurrency.Async {
         })
       }
     })"""
- 
+
   export $t1 ^Task? or: $t2 ^Task? =>
     task: ffi """
-    function($next) {
+    (function($next) {
       var resolved = false
       $self['run:recover:']($t1, succeed, fail)
       $self['run:recover:']($t2, succeed, fail)
 
-      funciton succeed(v) { transition(self['Success'](v)) }
+      function succeed(v) { transition(self['Success'](v)) }
       function fail(e)    { transition(self['Failure'](v)) }
       function transition(v) {
         if (!resolved) {
@@ -52,15 +51,15 @@ module Concurrency.Async {
           $next(v)
         }
       }
-    }"""
+    })"""
     cleanup: => case $t1, $t2 of
       | _ Clenup: $c1, _ Cleanup: $c2 => $c1() ~ $c2()
-      
+
   export $xs ^List? choose-first => $xs fold: _ or: _ from: never
 
   export $xs ^List? try-all =>
     task: ffi """
-    function($next) {
+    (function($next) {
       var xs = $self.$listToArray($xs)
       var resolved = false
       var pending  = xs.length
@@ -81,6 +80,15 @@ module Concurrency.Async {
         if (pending === 0)
           $next($self.Failure($self.Vector().$make(failures)))
       }}
-    }"""
+    })"""
+
+  implement BooleanAlgebra for Task {
+    method $this || $that ^Task? => $this or: $that
+    method $this && $that ^Task? => [$this, $that] parallel
+    method not($this) =>
+      task: $next => $this run: ($v => $next($v Failure))
+                           recover: ($e => $next($e Success))
+  }
+
 
 }
