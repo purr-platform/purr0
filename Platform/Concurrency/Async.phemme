@@ -44,7 +44,7 @@ module Concurrency.Async {
       $self['run:recover:']($t2, succeed, fail)
 
       function succeed(v) { transition($self['Success'](v)) }
-      function fail(e)    { transition($self['Failure'](v)) }
+      function fail(e)    { transition($self['Failure'](e)) }
       function transition(v) {
         if (!resolved) {
           resolved = true
@@ -66,7 +66,7 @@ module Concurrency.Async {
       var failures = new Array(pending)
 
       xs.forEach(function(x, i) {
-        $self['run:recover:'](succeed, accumulateFailure(index))
+        $self['run:recover:'](x, succeed, accumulateFailure(i))
       })
 
       function succeed(value) {
