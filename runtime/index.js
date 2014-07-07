@@ -432,8 +432,8 @@ NS.$makeNamespace = function(pkg) {
     var task = ns.main(xs)
     if (task.$$tag !== '<#Task:Io.Task>')
       throw new TypeError('Expected a Task, got: ' + tagFor(task))
-    var computation = task.$$0
-    var cleanup = task.$$1
+    var computation = task.$$1
+    var cleanup = task.$$2
     computation(function(val) {
       cleanup()
       if (val.$$ctag === 'Failure') throw val.$$0
