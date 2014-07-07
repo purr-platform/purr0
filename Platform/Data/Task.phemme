@@ -27,7 +27,7 @@ module Phemme.Data.Task {
                                                   | Yield($a) => $f($a)
                                                   | Throw($a) => $g($a)
                                                   | Done      => void
-                                                  ) ~ (=> $cleanup($state)) delayed))
+                                                  ) ~ (=> $cleanup($state, $value)) delayed))
         in $state
 
   export $t ^Task? run: $f ^Function? => case $t of
@@ -35,7 +35,7 @@ module Phemme.Data.Task {
         let $state = $computation(@once($value => ( case $value of
                                                   | Yield($a) => $f($a)
                                                   | Done      => void
-                                                  ) ~ (=> $cleanup($state)) delayed))
+                                                  ) ~ (=> $cleanup($state, $value)) delayed))
         in $state
 
   # -- Protocols
