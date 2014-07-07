@@ -36,6 +36,11 @@ module Phemme.Core {
   }
 
   export
+  interface Clonable {
+    method $this clone
+  }
+
+  export
   interface Ordered {
     need Equality
     method $this compare-to: $that -> Ordering?
