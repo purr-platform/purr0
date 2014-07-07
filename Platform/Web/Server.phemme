@@ -38,8 +38,20 @@ module Web.Server {
   $$Request.prototype.$$tag = $$Request.$$tag
   $$Request.$new = function(req) {
     var $$this = new $$Request()
-    $$this._req = req
+    $$this._req  = req
+    $$this._meta = Object.create(null)
     return $$this
+  }
+  $$Request.prototype.$set = function(key, value) {
+    var result = Object.create(this)
+    result._meta = Object.create(result._meta)
+    result._meta[key] = value
+    return result
+  }
+  $$Request.prototype.$get = function(name) {
+    var v = this._meta[name]
+    if (v == null)  return $self.Nothing()
+    else            return $self.Just(v)
   }
   $$Request.prototype['http-method'] = function(self) {
     return self._req.method
@@ -64,11 +76,11 @@ module Web.Server {
 
       function fail(error) {
         cleanup()
-        $next($self.Failure(error))
+        $next($self.Throw(error))
       }
       function fulfill() {
         cleanup()
-        $next($self.Success(data))
+        $next($self.Yield(data))
       }
       function grabChunk() {
         var chunk = source.read()
@@ -91,33 +103,56 @@ module Web.Server {
   export $this ^Request? http-version => ffi "$this['http-version']($this)"
   export $this ^Request? headers => ffi "$this.headers($this)"
 
+  implement Indexable for Request {
+    method $this at: $key ^String? => ffi "$this.$get($key)"
+  }
+  implement Container for Request {
+    method $this at: $key ^String? put: $value => ffi "$this.$set($key, $value)"
+    method $this remove-at: $key ^String? => ffi "$this.$remove($key)"
+  }
+
   export data Response = $status ^Number? Headers: _ Body: _
 
   export Status: $a Headers: $b Body: $c => $a Headers: $b Body: $c
   export Body: $c => 200 Headers: {} Body: $c
 
-  export data Address = { address ^String?, family ^String?, port ^Number? }
+  export data Address = { address ^String?  # Bound address
+                        , family ^String?   # IP family
+                        , port ^Number? }   # Bound port number
 
-
-  export $app ^Function? listen: $port ^Number? =>
+  
+  let $app listen: $port host: $host server-factory: $factory =>
     task: ffi """(function($next) {
-      var state = {}
-      state.server = $http.createServer($wrapApplication($app))
-      state.server.listen($port, function(error) {
-        if (state.ignore)  return
-
-        if (error)  $next($self.Failure(error))
+      var server = $factory($wrapApplication($app))
+      server.listen($port, $host, function(error) {
+        if (error)  $next($self.Throw(error))
         else {
-          var addr = this.address() 
-          $next($self.Success($self.Address().$new({ address : addr.address
-                                                   , family  : addr.family
-                                                   , port    : addr.port })))
+          var addr = this.address()
+          $next($self.Yield($self.Address().$new(addr)))
         }
       })
-      return state
+      return server
     })"""
-    cleanup: ffi """(function($state) {
-      $state.ignore = true
-      $state.server.close()
+    cleanup: ffi """(function($server, $status) {
+      if ($status.$$ctag !== 'Yield')
+        $server.close()
     })"""
+
+
+  export http: $app ^Function? listen: $port ^Number? host: $host ^String? =>
+    $app 
+    listen:         $port
+    host:           $host
+    server-factory: ffi "(function(app){ return $http.createServer(app) })" 
+
+  export http: $app listen: $port => http: $app listen: $port host: "0.0.0.0"
+
+  export https: $app ^Function? listen: $port ^Number? host: $host ^String? =>
+    $app 
+    listen:         $port
+    host:           $host
+    server-factory: ffi "(function(app){ return $https.createServer(app) })" 
+
+  export https: $app listen: $port => https: $app listen: $port host: "0.0.0.0"
+
 }
