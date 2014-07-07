@@ -1,0 +1,23 @@
+module Data.Record {
+  import Phemme.Core
+  
+  implement Clonable for Record {
+    method $this clone => ffi "$this.$clone()"
+  }
+
+  implement Indexable for Record {
+    method $this at: $index ^String? => ffi "$this[$index]? $self.Just($this.$get($index))
+                                                          : $self.Nothing()"
+  }
+
+  implement Container for Record {
+    method $this at: $index ^String? put: $value => ffi "$this.$clone().$add($index, $value)"
+    method $this remove-at: $index => ffi "(function() {
+      var result = $this.$clone()
+      if ($index[0] === '$')  throw new Error('Invalid key: ' + $index)
+      result[$index] = null
+      return result
+    })"
+  }
+
+}

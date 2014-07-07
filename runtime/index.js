@@ -202,46 +202,48 @@ Record.$clone = function() {
 }
 
 var ExtRecord = clone(Record)
-ExtRecord['at:put:'] = function(self, name, value) {
-  ensureString(name)
-  var result = clone(self)
-  return result.$add(name, value)
-}
-ExtRecord['at:'] = function(self, name) {
-  ensureString(name)
-  return self.$get(name)
-}
-ExtRecord.clone = function(self) {
-  return clone(self)
-}
-ExtRecord['with:'] = function(self, otherRecord) {
-  var result = clone(self)
-  var data   = otherRecord.$namespace()
-  unsafeExtend(result, data)
-  return result
-}
-ExtRecord['without:'] = function(self, names) {
-  var result = clone(self)
-  listToArray(names).forEach(function(name) {
-    ensureString(name)
-    result[name] = null
-  })
-  return result
-}
-ExtRecord['rename:to:'] = function(self, origin, newName) {
-  var newObj = Record.$fromObject({})
-  newObj.$add(newName, self.$get(origin))
-  return self['without:'](self, origin)
-             ['with:'](self, newObj)
-}
-ExtRecord['rename:'] = function(self, names) {
-  var result = clone(self)
-  listToArray(names).forEach(function(xs) {
-    var pair = listToArray(xs)
-    result = result['rename:to:'](self, pair[0], pair[1])
-  })
-  return result
-}
+ExtRecord.$$name = 'Record'
+ExtRecord.$$tag = newTag(ExtRecord, '<builtin>')
+//ExtRecord['at:put:'] = function(self, name, value) {
+//  ensureString(name)
+//  var result = clone(self)
+//  return result.$add(name, value)
+//}
+//ExtRecord['at:'] = function(self, name) {
+//  ensureString(name)
+//  return self.$get(name)
+//}
+//ExtRecord.clone = function(self) {
+//  return clone(self)
+//}
+//ExtRecord['with:'] = function(self, otherRecord) {
+//  var result = clone(self)
+//  var data   = otherRecord.$namespace()
+//  unsafeExtend(result, data)
+//  return result
+//}
+//ExtRecord['without:'] = function(self, names) {
+//  var result = clone(self)
+//  listToArray(names).forEach(function(name) {
+//    ensureString(name)
+//    result[name] = null
+//  })
+//  return result
+//}
+//ExtRecord['rename:to:'] = function(self, origin, newName) {
+//  var newObj = Record.$fromObject({})
+//  newObj.$add(newName, self.$get(origin))
+//  return self['without:'](self, origin)
+//             ['with:'](self, newObj)
+//}
+//ExtRecord['rename:'] = function(self, names) {
+//  var result = clone(self)
+//  listToArray(names).forEach(function(xs) {
+//    var pair = listToArray(xs)
+//    result = result['rename:to:'](self, pair[0], pair[1])
+//  })
+//  return result
+//}
 
 // -- Protocols ------------------------------------------------------
 function Protocol(name, pkg) {
@@ -372,6 +374,7 @@ NS.$protocols         = {}
 NS.$tag               = tagFor
 NS.$newTag            = newTag
 NS.$listToArray       = listToArray
+NS.Record = function(){ return ExtRecord }
 NS.$arrayToList = function(array) {
   var Nil  = this.Nil
   var Cons = this['::']

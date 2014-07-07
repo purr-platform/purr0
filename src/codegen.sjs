@@ -216,7 +216,7 @@ function prog(body) {
 function scoped(expr) {
   return call(
     lambda(null, [id("$$scope")], ret(expr)),
-    [call(smember(identifier("self"), id("clone")), [identifier("self")])]
+    [call(smember(identifier("self"), id("$clone")), [])]
   )
 }
 
@@ -752,7 +752,7 @@ function binding(vars, e) {
       [identifier("self")],
       vars.concat([ret(e)])
     ),
-    [call(smember(identifier("self"), id("clone")), [identifier("self")])]
+    [call(smember(identifier("self"), id("$clone")), [])]
   )
 }
 
