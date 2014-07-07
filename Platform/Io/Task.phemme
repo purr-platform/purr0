@@ -1,4 +1,4 @@
-module Phemme.Data.Task {
+module Io.Task {
 
   import Phemme.Core
   import Data.Function

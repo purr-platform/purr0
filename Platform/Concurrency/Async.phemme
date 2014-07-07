@@ -1,8 +1,8 @@
 module Concurrency.Async {
   import Phemme.Core
-  import Data.Task
   import Data.List
   import Data.Vector
+  import Io.Task
   import Control.Monad
 
   export _ ~ _ => Unit

@@ -1,6 +1,6 @@
 module Web.Server {
   import Phemme.Core
-  import Data.Task
+  import Io.Task
 
   ffi """
   var $http  = require('http')

@@ -1,6 +1,6 @@
 module Io.FileSystem {
   import Phemme.Core
-  import Data.Task
+  import Io.Task
   import Io.FileSystem.Path
 
   ffi "var $fs = require('fs')"
