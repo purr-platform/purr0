@@ -118,7 +118,12 @@ ometa Parser {
   digits = <digit+>:a -> Number(a),
   number = digits:a ('.' digits:b)? -> [#Num, a, b || 0],
   
-  stringEscape     = '\\' char:a -> a,
+  stringEscape     = '\\' ( 'b' -> '\b'
+                          | 'f' -> '\f'
+                          | 'n' -> '\n'
+                          | 'r' -> '\r'
+                          | 't' -> '\t'
+                          | char),
   stringChar       = (stringEscape | (~seq('"') char)):a -> a,
   unescapableChars = ~seq('"""') char,
   string           = seq('"""') <unescapableChars*>:as seq('"""') -> [#Str, as]
