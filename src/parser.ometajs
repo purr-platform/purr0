@@ -153,6 +153,9 @@ ometa Parser {
           | binaryPattern
           | unaryPattern,
 
+  spKeywordPatt  = keywordArg:k (ws keywordArg)*:ks                          -> (function(kws) {
+                                                                                  return [kwId(kws), [[#Id, '_']].concat(kwArgs(kws)), [[#Nil]].concat(kwCont(kws))]
+                                                                                }([k].concat(ks))),
   keywordPattern = keywordLeading:bs (ws keywordArg)+:ks                     -> [kwId(ks), [bs[0]].concat(kwArgs(ks)), [bs[1]].concat(kwCont(ks))],
   unaryPattern   = pattId:a ws preC:c1 ws identifier:b                       -> [b, [a], [c1]]
                  | identifier:a ws '(' ws pattId:b ws preC:c1 ws ')'         -> [a, [b], [c1]]
@@ -222,7 +225,7 @@ ometa Parser {
 
   adt = kw('data') ws identifier:id ws '=' ws struct:xs  -> [#Struct, id, xs]
       | kw('data') ws identifier:id ws '=' ws adtPatterns:xs -> [#Data, id, xs],
-  adtPatt = keywordPattern:p -> [#DataCtor, [#Kw].concat(p)]
+  adtPatt = spKeywordPatt:p  -> [#DataCtor, [#Kw].concat(p)]
           | binaryPattern:p  -> [#DataCtor, [#Bin].concat(p)]
           | unaryPattern:p   -> [#DataCtor, [#Un].concat(p)]
           | identifier:a     -> [#DataCtor, [#Val, a, [], []]],
@@ -248,7 +251,7 @@ ometa Parser {
                  , n || [#Nil]],
 
   // Pattern matching
-  matchCase  = matchCase2:x (ws keywordCase)+:ks         -> [#CaseKw, kwId(ks), [x].concat(kwArgs(ks))]
+  matchCase  = keywordCase:k (ws keywordCase)*:ks         -> [#CaseKw, kwId([k].concat(ks)), kwArgs([k].concat(ks))]
              | matchCase2,
   matchCase2 = matchCase2:x ws symbols:s ws matchCase3:y -> [#CaseBin, s, [x, y]]
              | matchCase3,

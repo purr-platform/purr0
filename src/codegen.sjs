@@ -547,11 +547,9 @@ function adtStmt(name, cases) {
       case 'Un': return [
         expr(set(smember(thisExpr(), id('$$0')), args[0]))
       ]
-      case 'Kw': return [
-        expr(set(smember(thisExpr(), id('$$0')), args[0]))
-      ].concat(args.slice(1).map(function(a, i) {
+      case 'Kw': return args.slice(1).map(function(a, i) {
         return expr(set(smember(thisExpr(), id('$$' + (i + 1))), a))
-      }));
+      });
       default: throw new Error('Unknow data constructor kind: ' + kind)
     }
   }
@@ -701,14 +699,14 @@ function caseBin(tag, l, r) {
 
 exports.caseKw = caseKw
 function caseKw(tag, args) {
-  var names = [lit("self")].concat(tag.value.split(':').slice(0,-1).map(lit));
+  var names = tag.value.split(':').slice(0,-1).map(lit);
   return function(val, e, ctx) {
     return whenCase(
       eq(smember(val, id("$$ctag")), tag),
       ret(names.reduceRight(function(res, name, i) {
         var lvar = ctx.newVar();
         return withMatch(
-          [smember(val, id('$$' + i))],
+          [smember(val, id('$$' + (i + 1)))],
           args[i](lvar, res, ctx),
           [lvar]
         )

@@ -3,7 +3,7 @@ module Phemme.Data.Task {
   import Phemme.Core
   import Data.Function
 
-  export data Task = _ ^Function? Cleanup: _ ^Function?
+  export data Task = Task: _ ^Function? Cleanup: _ ^Function?
   export data TaskResult = _ Yield  # Succeeds with some result
                          | _ Throw  # Fails with some result
                          | Done     # Finishes the computation
@@ -22,7 +22,7 @@ module Phemme.Data.Task {
 
   # -- Runs things (meant for the end of the world, a la Haskell's unsafePerformIO)
   export $t ^Task? run: $f ^Function? recover: $g ^Function? => case $t of
-    | $computation Cleanup: $cleanup =>
+    | Task: $computation Cleanup: $cleanup =>
         let $state = $computation(@once($value => ( case $value of
                                                   | Yield($a) => $f($a)
                                                   | Throw($a) => $g($a)
@@ -31,7 +31,7 @@ module Phemme.Data.Task {
         in $state
 
   export $t ^Task? run: $f ^Function? => case $t of
-    | $computation Cleanup: $cleanup => 
+    | Task: $computation Cleanup: $cleanup => 
         let $state = $computation(@once($value => ( case $value of
                                                   | Yield($a) => $f($a)
                                                   | Done      => void
