@@ -33,6 +33,7 @@ var reserved = [ ':'  // Method parameter
                , '_'  // Partial / Wildcard
                , '=>' // Function definition
                , '|'  // Case separators
+               , '<-' // Do binding
                , '<|', '|>'  // pipes
                // Protocols
                , 'interface'
