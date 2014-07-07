@@ -430,7 +430,7 @@ NS.$makeNamespace = function(pkg) {
       })
     })
     var task = ns.main(xs)
-    if (task.$$tag !== '<#Task:Phemme.Data.Task>')
+    if (task.$$tag !== '<#Task:Io.Task>')
       throw new TypeError('Expected a Task, got: ' + tagFor(task))
     var computation = task.$$0
     var cleanup = task.$$1
