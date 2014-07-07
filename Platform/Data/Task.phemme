@@ -15,9 +15,9 @@ module Phemme.Data.Task {
   let once($f) => ffi "(function(a) { var result = $f(a); $f = function(){}; return result })"
 
   # -- Constructors
-  export _ task: $f ^Function? => $f Cleanup: (=> void)
-  export _ task: $f ^Function? cleanup: $g ^Function? => $f Cleanup: $g
-  export _ fail: $x => task: $next => $next($x Throw)
+  export task: $f ^Function? => Task: $f Cleanup: (=> void)
+  export task: $f ^Function? cleanup: $g ^Function? => Task: $f Cleanup: $g
+  export fail: $x => task: $next => $next($x Throw)
   export never => task: => Unit
 
   # -- Runs things (meant for the end of the world, a la Haskell's unsafePerformIO)
