@@ -339,14 +339,14 @@ ometa Parser {
               | postfixExpr:a ws map:m                               -> [#New, a, m]
               | primaryExpr,
   primaryExpr = ffi
-              | value
+              | '_'                  -> [#Partial]
               | caseExpr
               | doExpr
+              | value
               | lambda
               | identifier:a         -> [#App, [#Var, 'self'], a, [[#Var, 'self']]]
               | '@' extendedId:i     -> [#Member, [#Var, 'self'], i]
               | varName:a            -> [#Var, a[1]]
-              | '_'                  -> [#Partial]
               | '(' ws expr:a ws ')' -> a,
 
   keywordApp = keyword:k ws binaryExpr:v -> [k, v],
