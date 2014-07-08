@@ -49,8 +49,9 @@ ometa Compiler {
   Program cc:id cc:mod              -> _.program(id, mod),
   Deco cc:f cc:id cc:e              -> _.decorator(f, id, e),
 
-  Import cc:p cc:ks cc:id           -> _.importStmt(p, ks, id),
+  Import cc:p cc:ks cc:id [cc*:xs]  -> _.importStmt(p, ks, id, xs),
   ImpKw cc:id [cc*:args]            -> [id, args],
+  ImpBind cc:f cc:t                 -> [f, t],
   Use cc:e                          -> _.use(e),
 
   IFace cc:id [cc*:decl]            -> _.ifaceStmt(id, decl),

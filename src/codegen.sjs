@@ -821,21 +821,29 @@ function map(xs) {
 }
 
 exports.importStmt = importStmt
-function importStmt(p, kw, name) {
+function importStmt(p, kw, name, binds) {
   return atImportPhase(expr(call(
     fn(
       null,
       [id("$$mod")],
       [
         expr(set(id("$$mod"), instantiate(kw))),
-        expr(call(
-          smember(identifier("self"), id("$doImport")),
-          [id("$$mod"), name == null? lit("") : name]
-        ))
+        binds.map(compileBind),
+        ( name?           letStmt(name, id("$$mod"))
+        : !binds.length?  expr(call(
+                            smember(identifier("self"), id("$doImport")),
+                            [id("$$mod")]
+                          ))
+        : /* otherwise */ [])
       ]
     ),
     [call(builtin("$load"), [p, id("__dirname")])]
   )));
+
+  function compileBind(pair) {
+    var from = pair[0], to = pair[1] || pair[0];
+    return letStmt(to, call(smember(id("$$mod"), id("$get")), [from]))
+  }
 
   function instantiate(kw) {
     var pub = smember(identifier("self"), id("$exports"))

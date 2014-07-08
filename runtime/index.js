@@ -392,9 +392,8 @@ NS.$Struct = {
   },
   $$tag: newTag({ $$name: 'Struct' }, '<builtin>')
 }
-NS.$doImport = function(module, name) {
-  if (name)  this[name] = module
-  else       unsafeExtend(this, module)
+NS.$doImport = function(module) {
+  unsafeExtend(this, module)
 }
 NS.$hasImplementation = function(proto, type) {
   return tagFor(type) in this.$protocols[tagFor(proto)].$impl

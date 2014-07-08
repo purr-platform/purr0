@@ -49,7 +49,6 @@ var reserved = [ ':'  // Method parameter
                , 'module'
                , 'use'
                , 'import'
-               , 'with'
                , 'as'
                // Scoping & others
                , 'let'
@@ -253,11 +252,14 @@ ometa Parser {
             ),
 
   importDecl = kw('import') ws namespace:p
-                 (ws kw('with') (ws keywordApp)+:ks)?
+                 (ws keywordApp)*:ks)?
                  (ws kw('as') ws identifier:n)?
+                 (ws kw('use') ws listOf(#importBindRule, ','):xs)?
              -> [#Import, p
-                 , ks? [#ImpKw, kwId(ks), kwArgs(ks)] : [#Nil]
-                 , n || [#Nil]],
+                 , ks.length? [#ImpKw, kwId(ks), kwArgs(ks)] : [#Nil]
+                 , n || [#Nil]
+                 , xs || []],
+  importBindRule = extendedId:a ("=>" extendedId)?:b -> [#ImpBind, a, b || [#Nil]],
 
   // Pattern matching
   matchCase  = keywordCase:k (ws keywordCase)*:ks         -> [#CaseKw, kwId([k].concat(ks)), kwArgs([k].concat(ks))]
