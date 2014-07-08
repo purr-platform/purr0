@@ -666,6 +666,23 @@ function caseId(tag) {
   }
 }
 
+exports.caseBind = caseBind
+function caseBind(id, patt) {
+  return function(val, e, ctx) {
+    return patt(
+      val,
+      call(
+        fn(
+          null,
+          [id],
+          [ret(e)]
+        ), 
+        [val]),
+      ctx
+    )
+  }
+}
+
 exports.caseUn = caseUn
 function caseUn(tag, body) {
   return function(val, e, ctx) {

@@ -76,6 +76,7 @@ ometa Compiler {
   CaseUn cc:tag cc:arg              -> _.caseUn(tag, arg),
   CaseBin cc:tag [cc:l cc:r]        -> _.caseBin(tag, l, r),
   CaseKw cc:tag [cc*:args]          -> _.caseKw(tag, args),
+  CaseBind scc:id cc:patt           -> _.caseBind(id, patt),
 
   Do [cc*:xs]                       -> _.doExpr(xs),
   DoAct scc:id cc:e                 -> [id, e],
