@@ -9,7 +9,7 @@ module Concurrency.Async {
 
   export $xs ^List? sequentially => $xs sequence-with: Task
 
-  export $xs ^List? parallel =>
+  export $xs ^List? concurrently =>
     task: ffi """
     (function($next) {
       var xs       = $self.$listToArray($xs)
@@ -80,7 +80,7 @@ module Concurrency.Async {
 
   implement BooleanAlgebra for Task {
     method $this || $that ^Task? => $this or: $that
-    method $this && $that ^Task? => [$this, $that] parallel
+    method $this && $that ^Task? => [$this, $that] concurrently
     method not($this) =>
       task: $next => $this run: ($v => $next($v Yield))
                            recover: ($e => $next($e Throw))
