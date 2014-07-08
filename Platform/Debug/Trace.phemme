@@ -6,7 +6,7 @@ module Debug.Trace {
   ffi """
   function $inspect($value) {
     try {
-      return $self.$tag($value) + ' ' + $self.describe($value)
+      return $self.$tag($value) + ' ' + $self['to-string']($value)
     } catch(e) {
       return $self.$tag($value) + ' ' + $self.$describe($value)
     }
