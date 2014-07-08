@@ -41,7 +41,7 @@ module Data.List {
       }
     }())"
 
-    method $this fold-right: $f from: $b => $this reverse fold: $f from: $b
+    method $this fold-right: $f from: $b => $this reverse fold: ($a $b => $f($b, $a)) from: $b
   }
 
   implement Semigroup for List {
@@ -56,7 +56,7 @@ module Data.List {
   }
 
   implement Functor for List {
-    method $this map: $f => $this fold-right: ($xs $x => $f($x) :: $xs) from: Nil
+    method $this map: $f => $this fold-right: ($x $xs => $f($x) :: $xs) from: Nil
   }
 
   implement Applicative for List {
