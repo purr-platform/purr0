@@ -179,7 +179,7 @@ module Phemme.Core {
     need Applicative
     method $this none -> Alternative?
     method $this else: $that -> Alternative?
-    method $this <|> $that -> Alternative?
+    method $this <|> $that => $this else: $that
   }
 
   export
