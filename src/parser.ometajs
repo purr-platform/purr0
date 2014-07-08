@@ -156,8 +156,9 @@ ometa Parser {
                                                                                   return [kwId(kws), [[#Id, '_']].concat(kwArgs(kws)), [[#Nil]].concat(kwCont(kws))]
                                                                                 }([k].concat(ks))),
   keywordPattern = keywordLeading:bs (ws keywordArg)+:ks                     -> [kwId(ks), [bs[0]].concat(kwArgs(ks)), [bs[1]].concat(kwCont(ks))],
-  unaryPattern   = pattId:a ws preC:c1 ws identifier:b                       -> [b, [a], [c1]]
-                 | identifier:a ws '(' ws pattId:b ws preC:c1 ws ')'         -> [a, [b], [c1]]
+  rUnaryPattern  = pattId:a ws preC:c1 ws identifier:b                       -> [b, [a], [c1]]
+                 | identifier:a ws '(' ws pattId:b ws preC:c1 ws ')'         -> [a, [b], [c1]],
+  unaryPattern   = rUnaryPattern
                  | preC:c1 ws identifier:a                                   -> [a, [[#Id, '_']], [c1]],
   binaryPattern  = pattId:a ws preC:c1 ws symbols:b ws pattId:c ws preC:c2 -> [b, [a, c], [c1, c2]],
 
@@ -226,7 +227,7 @@ ometa Parser {
       | kw('data') ws identifier:id ws '=' ws adtPatterns:xs -> [#Data, id, xs],
   adtPatt = spKeywordPatt:p  -> [#DataCtor, [#Kw].concat(p)]
           | binaryPattern:p  -> [#DataCtor, [#Bin].concat(p)]
-          | unaryPattern:p   -> [#DataCtor, [#Un].concat(p)]
+          | rUnaryPattern:p  -> [#DataCtor, [#Un].concat(p)]
           | identifier:a     -> [#DataCtor, [#Val, a, [], []]],
   adtPatterns = adtPatt:a (ws '|' ws adtPatt)*:as -> [a].concat(as),
 
