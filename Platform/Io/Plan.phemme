@@ -1,0 +1,66 @@
+module Io.Plan {
+  import Phemme.Core
+  import Data.Function
+  import Data.String
+  import Io.Task
+
+  # This module provides a way to construct a plan about how I/O should be
+  # dealt with. You declare what you want to do, potentially compose plans
+  # as much as you want, then feed the plan to a Machine so it gets executed
+  # for effects
+  export
+  data Plan = Halt
+            | Fail: $reason
+            | Emit: $value ^Semigroup? Then: _ ^Plan?
+            | Await: _ ^Function? Fallback: _ ^Plan?
+
+  export $plan execute: $input => match $plan {
+    | Halt                   => []
+    | Fail: $reason          => $reason
+    | Emit: $xs Then: $cp    => $xs :: ($cp execute: $input)
+    | Await: $f Fallback: $p => match $input {
+                                | $hd :: $tl => $f($hd) execute: $tl
+                                | _          => $p execute: $input
+                                }
+    }
+
+  implement Functor for Plan {
+    method $p map: $f => ($p \/ halt) 
+  }
+
+  implement Applicative for Plan {
+    method _ of: $v => $v emit
+    method _ apply-to: _ => Unit
+  }
+
+  implement Chainable for Plan {
+    method $p chain: $f => match $p {
+      | Halt                    => $p
+      | Fail: _                 => $p
+      | Emit: $v Then: $t       => Emit: $v Then: $t + $f($v)
+      | Await: $c Fallback: $fb => Await: ($v => let $t = $c($v)
+                                                  in match $t {
+                                                    | Halt => $f($v)
+                                                    | _    => $t >>= $f
+                                                  })
+                                   Fallback: $fb >>= $f
+    }
+  }
+
+  implement Semigroup for Plan {
+    method $p + $p2 ^Plan? => match $p {
+      | Halt                   => $p2
+      | Fail: $reason          => $p
+      | Emit: $xs Then: $t     => Emit: $xs Then: $t + $p2
+      | Await: $c Fallback: $t => Await: $c ->> (_ + $p2) Fallback: $t + $p2
+    }
+      
+  }
+
+  export await => Await: @halt Fallback: halt
+  export await-or: $fb => Await: @halt Fallback: $fb
+  export $x emit => Emit: $x Then: halt
+  export $x fail => Fail: $x
+  export halt => Halt
+}
+
