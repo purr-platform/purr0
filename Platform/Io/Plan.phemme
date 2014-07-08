@@ -12,17 +12,35 @@ module Io.Plan {
   data Plan = Halt
             | Fail: $reason
             | Emit: $value ^Semigroup? Then: _ ^Plan?
-            | Await: _ ^Function? Fallback: _ ^Plan?
+            | Await: $resource Then: _ ^Function? Fallback: _ ^Plan?
 
-  export $plan execute: $input => match $plan {
-    | Halt                   => []
-    | Fail: $reason          => $reason
-    | Emit: $xs Then: $cp    => $xs :: ($cp execute: $input)
-    | Await: $f Fallback: $p => match $input {
-                                | $hd :: $tl => $f($hd) execute: $tl
-                                | _          => $p execute: $input
-                                }
-    }
+  export
+  data Resource = { acquire ^Function?  # Unit → Task[Error, R]
+                  , release ^Function?  # R → Task[Error, Unit]
+                  , step ^Function?     # R → Task[Error, A]
+                  }
+
+  let $f force => $f()
+
+  export $plan to-task: $input => 
+    task: $next => $input go: $plan
+      where $xs go: $p => match $p {
+        | Halt                            => $next($xs Yield)
+        | Fail: $e                        => $next($e Throw)
+        | Emit: $ys Then: $t              => ($xs + $ys) go: $t
+        | Await: $r Then: $c Fallback: $t => let $res = $r acquire force
+                                             in do {
+                                               $data <- $r step <| $res;
+                                               $x <- match $data {
+                                                 | Nothing  => $t to-task: $xs
+                                                 | Just($a) => $c($a) to-task: $xs
+                                               };
+                                               $r release <| $res;
+                                               return $x
+                                             } run: @Yield ->> $next
+      }
+
+  export $plan to-task => $plan to-task: []
 
   implement Functor for Plan {
     method $p map: $f => ($p \/ halt) 
@@ -35,30 +53,31 @@ module Io.Plan {
 
   implement Chainable for Plan {
     method $p chain: $f => match $p {
-      | Halt                    => $p
-      | Fail: _                 => $p
-      | Emit: $v Then: $t       => Emit: $v Then: $t + $f($v)
-      | Await: $c Fallback: $fb => Await: ($v => let $t = $c($v)
-                                                  in match $t {
-                                                    | Halt => $f($v)
-                                                    | _    => $t >>= $f
-                                                  })
-                                   Fallback: $fb >>= $f
+      | Halt                             => $p
+      | Fail: _                          => $p
+      | Emit: $v Then: $t                => Emit: $v Then: $t + $f($v)
+      | Await: $r Then: $c Fallback: $fb => Await: $r
+                                            Then: ($v => let $t = $c($v)
+                                                         in match $t {
+                                                           | Halt => $f($v)
+                                                           | _    => $t >>= $f
+                                                         })
+                                            Fallback: $fb >>= $f
     }
   }
 
   implement Semigroup for Plan {
     method $p + $p2 ^Plan? => match $p {
-      | Halt                   => $p2
-      | Fail: $reason          => $p
-      | Emit: $xs Then: $t     => Emit: $xs Then: $t + $p2
-      | Await: $c Fallback: $t => Await: $c ->> (_ + $p2) Fallback: $t + $p2
+      | Halt                            => $p2
+      | Fail: $reason                   => $p
+      | Emit: $xs Then: $t              => Emit: $xs Then: $t + $p2
+      | Await: $r Then: $c Fallback: $t => Await: $r Then: $c ->> (_ + $p2) Fallback: $t + $p2
     }
       
   }
 
-  export await => Await: @halt Fallback: halt
-  export await-or: $fb => Await: @halt Fallback: $fb
+  export $r await => Await: $r Then: @halt Fallback: halt
+  export $r await-or: $fb => Await: $r Then: @halt Fallback: $fb
   export $x emit => Emit: $x Then: halt
   export $x fail => Fail: $x
   export halt => Halt
