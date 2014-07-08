@@ -260,8 +260,15 @@ function lets(name, value) {
 
 // High-level stuff
 exports.number = number;
-function number(integer, decimal) {
-  return lit(Number(integer + '.' + decimal))
+function number(sign, integer, decimal, expt) {
+  var num = lit(Number(String(integer) + '.' + String(decimal) + renderExpt(expt)));
+  return sign?    unary(sign, true, num)
+  :      /* _ */  num;
+
+  function renderExpt(e) {
+    return e == null? ''
+    :      /* _ */    'e' + (e[0] || '') + String(e[1])
+  }
 }
 
 exports.string = string;

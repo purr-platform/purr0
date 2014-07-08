@@ -115,8 +115,17 @@ ometa Parser {
   bool = kw('true'):a  -> [#Bool, true]
        | kw('false'):a -> [#Bool, false],
 
-  digits = <digit+>:a -> Number(a),
-  number = digits:a ('.' digits:b)? -> [#Num, a, b || 0],
+  octDigit = /[0-7_]/,
+  hexDigit = /[0-9a-fA-F_]/,
+  binDigit = '0' | '1' | '_',
+  digits = (digit | '_')+:as -> Number(as.join('').replace(/_/g, '')),
+  number = '-'?:s ( '0' 'b' <binDigit+>:n               -> [#Num, s, parseInt(n.replace(/_/g, ''), 2), 0, null]
+                  | '0' 'o' <octDigit+>:n               -> [#Num, s, parseInt(n.replace(/_/g, ''), 8), 0, null]
+                  | '0' 'x' <hexDigit+>:n               -> [#Num, s, parseInt(n.replace(/_/g, ''), 16), 0, null]
+                  | digits:a ('.' digits:b exponent:c)? -> [#Num, s, a, b || 0, c]
+                  ),
+  sign = '+' | '-',
+  exponent = ('e' | 'E') sign?:s digits:d -> [s, d],
   
   stringEscape     = '\\' ( 'b' -> '\b'
                           | 'f' -> '\f'
