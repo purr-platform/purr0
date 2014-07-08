@@ -54,10 +54,10 @@ function fnName(fn) {
 }
 
 function describe(value) {
-  return tagFor(value) === '<number>'?   value
+  return tagFor(value) === '<number>'?   String(value)
   :      tagFor(value) === '<string>'?   JSON.stringify(value)
-  :      tagFor(value) === '<boolean>'?  value
-  :      typeof value === '<function>'?  describeFn(value)
+  :      tagFor(value) === '<boolean>'?  String(value)
+  :      typeof value === 'function'?    describeFn(value)
   :      /* otherwise */                 tagFor(value)
 }
 
@@ -374,6 +374,7 @@ NS.$protocols         = {}
 NS.$tag               = tagFor
 NS.$newTag            = newTag
 NS.$listToArray       = listToArray
+NS.$describe          = describe
 NS.Record = function(){ return ExtRecord }
 NS.$arrayToList = function(array) {
   var Nil  = this.Nil

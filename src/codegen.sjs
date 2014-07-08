@@ -756,7 +756,7 @@ function decorator(f, name, e) {
   return flatten([e]).concat([
     atEnd(expr(set(
       get(name),
-      call(f, [get(name)])
+      call(f, [get(name), name, id("$$package")])
     )))
   ])
 }
