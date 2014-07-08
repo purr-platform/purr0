@@ -124,9 +124,10 @@ module Phemme.Core {
   export
   interface Indexable {
     method $this at: $index -> Maybe?
-    method $this includes?: $index -> Boolean? => case $this at: $index of
+    method $this includes?: $index -> Boolean? => match $this at: $index {
                                                   | Nothing => false
                                                   | _       => true
+                                                  }
   }
   
   export
