@@ -44,8 +44,7 @@ var reserved = [ ':'  // Method parameter
                , 'derivation'
                // Data structures
                , 'data'
-               , 'case'
-               , 'of'
+               , 'match'
                // Modules
                , 'module'
                , 'use'
@@ -267,8 +266,8 @@ ometa Parser {
              | '(' ws matchCase:a ws ')'                 -> a,
 
   keywordCase = keyword:k ws matchCase2:x -> [k, x],
-  caseExpr = kw('case') ws listOf(#expr, ','):es ws kw('of') ws (ws casePatt)+:xs -> [#Case, es, xs],
-  casePatt = '|' ws listOf(#matchCase, ','):cs ws "=>" ws expr:b                  -> [#CPatt, cs, b],
+  caseExpr = kw('match') ws listOf(#expr, ','):es ws '{' ws (ws casePatt)+:xs ws '}' -> [#Case, es, xs],
+  casePatt = '|' ws listOf(#matchCase, ','):cs ws "=>" ws expr:b                     -> [#CPatt, cs, b],
 
   // Expressions
   letExpr   = kw('let') ws bindingList:xs ws kw('in') ws expr:e -> [#Bind, xs, e],

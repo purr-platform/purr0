@@ -21,22 +21,24 @@ module Io.Task {
   export never => task: => Unit
 
   # -- Runs things (meant for the end of the world, a la Haskell's unsafePerformIO)
-  export $t ^Task? run: $f ^Function? recover: $g ^Function? => case $t of
+  export $t ^Task? run: $f ^Function? recover: $g ^Function? => match $t {
     | Task: $computation Cleanup: $cleanup =>
-        let $state = $computation(@once($value => ( case $value of
+        let $state = $computation(@once($value => match $value {
                                                   | Yield($a) => $f($a)
                                                   | Throw($a) => $g($a)
                                                   | Done      => void
-                                                  ) ~ (=> $cleanup($state, $value)) delayed))
+                                                  } ~ (=> $cleanup($state, $value)) delayed))
         in $state
+   }
 
-  export $t ^Task? run: $f ^Function? => case $t of
+  export $t ^Task? run: $f ^Function? => match $t {
     | Task: $computation Cleanup: $cleanup => 
-        let $state = $computation(@once($value => ( case $value of
+        let $state = $computation(@once($value => match $value {
                                                   | Yield($a) => $f($a)
                                                   | Done      => void
-                                                  ) ~ (=> $cleanup($state, $value)) delayed))
+                                                  } ~ (=> $cleanup($state, $value)) delayed))
         in $state
+    }
 
   # -- Protocols
   implement Chainable for Task {

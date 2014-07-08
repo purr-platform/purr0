@@ -8,8 +8,9 @@ module Io.FileSystem.Path {
   var $join      = $path.join
   """
 
-  let $x get => case $x of
+  let $x get => match $x {
     | Success($a) => $a
+    }
 
   export data Path = Relative
                    | Root
@@ -18,18 +19,20 @@ module Io.FileSystem.Path {
   export $a Segment? => ffi "!/\\//.test($a)"
 
   implement Equality for Path {
-    method $this === $that ^Path? => case $this, $that of
+    method $this === $that ^Path? => match $this, $that {
       | Relative, Relative => true
       | Root,     Root     => true
       | $as \ $a, $bs \ $b => ($a === $b) && ($as === $bs)
       | _,        _        => false
+      }
   }
 
   implement Representable for Path {
-    method $this to-string => case $this of
+    method $this to-string => match $this {
       | Relative => "."
       | Root     => $normalise("/")
       | $as \ $a => $join($as to-string, $a)
+      }
   }
 
   implement Parseable for Path {
@@ -49,26 +52,30 @@ module Io.FileSystem.Path {
     method empty => Relative
   }
 
-  export $this ^Path? parent => case $this of
+  export $this ^Path? parent => match $this {
     | Root     => Root
     | Relative => Relative \ ".."
     | $as \ $a => $as
+    }
 
-  export $this ^Path? filename => case $this of
+  export $this ^Path? filename => match $this {
     | $as \ $a => $a Just
     | _        => Nothing
+    }
 
-  export $this ^Path? extension => case $this of
+  export $this ^Path? extension => match $this {
     | $as \ $a => let $xs = ffi "$a.split('.')"
                   in
                     if ffi "$xs.length > 0" then ffi "$xs[$xs.length - 1]" Just
                                            else Nothing
     | _        => Nothing
+    }
 
-  export $this ^Path? relative? => case $this of
+  export $this ^Path? relative? => match $this {
     | Root     => false
     | Relative => true
     | $as \ $a => $as relative?
+    }
 
   export $this ^Path? absolute? => not($this relative?)
 }

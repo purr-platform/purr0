@@ -9,10 +9,11 @@ module Data.Boolean {
   }
 
   implement Ordered for Boolean {
-    method $this compare-to: $that => case $this, $that of
+    method $this compare-to: $that => match $this, $that {
       | true, false => Less
       | false, true => Greater
       | _           => Equal
+    }
   }
 
   implement Representable for Boolean {
@@ -32,10 +33,12 @@ module Data.Boolean {
   }
 
   implement Enumerable for Boolean {
-    method $this successor => case $this of
+    method $this successor => match $this {
                               | false => true
-    method $this predecessor => case $this of
+                              }
+    method $this predecessor => match $this {
                                 | true => false
+                                }
   }
 
   implement BooleanAlgebra for Boolean {

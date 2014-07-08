@@ -6,26 +6,29 @@ module Io.FileSystem {
   ffi "var $fs = require('fs')"
 
   # -- Helpers
-  let $x ^String? asPath => case Path parse: $x of
+  let $x ^String? asPath => match Path parse: $x {
     | Success($a) => $a
+    }
 
 
   # -- Data structures
   export data LinkType = Directory | File | Junction
 
   implement Representable for LinkType {
-    method $this to-string => case $this of
+    method $this to-string => match $this {
       | Directory => "<LinkType:Directory>"
       | File      => "<LinkType:File>"
       | Junction  => "<LinkType:Junction>"
+      }
   }
 
   implement Equality for LinkType {
-    method $this === $that => case $this, $that of
+    method $this === $that => match $this, $that {
       | Directory, Directory => true
       | File,      File      => true
       | Junction,  Junction  => true
       | otherwise            => false
+      }
   }
 
 
@@ -76,10 +79,11 @@ module Io.FileSystem {
         else        $next($self.Yield(null))
       })
     })"""
-    where render-type($a) => case $a of
+    where render-type($a) => match $a {
       | Directory => "dir"
       | File      => "file"
       | Junction  => "junction"
+      }
 
   export $p ^Path? read-link =>
     task: ffi """(function($next) {

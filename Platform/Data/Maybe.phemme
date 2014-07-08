@@ -8,22 +8,25 @@ module Data.Maybe {
   export Maybe?
 
   implement Equality for Maybe {
-    method $this === $that ^Maybe? => case $this, $that of
+    method $this === $that ^Maybe? => match $this, $that {
                                       | Nothing, Nothing   => true
                                       | Just($a), Just($b) => $a == $b
                                       | _, _               => false
+                                      }
   }
 
   implement Representable for Maybe {
-    method $this to-string => case $this of
+    method $this to-string => match $this {
                              | Nothing  => "Nothing"
                              | Just($a) => "Just(" + $a to-string + ")"
+                             }
   }
 
   implement Semigroup for Maybe {
-    method $this + $that ^Maybe? => case $this, $that of
+    method $this + $that ^Maybe? => match $this, $that {
                                  | Just($a), Just($b) => ($a + $b) Just
                                  | _, _               => Nothing
+                                 }
   }
 
   implement Monoid for Maybe {
@@ -31,22 +34,25 @@ module Data.Maybe {
   }
 
   implement Functor for Maybe {
-    method $this map: $f => case $this of
+    method $this map: $f => match $this {
                             | Nothing  => Nothing
                             | Just($a) => $f($a) Just
+                            }
   }
 
   implement Applicative for Maybe {
     method $protocol of: $value => value Just
-    method $this apply-to: $that => case $this of
+    method $this apply-to: $that => match $this {
                                     | Nothing  => $that
                                     | Just($f) => $that map: $f
+                                    }
   }
 
   implement Chainable for Maybe {
-    method $this chain: $f => case $this of
+    method $this chain: $f => match $this {
                               | Nothing  => Nothing
                               | Just($a) => $f($a)
+                              }
   }
   
 }

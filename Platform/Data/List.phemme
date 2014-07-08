@@ -9,18 +9,20 @@ module Data.List {
   export List?
 
   implement Equality for List {
-    method $this === $that ^List? => case $this, $that of
+    method $this === $that ^List? => match $this, $that {
       | $x :: $xs, $y :: $ys => ($x === $y) && ($xs === $ys)
       | Nil, Nil             => true
+    }
   }
 
   implement Representable for List {
     method $this to-string  => "[" + $this to-string1 + "]"
                                where
-                                 $xs to-string1 => case $xs of
-                                 | $x :: Nil => $x to-string
-                                 | $x :: $ys => $x to-string + ", " + $ys to-string1
-                                 | Nil       => ""
+                                 $xs to-string1 => match $xs {
+                                   | $x :: Nil => $x to-string
+                                   | $x :: $ys => $x to-string + ", " + $ys to-string1
+                                   | Nil       => ""
+                                   }
   }
 
   implement Bounded for List {
@@ -43,9 +45,10 @@ module Data.List {
   }
 
   implement Semigroup for List {
-    method $this + $that ^List? => case $this, $that of
+    method $this + $that ^List? => match $this, $that {
       | Nil, $ys       => $ys
       | $x :: $xs, $ys => $x :: ($xs + $ys)
+      }
   }
 
   implement Monoid for List {
