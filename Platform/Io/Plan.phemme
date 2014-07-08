@@ -3,6 +3,7 @@ module Io.Plan {
   import Data.Function
   import Data.String
   import Io.Task
+  import Concurrency.Async
 
   # This module provides a way to construct a plan about how I/O should be
   # dealt with. You declare what you want to do, potentially compose plans
@@ -22,33 +23,42 @@ module Io.Plan {
 
   let $f force => $f()
 
-  export $plan to-task: $input => 
-    task: $next => $input go: $plan
-      where $xs go: $p => match $p {
-        | Halt                            => $next($xs Yield)
+  export $plan to-task => 
+    task: $next => $plan run
+      where $p run => match $p {
+        | Halt                            => $next(Unit Yield)
         | Fail: $e                        => $next($e Throw)
-        | Emit: $ys Then: $t              => ($xs + $ys) go: $t
+        | Emit: $ys Then: $t              => $ys sequentially run: (=> $t run)
+                                                              recover: ($e => $next($e Throw))
         | Await: $r Then: $c Fallback: $t => let $res = $r acquire force
                                              in do {
                                                $data <- $r step <| $res;
                                                $x <- match $data {
-                                                 | Nothing  => $t to-task: $xs
-                                                 | Just($a) => $c($a) to-task: $xs
+                                                 | Nothing  => $t run
+                                                 | Just($a) => $c($a) run
                                                };
                                                $r release <| $res;
                                                return $x
-                                             } run: @Yield ->> $next
+                                             } run: (=> $next(Unit Yield))
       }
 
-  export $plan to-task => $plan to-task: []
-
   implement Functor for Plan {
-    method $p map: $f => ($p \/ halt) 
+    method $p map: $f => match $p {
+      | Halt                             => $p
+      | Fail: _                          => $p
+      | Await: $r Then: $c Fallback: $fb => Await: $r Then: ($c map: $f) Fallback: ($fb map: $f)
+      | Emit: $v Then: $t                => Emit: ($v map: $f) Then: $t
+    }
   }
 
   implement Applicative for Plan {
     method _ of: $v => $v emit
-    method _ apply-to: _ => Unit
+    method $plan apply-to: $b => match $plan {
+      | Halt                             => $plan
+      | Fail: _                          => $plan
+      | Emit: $v Then: $t                => Emit: $v Then: $t <*> $b
+      | Await: $r Then: $f Fallback: $fb => Await: $r Then: ($b >>= $f) Fallback: $fb
+    }
   }
 
   implement Chainable for Plan {
@@ -69,12 +79,26 @@ module Io.Plan {
   implement Semigroup for Plan {
     method $p + $p2 ^Plan? => match $p {
       | Halt                            => $p2
-      | Fail: $reason                   => $p
+      | Fail: _                         => $p
       | Emit: $xs Then: $t              => Emit: $xs Then: $t + $p2
       | Await: $r Then: $c Fallback: $t => Await: $r Then: $c ->> (_ + $p2) Fallback: $t + $p2
-    }
-      
+    }      
   }
+
+  implement Monoid for Plan {
+    method $this empty => Halt
+  }
+
+  implement Alternative for Plan {
+    method $this none => Halt
+    method $this else: $that => match $this {
+      | Halt                            => $this
+      | Fail: _                         => $this
+      | Emit: $xs Then: $t              => Emit: $xs Then: $t <|> $that
+      | Await: $r Then: $c Fallback: $t => Await: $r Then: $c Fallback: $t + $that
+    }
+  }
+
 
   export $r await => Await: $r Then: @halt Fallback: halt
   export $r await-or: $fb => Await: $r Then: @halt Fallback: $fb
