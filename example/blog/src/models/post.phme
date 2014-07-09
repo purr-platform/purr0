@@ -1,8 +1,0 @@
---- Module models/post
---
--- Models for blog posts.
-
---- Dependencies -------------------------------------------------------
-use "./schemas" only: (^post)
-
-
