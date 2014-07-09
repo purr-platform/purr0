@@ -9,24 +9,24 @@ module Data.Maybe {
 
   implement Equality for Maybe {
     method $this === $that ^Maybe? => match $this, $that {
-                                      | Nothing, Nothing   => true
-                                      | Just($a), Just($b) => $a == $b
-                                      | _, _               => false
-                                      }
+      | Nothing, Nothing   => true
+      | Just($a), Just($b) => $a == $b
+      | _, _               => false
+    }
   }
 
   implement Representable for Maybe {
     method $this to-string => match $this {
-                             | Nothing  => "Nothing"
-                             | Just($a) => "Just(" + $a to-string + ")"
-                             }
+      | Nothing  => "Nothing"
+      | Just($a) => "Just(" + $a to-string + ")"
+    }
   }
 
   implement Semigroup for Maybe {
     method $this + $that ^Maybe? => match $this, $that {
-                                 | Just($a), Just($b) => ($a + $b) Just
-                                 | _, _               => Nothing
-                                 }
+      | Just($a), Just($b) => ($a + $b) Just
+      | _, _               => Nothing
+    }
   }
 
   implement Monoid for Maybe {
@@ -35,24 +35,38 @@ module Data.Maybe {
 
   implement Functor for Maybe {
     method $this map: $f => match $this {
-                            | Nothing  => Nothing
-                            | Just($a) => $f($a) Just
-                            }
+      | Nothing  => Nothing
+      | Just($a) => $f($a) Just
+    }
   }
 
   implement Applicative for Maybe {
     method $protocol of: $value => value Just
     method $this apply-to: $that => match $this {
-                                    | Nothing  => $that
-                                    | Just($f) => $that map: $f
-                                    }
+      | Nothing  => $that
+      | Just($f) => $that map: $f
+    }
   }
 
   implement Chainable for Maybe {
     method $this chain: $f => match $this {
-                              | Nothing  => Nothing
-                              | Just($a) => $f($a)
-                              }
+      | Nothing  => Nothing
+      | Just($a) => $f($a)
+    }
+  }
+
+  implement Foldable for Maybe {
+    method $this fold-right: $f from: $b => match $this {
+      | Nothing  => $b
+      | Just($a) => $f($a)
+    }
   }
   
+  implement Alternative for Maybe {
+    method none => Nothing
+    method $this <|> $that => match $this {
+      | Nothing => $that
+      | _       => $this
+    }
+  }
 }
