@@ -238,7 +238,7 @@ module Data.Either where
 
 module Data.Validation where
   data Validation = a Failure | a Success
-  deriving Equality, Representable, Semigroup, Monoid, Functor, Applicative, Foldable, Alternative
+  deriving Equality, Representable, Semigroup, Functor, Applicative, Alternative
 
   a Validation? -> Boolean
 

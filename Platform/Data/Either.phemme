@@ -1,0 +1,55 @@
+module Data.Either {
+  import Phemme.Core
+
+  # -- Implicitly: data Either = Failure(_) | Success(_)
+  export Either
+  export Either?
+  export Failure
+  export Success
+
+  implement Equality for Either {
+    method $this === $that ^Either? => match $this, $that {
+      | Failure($a), Failure($b) => $a === $b
+      | Success($a), Success($b) => $a === $b
+      | _, _                     => false
+    }
+  }
+
+  implement Representable for Either {
+    method $this to-string => match $this {
+      | Failure($a) => "Failure(" + $a to-string + ")"
+      | Success($a) => "Success(" + $a to-string + ")"
+    }
+  }
+
+  implement Semigroup for Either {
+    method $this + $that ^Either? => match $this, $that {
+      | Failure(_), _            => $this
+      | _,           Failure(_)  => $that
+      | Success($a), Success($b) => ($a + $b) Success
+    }
+  }
+
+  implement Functor for Either {
+    method $this map: $f => match $this {
+      | Failure(_)  => $this
+      | Success($a) => $f($a) Success
+    }
+  }
+
+  implement Applicative for Either {
+    method _ of: $x => $x Success
+    method $this apply-to: $b => match $this {
+      | Failure(_)  => $this
+      | Success($f) => $b map: $f
+    }
+  }
+
+  implement Alternative for Either {
+    method none => Unit Failure
+    method $this else: $that ^Either? => match $this {
+      | Failure(_) => $that
+      | _          => $this
+    }
+  }
+}
