@@ -23,13 +23,13 @@ module Io.Plan {
 
   let $f force => $f()
 
-  export $plan to-task => 
-    task: $next => $plan run
-      where $p run => match $p {
+  export $plan run => 
+    task: $next => $plan go
+      where $p go => match $p {
         | Halt                            => $next(Unit Yield)
         | Fail: $e                        => $next($e Throw)
-        | Emit: $ys Then: $t              => $ys sequentially run: (=> $t run)
-                                                              recover: ($e => $next($e Throw))
+        | Emit: $v Then: $t               => $v run: (=> $t go)
+                                                recover: ($e => $next($e Throw))
         | Await: $r Then: $c Fallback: $t => let $res = $r acquire force
                                              in do {
                                                $data <- $r step <| $res;
@@ -46,8 +46,10 @@ module Io.Plan {
     method $p map: $f => match $p {
       | Halt                             => $p
       | Fail: _                          => $p
-      | Await: $r Then: $c Fallback: $fb => Await: $r Then: ($c map: $f) Fallback: ($fb map: $f)
-      | Emit: $v Then: $t                => Emit: ($v map: $f) Then: $t
+      | Await: $r Then: $c Fallback: $fb => Await: $r 
+                                            Then: $c ->> (_ map: $f)
+                                            Fallback: ($fb map: $f)
+      | Emit: $v Then: $t                => Emit: $f($v) Then: ($t map: $f)
     }
   }
 
