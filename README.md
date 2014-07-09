@@ -1,33 +1,21 @@
-# Phemme
+Phemme
+======
 
-[![Gitter chat](https://badges.gitter.im/robotlolita/phemme.png)](https://gitter.im/robotlolita/phemme)
+Phemme is a small functional language designed for writing concurrent
+web-servers. It focuses on easy of development, security and concurrency.
 
-Phemme is a small, portable functional language for easily writing highly
-concurrent web-servers. It poses itself as a
-["better PHP"](http://www.pltgames.com/competition/2013/5), but it actually
-runs on top of Node, and as such can use anything Node gives you!
+(See the [Rationale](https://github.com/robotlolita/phemme/wiki/Rationale) page
+for more details)
 
-
-## Example
-
-A simple "Hello, World!" in Phemme:
-
-```hs
-module {
-  routes {
-    / get: req => "Hello, world!"
-  }
-}
-```
+> **NOTE**
+>
+> The language is still in **REALLY EARLY STAGES** of development. While it's
+> usable, there's absolutely no optimisations in the compiler whatsoever, and
+> the standard library and tooling are lacking many features. Do note also that
+> the language is constantly changing at this stage.
 
 
-## Installing
+## Resources
 
-Grab it from NPM:
-
-    $ npm install -g phemme
-    
-
-## Licence
-
-MIT/X11. Which means you just do whatever the fuck you want to.
+  - [The Wiki](https://github.com/robotlolita/phemme/wiki) has some information on the project.
+  - [The Gitter chat](https://gitter.im/robotlolita/phemme) is used for discussing project-related things.
