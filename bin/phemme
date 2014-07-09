@@ -23,71 +23,39 @@
 var doc = [ 'phemme — A minimal & portable language for concurrent web servers.'
           , ''
           , 'Usage:'
-          , '  phemme repl [options]            # Starts an interactive session'
-          , '  phemme run [options] <file>      # Runs the given program'
-          , '  phemme compile [options] <file>  # Compiles the given module'
-          , '  phemme help                      # Shows this help screen'
-          , '  phemme version                   # Shows the version number'
+          , '  phemme [options] <file>'
+          , '  phemme --version'
+          , '  phemme --help'
           , ''
           , 'Options:'
           , '  -a, --ast                Displays the Phemme AST in JSON.'
           , '  -j, --js-ast             Displays the generated JS ast in JSON.'
+          , '  -h, --help               Displays the help screen.'
+          , '  -v, --version            Displays the compiler version.'
           ].join('\n')
 
 // -- Dependencies -----------------------------------------------------
 var fs     = require('fs')
 var docopt = require('docopt').docopt
-var path   = require('path')
-var curry  = require('core.lambda').curry
 var pkg    = require('../package.json')
 var phemme = require('../lib/')
-
-var die  = process.exit.bind(process)
-var _log = console.log.bind(console)
 
 
 // -- Helpers ----------------------------------------------------------
 function show(a) {
-  if (a !== undefined)  _log(a)
+  if (a !== undefined)  console.log(a)
 }
 
 function read(filename) {
   return fs.readFileSync(filename, 'utf-8')
 }
 
-function stripComments(doc) {
-  return doc.replace(/\#.+/g, '')
-}
-
-function unimplemented() {
-  throw new Error('Unimplemented.')
-}
-
-function parseArgs(spec, options) {
-  var _oldExit = process.exit
-  var _oldLog  = console.log
-  try {
-    process.exit = function(){ throw new Error }
-    console.log  = function(){ }
-
-    return docopt(spec, options)
-  } catch (e) {
-    show(doc)
-    die()
-  } finally {
-    process.exit = _oldExit
-    console.log  = _oldLog
-  }
-}
 
 // -- Main -------------------------------------------------------------
 void function Main() {
-  var args = parseArgs(stripComments(doc), { help: false })
+  var args = docopt(doc, { help: false })
 
-  ; args.repl?          unimplemented()
-  : args.run?           phemme.runFile(args['<file>'])
-  : args.compile?       show(phemme(read(args['<file>'])))
-  : args.help?          show(doc)
-  : args.version?       show('phemme version ' + pkg.version)
-  : /* otherwise */     die(show(doc))
+  ; args['--help']?     show(doc)
+  : args['--version']?  show('phemme version ' + pkg.version)
+  : /* otherwise */     phemme.runFile(args['<file>'])
 }()
