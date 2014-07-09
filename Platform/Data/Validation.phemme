@@ -2,53 +2,46 @@ module Data.Validation {
   import Phemme.Core
 
   export
-  data Validation = Failure(_) | Success(_)
+  data Validation = Invalid(_) | Valid(_)
 
   implement Equality for Validation {
     method $this === $that ^Validation? => match $this, $that {
-      | Failure($a), Failure($b) => $a === $b
-      | Success($a), Success($b) => $a === $b
+      | Invalid($a), Invalid($b) => $a === $b
+      | Valid($a),   Valid($b)   => $a === $b
       | _, _                     => false
     }
   }
 
   implement Representable for Validation {
     method $this to-string => match $this {
-      | Failure($a) => "Failure(" + $a to-string + ")"
-      | Success($a) => "Success(" + $a to-string + ")"
+      | Invalid($a) => "Invalid(" + $a to-string + ")"
+      | Valid($a)   => "Valid(" + $a to-string + ")"
     }
   }
 
   implement Semigroup for Validation {
     method $this + $that ^Validation? => match $this, $that {
-      | Failure(_), _            => $this
-      | _,           Failure(_)  => $that
-      | Success($a), Success($b) => ($a + $b) Success
+      | Invalid(_), _          => $this
+      | _,          Invalid(_) => $that
+      | Valid($a),  Valid($b)  => ($a + $b) Valid
     }
   }
 
   implement Functor for Validation {
     method $this map: $f => match $this {
-      | Failure(_)  => $this
-      | Success($a) => $f($a) Success
+      | Invalid(_) => $this
+      | Valid($a)  => $f($a) Valid
     }
   }
 
   implement Applicative for Validation {
-    method _ of: $x => $x Success
+    method _ of: $x => $x Valid
     method $this apply-to: $b ^Validation? => match $this, $that {
-      | Failure($e1), Failure($e2) => Failure($e1 + $e2)
-      | Failure($e1), _            => Failure($e1)
-      | _,            Failure($e2) => Failure($e2)
-      | Success($f),  _            => $b map: $f
+      | Invalid($e1), Invalid($e2) => Invalid($e1 + $e2)
+      | Invalid($e1), _            => Invalid($e1)
+      | _,            Invalid($e2) => Invalid($e2)
+      | Valid($f),  _              => $b map: $f
     }
   }
 
-  implement Alternative for Validation {
-    method none => Unit Failure
-    method $this else: $that ^Validation? => match $this {
-      | Failure(_) => $that
-      | _          => $this
-    }
-  }
 }
