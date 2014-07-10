@@ -27,6 +27,7 @@ module Phemme.Core {
   export data Maybe    = Nothing | Just(_)
   export data Either   = Failure(_) | Success(_)
   export data List     = Nil | _ :: _ ^List?
+  export data Tuple    = Tuple: _ With: _
 
   # -- Protocols -------------------------------------------------------
   export

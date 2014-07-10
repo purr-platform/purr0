@@ -1,7 +1,11 @@
 module Data.List {
   import Phemme.Core
   import Data.Boolean
+  import Data.Number
+  import Data.Function
 
+  let $x Positive? => $x >= 0
+  
   # -- Implicitly: data List = Nil | _ :: List
   export Nil
   export ::
@@ -25,11 +29,6 @@ module Data.List {
                                    }
   }
 
-  implement Bounded for List {
-    method $this lower-bound => 0
-    method $this upper-bound => $this length
-  }
-  
   implement Foldable for List {
     method $this fold: $f from: $b => ffi "(function() {
       while(true) {
@@ -52,7 +51,7 @@ module Data.List {
   }
 
   implement Monoid for List {
-    method $this empty => Nil
+    method empty => Nil
   }
 
   implement Functor for List {
@@ -69,5 +68,75 @@ module Data.List {
   }
 
   export $xs ^List? reverse => $xs fold: ($a $b => $b :: $a) from: Nil
-  export $xs ^List? length => $xs fold: ($a _ => $a + 1) from: 0
+
+  export $xs ^List? first => match $xs {
+    | Nil     => Nothing
+    | $x :: _ => $x Just
+  }
+
+  export $xs ^List? first! => match $xs {
+    | $x :: _ => $x
+  }
+
+  export $xs ^List? empty? => match $xs {
+    | Nil => true
+    | _   => false
+  }
+
+  export $xs ^List? tail => match $xs {
+    | _ :: $ys => $ys
+    | _        => Nil
+  }
+
+  export $xs ^List? instersperse: $separator => match $xs {
+    | Nil       => Nil
+    | $x :: $ys => $x :: ($separator prepended-to-all: $ys)
+  } where 
+      $separator' prepended-to-all: $zs => match $zs {
+        | Nil        => Nil
+        | $z :: $zs' => $separator' :: ($z :: ($separator' prepended-to-all: $zs'))
+      }
+    
+  export $xs ^List? intercalate: $ys ^List? => ($xs instersperse: $ys) >>= @identity
+
+  export $xs ^List? take: $n ^Number? =>
+    | $n <= 0   => Nil
+    | otherwise => match $xs {
+                     | Nil        => Nil
+                     | $x :: $xs' => $x :: ($xs' take: ($n - 1))
+                   }
+
+  export $xs ^List? drop: $n ^Number? =>
+    | $n <= 0   => $xs
+    | otherwise => match $xs {
+                     | Nil       => Nil
+                     | _ :: $xs' => $xs' drop: ($n - 1)
+                   }
+
+  export $xs ^List? take-while: $p ^Function? => match $xs {
+    | $x :: $xs' => if $p($x) then $x :: ($xs' take-while: $p)
+                              else Nil
+  }
+
+  export $xs ^List? drop-while: $p ^Function? => match $xs {
+    | $x :: $xs' => if $p($x) then $xs' drop-while: $p
+                              else $xs
+  }
+  
+  export $xs ^List? filter: $p => match $xs {
+    | $x :: $xs' => if $p($x) then $x :: ($xs' filter: $p)
+                              else $xs' filter: $p
+    | Nil        => Nil
+  }
+
+  export $xs ^List? zip: $ys ^List? => match $xs, $ys {
+    | $x :: Nil,  $y :: Nil  => (Tuple: $x With: $y) :: Nil
+    | $x :: $xs', $y :: $ys' => (Tuple: $x With: $y) :: ($xs' zip: $ys')
+  }
+
+  export $xs ^List? zip-discarding: $ys ^List? => match $xs, $ys {
+    | $x :: $xs', $y :: $ys' => (Tuple: $x With: $y) :: ($xs' zip-discarding: $ys')
+    | _,          _          => Nil
+  }
+    
 }
