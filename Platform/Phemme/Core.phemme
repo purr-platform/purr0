@@ -21,6 +21,7 @@ module Phemme.Core {
   export $x Boolean?  => ffi "typeof $x === 'boolean'" 
   export $x Function? => ffi "typeof $x === 'function'"
   export $x Unit?     => ffi "$x == null"
+  export $x Record?   => ffi "self.$tag($x) === '<#Record:<builtin>>'"
 
   # -- Builtin types ---------------------------------------------------
   export data Ordering = Less | Equal | Greater
