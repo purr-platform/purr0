@@ -2,10 +2,7 @@ module Data.Either {
   import Phemme.Core
 
   # -- Implicitly: data Either = Failure(_) | Success(_)
-  export Either
-  export Either?
-  export Failure
-  export Success
+  export ( Either, Either?, Failure, Success )
 
   implement Equality for Either {
     method $this === $that ^Either? => match $this, $that {

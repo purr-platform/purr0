@@ -220,7 +220,7 @@ module Phemme.Core {
     method $this to-string => ffi "$this.toString()"
   }
   implement Representable for Unit {
-    method $this to-string => ffi "<Unit>"
+    method $this to-string => "<Unit>"
   }
   implement Representable for Date {
     method $this to-string => ffi "$this.toString()"

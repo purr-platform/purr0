@@ -1,0 +1,27 @@
+module Prelude {
+  import Phemme.Core as Core
+  # -- Core data types
+  import Data.Boolean as Boolean
+  import Data.Number as Number
+  import Data.Char as Char
+  import Data.String as String
+  import Data.Maybe as Maybe
+  import Data.Either as Either
+  import Data.Validation as Validation
+  import Data.Function as Function
+  import Data.List as List
+  import Data.Vector as Vector
+  import Data.Tuple as Tuple
+  import Data.Record as Record
+  # -- Essential I/O
+  import Io.Task as Task
+  import Io.Plan as Plan
+  import Io.Console as Console
+
+  # -- Exports everything
+  export all (
+    Core,
+    Boolean, Number, Char, String, Maybe, Either, Validation, Function, List, Vector, Tuple, Record,
+    Task, Plan, Console
+  )
+}

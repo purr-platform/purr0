@@ -2,7 +2,7 @@ module Data.Boolean {
   import Phemme.Core
 
   # -- Implicitly: data Boolean = false | true
-  export Boolean?
+  export ( Boolean? )
 
   implement Ordered for Boolean {
     method $this compare-to: $that => match $this, $that {

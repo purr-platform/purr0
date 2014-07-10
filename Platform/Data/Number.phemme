@@ -1,5 +1,7 @@
 module Data.Number {
   import Phemme.Core
+
+  export ( Number? )
   
   implement Ordered for Number {
     method $this compare-to: $that ^Number? =>

@@ -7,10 +7,7 @@ module Data.List {
   let $x Positive? => $x >= 0
   
   # -- Implicitly: data List = Nil | _ :: List
-  export Nil
-  export ::
-  export List
-  export List?
+  export ( Nil, ::, List, List? )
 
   implement Equality for List {
     method $this === $that ^List? => match $this, $that {

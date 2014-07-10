@@ -2,10 +2,7 @@ module Data.Maybe {
   import Phemme.Core
 
   # -- Implicitly: data Maybe = Nothing | Just(_)
-  export Nothing
-  export Just
-  export Maybe
-  export Maybe?
+  export ( Nothing, Just, Maybe, Maybe? )
 
   implement Equality for Maybe {
     method $this === $that ^Maybe? => match $this, $that {
@@ -64,7 +61,7 @@ module Data.Maybe {
   
   implement Alternative for Maybe {
     method none => Nothing
-    method $this <|> $that => match $this {
+    method $this else: $that => match $this {
       | Nothing => $that
       | _       => $this
     }

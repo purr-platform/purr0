@@ -3,6 +3,8 @@ module Data.Record {
   import Data.List
   import Data.Tuple use (first => fst, second => snd)
 
+  export ( Record? )
+  
   implement Equality for Record {
     method $this === $that ^Record? => ffi "(function() {
       var xs = $this.$toObject(), ys = $that.$toObject()

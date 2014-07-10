@@ -3,7 +3,8 @@ module Data.Tuple {
   import Data.Boolean
 
   # -- Implicitly: Tuple: _ With: _
-
+  export ( Tuple:With:, Tuple? )
+  
   implement Equality for Tuple {
     method $this === $that ^Tuple? => match $this, $that {
       | Tuple: $x With: $y, Tuple: $x' With: $y' => ($x === $x') && ($y === $y')

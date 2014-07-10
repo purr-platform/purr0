@@ -1,5 +1,7 @@
 module Data.Function {
 
+  export ( Function? )
+  
   export $a identity => $a
   export $a constant => $b => $a
   export $f ->> $g => $a => $g($f($a))
