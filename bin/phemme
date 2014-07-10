@@ -30,6 +30,7 @@ var doc = [ 'phemme — A minimal & portable language for concurrent web servers
           , 'Options:'
           , '  -a, --ast                Displays the Phemme AST in JSON.'
           , '  -j, --js-ast             Displays the generated JS ast in JSON.'
+          , '  -c, --compile            Compiles the file instead of running.'
           , '  -h, --help               Displays the help screen.'
           , '  -v, --version            Displays the compiler version.'
           ].join('\n')
@@ -57,5 +58,6 @@ void function Main() {
 
   ; args['--help']?     show(doc)
   : args['--version']?  show('phemme version ' + pkg.version)
+  : args['--compile']?  show(phemme(read(args['<file>'])))
   : /* otherwise */     phemme.runFile(args['<file>'])
 }()
