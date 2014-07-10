@@ -142,7 +142,7 @@ module Io.FileSystem {
       })
     })"""
 
-  export $p ^Path? write: $data ^String? => $p write: $data mode: 438 encoding: "utf8" # 0666
+  export $p ^Path? write: $data ^String? => $p write: $data mode: 0o666 encoding: "utf8"
 
   export $p ^Path? append: $data ^String? mode: $mode encoding: $encoding =>
     task: ffi """(function($next) {
@@ -152,7 +152,7 @@ module Io.FileSystem {
       })
     })"""
 
-  export $p ^Path? append: $data ^String? => $p append: $data mode: 438 encoding: "utf8" # 0666
+  export $p ^Path? append: $data ^String? => $p append: $data mode: 0o666 encoding: "utf8"
 
   
 
@@ -193,7 +193,7 @@ module Io.FileSystem {
                            $p make-directory: $mode
                          }
 
-  export $p ^Path? make-directory => $p make-directory: 511 # 0777
+  export $p ^Path? make-directory => $p make-directory: 0o777
 
   export $p ^Path? list-directory =>
     task: ffi """(function($next) {
