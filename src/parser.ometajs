@@ -188,7 +188,6 @@ ometa Parser {
               | adt
               | importDecl
               | ffiStmt
-              | useStmt
               | exportStmt
               | letStmt,
 
@@ -208,8 +207,6 @@ ometa Parser {
   ffiStmt = kw('ffi') ws string:a -> [#FFIStmt, a],
 
   letStmt = kw('let') ws pattern:p ws fnBody:e -> [#Let, p[0], [#Fn, p, e]],
-
-  useStmt = kw('use') ws expr:e -> [#Use, e],
 
   module = kw('module') ws mparms:p ws '{' (ws declaration)*:xs ws '}' -> [#Mod, p, xs, false],
   mparms = namespace:ns (ws keywordArg)*:ks -> (function(i, xs, cs) {

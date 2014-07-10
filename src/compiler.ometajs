@@ -53,7 +53,6 @@ ometa Compiler {
   Import cc:p cc:ks cc:id [cc*:xs]  -> _.importStmt(p, ks, id, xs),
   ImpKw cc:id [cc*:args]            -> [id, args],
   ImpBind cc:f cc:t                 -> [f, t],
-  Use cc:e                          -> _.use(e),
 
   IFace cc:id [cc*:decl]            -> _.ifaceStmt(id, decl),
   Impl cc:proto cc:tag [cc*:impl]   -> _.implStmt(proto, tag, impl),

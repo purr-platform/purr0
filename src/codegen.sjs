@@ -739,13 +739,6 @@ function caseKw(tag, args) {
   }
 }
 
-exports.use = use
-function use(e) {
-  return delayed(
-    expr(call(builtin("$destructiveExtend"), [self(), e]))
-  )
-}
-
 exports.bool = bool
 function bool(a) {
   return lit(a)
