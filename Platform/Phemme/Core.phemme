@@ -130,12 +130,18 @@ module Phemme.Core {
                                                   | _       => true
                                                   }
   }
-  
+
   export
   interface Container {
+    method $this add: $value -> Container?
+    method $this remove: $value -> Container?
+  }  
+
+  export
+  interface IndexedContainer {
     need Indexable
-    method $this at: $index put: $value -> Container?
-    method $this remove-at: $index -> Container?
+    method $this at: $index put: $value -> IndexedContainer?
+    method $this remove-at: $index -> IndexedContainer?
   }
 
   export
@@ -190,5 +196,11 @@ module Phemme.Core {
     method $this fold => $this fold-right: _ + _ from: $this empty
     method $this fold-using: $f => $this fold-right: ($a $b => $f($a) + $b) from: $this empty
     method $this fold: $f from: $initial => $this fold-right: ($a $b => $f($b, $a)) from: $initial
+  }
+
+  export
+  interface ToList {
+    method $this to-list -> List?
+    method $this from-list: $xs ^List?
   }
 }
