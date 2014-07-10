@@ -16,4 +16,11 @@ module Data.Tuple {
     }
   }
 
+  export $this first => match $this {
+    | Tuple: $x With: _ => $x
+  }
+
+  export $this second => match $this {
+    | Tuple: _ With: $x => $x
+  }
 }
