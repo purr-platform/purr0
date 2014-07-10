@@ -1,0 +1,19 @@
+module Data.Tuple {
+  import Phemme.Core
+  import Data.Boolean
+
+  # -- Implicitly: Tuple: _ With: _
+
+  implement Equality for Tuple {
+    method $this === $that ^Tuple? => match $this, $that {
+      | Tuple: $x With: $y, Tuple: $x' With: $y' => ($x === $x') && ($y === $y')
+    }
+  }
+
+  implement Representable for Tuple {
+    method $this to-string => match $this {
+      | Tuple: $x With: $y => "(" + $x to-string + ", " + $y to-string + ")"
+    }
+  }
+
+}
