@@ -257,7 +257,7 @@ ometa Parser {
                  , ks.length? [#ImpKw, kwId(ks), kwArgs(ks)] : [#Nil]
                  , n || [#Nil]
                  , xs || []],
-  importBindRule = extendedId:a ("=>" extendedId)?:b -> [#ImpBind, a, b || [#Nil]],
+  importBindRule = extendedId:a (ws "=>" ws extendedId)?:b -> [#ImpBind, a, b || [#Nil]],
 
   // Pattern matching
   matchCase  = varName:a ws '=' ws matchCase1:b          -> [#CaseBind, a, b]
