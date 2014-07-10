@@ -36,7 +36,6 @@ var doc = [ 'purr — A minimal & portable language for concurrent web servers.'
           ].join('\n')
 
 // -- Dependencies -----------------------------------------------------
-var fs     = require('fs')
 var docopt = require('docopt').docopt
 var pkg    = require('../package.json')
 var purr   = require('../lib/')
@@ -47,17 +46,12 @@ function show(a) {
   if (a !== undefined)  console.log(a)
 }
 
-function read(filename) {
-  return fs.readFileSync(filename, 'utf-8')
-}
-
-
 // -- Main -------------------------------------------------------------
 void function Main() {
   var args = docopt(doc, { help: false })
 
   ; args['--help']?     show(doc)
   : args['--version']?  show('purr version ' + pkg.version)
-  : args['--compile']?  show(purr(read(args['<file>'])))
+  : args['--compile']?  show(purr(args['<file>']))
   : /* otherwise */     purr.runFile(args['<file>'])
 }()

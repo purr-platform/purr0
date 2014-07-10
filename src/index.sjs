@@ -34,8 +34,13 @@ var esprima   = require('esprima');
 var Parser    = require('./parser').Parser;
 var Compiler  = require('./compiler').Compiler;
 
-var doSource = exports = module.exports = function(program) {
-  return generate(compile(parse(program)))
+var doSource = exports = module.exports = function(file) {
+  var program = read(file, 'utf-8');
+  try {
+    return generate(compile(parse(program)))
+  } catch (e) {
+    throw new Error('Failed to compile the file: ' + file + '\n\nReason: ' + e.stack)
+  }
 };
 
 exports.parse = parse;
@@ -55,8 +60,7 @@ function generate(ast) {
 
 exports.run = run;
 function run(file, rt) {
-  var code    = read(file, 'utf-8');
-  var source  = doSource(code);
+  var source  = doSource(file);
   var module  = { exports: { } };
 
   var context = vm.createContext({ process: process
