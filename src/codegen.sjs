@@ -839,7 +839,7 @@ function importStmt(p, kw, name, binds) {
       [
         expr(set(id("$$mod"), instantiate(kw))),
         binds.map(compileBind),
-        ( name?           letStmt(name, id("$$mod"))
+        ( name?           letStmt(name, thunk(id("$$mod")))
         : !binds.length?  expr(call(
                             smember(self(), id("$doImport")),
                             [id("$$mod")]
