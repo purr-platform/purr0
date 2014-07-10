@@ -197,7 +197,9 @@ module Io.FileSystem {
     task: ffi """(function($next) {
       $fs.readdir(self['to-string']($p), function(error, files) {
         if (error)  $next(self.Throw(error))
-        else        $next(self.Yield(self.$arrayToList(files.map(self.asPath))))
+        else        $next(self.Yield(self.$arrayToList(files.map(function(f) {
+                      return self['\\']($p, f)
+                    }))))
       })
     })"""
 

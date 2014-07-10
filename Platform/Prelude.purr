@@ -17,11 +17,17 @@ module Prelude {
   import Io.Task as Task
   import Io.Plan as Plan
   import Io.Console as Console
+  import Io.FileSystem.Path as Path
+  import Io.FileSystem as FS
+  import Web.Server as Server
+  # -- Essential concurrency
+  import Concurrency.Async as Async
+  import Concurrency.Timers as Timers
 
   # -- Exports everything
   export all (
     Core,
     Boolean, Number, Char, String, Maybe, Either, Validation, Function, List, Vector, Tuple, Record,
-    Task, Plan, Console
+    Task, Plan, Console, Path, FS, Server, Async, Timers
   )
 }

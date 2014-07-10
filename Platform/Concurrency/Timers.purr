@@ -2,7 +2,7 @@ module Concurrency.Timers {
   import Purr.Core
   import Data.Number
   import Data.Boolean
-  import Data.Task
+  import Io.Task
 
   let $n Time? => ($n > 0) && ($n < 2147483647) # Max Int32
 

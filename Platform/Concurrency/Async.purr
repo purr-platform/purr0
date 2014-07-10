@@ -19,7 +19,7 @@ module Concurrency.Async {
       return [xs, xs.map(runComputation)]
 
       function runComputation(task, i) {
-        self['run:recover:'](function Success(value) {
+        self['run:recover:'](task, function Success(value) {
           result[i] = value
           len = len - 1
           if (len === 0) {
@@ -31,7 +31,7 @@ module Concurrency.Async {
       }
     })"""
     cleanup: ffi """(function($state) {
-      $state.forEach(function(x){ x[0].$$1(x[1]) })
+      $state[0].forEach(function(x, i){ if (x) x.$$2($state[1][i]) })
     })
     """
 
@@ -47,7 +47,7 @@ module Concurrency.Async {
       function fail(e)    { $next(self.Throw(e)) }
     })"""
     cleanup: ffi """(function($state) {
-      $state.forEach(function(x){ x[0].$$1(x[1]) })
+      $state.forEach(function(x){ x[0].$$2(x[1]) })
     })"""
 
   export $xs ^List? choose-first => $xs fold: _ or: _ from: never
@@ -75,7 +75,7 @@ module Concurrency.Async {
       }}
     })"""
     cleanup: ffi """(function($state) {
-      $state.forEach(function(x){ x[0].$$1(x[1]) })
+      $state.forEach(function(x){ x[0].$$2(x[1]) })
     })""" 
 
   implement BooleanAlgebra for Task {
