@@ -252,7 +252,7 @@ ometa Parser {
   importDecl = kw('import') ws namespace:p
                  (ws keywordApp)*:ks)?
                  (ws kw('as') ws identifier:n)?
-                 (ws kw('use') ws listOf(#importBindRule, ','):xs)?
+                 (ws kw('use') ws '(' ws listOf(#importBindRule, ','):xs ws ')')?
              -> [#Import, p
                  , ks.length? [#ImpKw, kwId(ks), kwArgs(ks)] : [#Nil]
                  , n || [#Nil]
