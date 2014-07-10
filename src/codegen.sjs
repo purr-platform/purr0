@@ -26,9 +26,9 @@ var stableSort = require('stable');
 
 // -- Helpers ----------------------------------------------------------
 
-var START     = 0
-var DELAYED   = 1
-var IMPORT    = 2
+var IMPORT    = 0
+var START     = 1
+var DELAYED   = 2
 var IMPLEMENT = 3
 var END       = 4
 var EXPORTING = 5
@@ -285,7 +285,7 @@ function letStmt(name, value) {
 }
 
 exports.module = module;
-function module(name, args, body, contracts, topLevel) {
+function module(name, args, body, contracts, topLevel, decos) {
   if (!topLevel)  throw new Error('Submodules are not supported right now.')
   var ns = lit(name.value.split(':')[0]);
 
@@ -304,6 +304,9 @@ function module(name, args, body, contracts, topLevel) {
           ])
         ].concat(sort(flatten(body)))
          .concat([
+           expr(set(
+             id("self"), decorateExpr(decos, name, id("self"))
+           )),
            ret(smember(self(), id("$exports")))
          ])
       )
@@ -331,7 +334,7 @@ function ifaceStmt(name, decls) {
 }
 
 exports.ifaceMethDecl = ifaceMethDecl
-function ifaceMethDecl(key, args, contracts) {
+function ifaceMethDecl(decos, key, args, contracts) {
   args = args.map(λ(x, i) -> id('$$' + i));
 
   return letStmt(
@@ -340,19 +343,23 @@ function ifaceMethDecl(key, args, contracts) {
       smember(id("$$proto"), id("$require")),
       [
         key,
+        decorateExpr(
+          decos,
+          key,
         compileContract(
           identifier(key.value),
           contracts,
-          lambda(
-            identifier(key.value),
-            args,
-            ret(call(
-              member(call(
-                builtin('$getImplementation'),
-                [id("$$proto"), args[0]]
-              ), key),
-              args
-            ))
+            lambda(
+              identifier(key.value),
+              args,
+              ret(call(
+                member(call(
+                  builtin('$getImplementation'),
+                  [id("$$proto"), args[0]]
+                ), key),
+                args
+              ))
+            )
           )
         )
       ]
@@ -363,7 +370,7 @@ function ifaceMethDecl(key, args, contracts) {
 exports.ifaceMethDef = ifaceMethDef
 function ifaceMethDef(key, args, val) {
   return [
-    ifaceMethDecl(key, args),
+    ifaceMethDecl([], key, args),
     expr(call(
       smember(id("$$proto"), id("$addDefault")),
       [ key, val ]
@@ -754,6 +761,13 @@ function decorator(f, name, e) {
   ])
 }
 
+exports.decorateExpr = decorateExpr
+function decorateExpr(decos, name, fn) {
+  return decos.reduce(function(result, deco) {
+    return call(deco, [result, name, id("$$package")])
+  }, fn)
+}
+
 exports.decl = decl
 function decl(id, e) {
   return varsDecl([[id, e]])
@@ -1026,3 +1040,4 @@ exports.self = self
 function self() {
   return id('self')
 }
+

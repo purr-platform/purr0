@@ -39,9 +39,10 @@ module Io.FileSystem.Path {
     method _ parse: $text => ffi """$p.split('/').reduce(function(xs, x) {
                                     return self['\\'](xs, x)
                                   }, $top)""" Success
-                                  where $p   = $normalise($text)
-                                      | $top = if ffi "/^\\//.test($p)" then Root
-                                                                        else Relative
+                                  where { $p   = $normalise($text)
+                                        | $top = if ffi "/^\\//.test($p)" then Root
+                                                                          else Relative
+                                        }
   }
 
   implement Semigroup for Path {
@@ -64,7 +65,7 @@ module Io.FileSystem.Path {
     }
 
   export $this ^Path? extension => match $this {
-    | $as \ $a => let $xs = ffi "$a.split('.')"
+    | $as \ $a => let { $xs = ffi "$a.split('.')" }
                   in
                     if ffi "$xs.length > 0" then ffi "$xs[$xs.length - 1]" Just
                                            else Nothing

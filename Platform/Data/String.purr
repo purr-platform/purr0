@@ -1,13 +1,13 @@
 module Data.String {
   import Purr.Core
-  import Data.Char
+  import Data.Char as C
   import Data.Number
 
   # -- Implicitly type String = [Char]
   export ( String? )
 
   ffi """
-  function $asChar(a) { return self.Char().$new(a) }
+  function $asChar(a) { return self.C.Char().$new(a) }
   """
 
   implement Ordered for String {

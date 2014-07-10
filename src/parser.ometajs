@@ -224,13 +224,13 @@ ometa Parser {
   ifaceDecl  = needDecl
              | methodDecl,
   needDecl   = kw('need') ws expr:e -> [#INeed, e],
-  methodDecl = kw('method') ws pattern:p ws fnBody:e -> [#DMeth, p, [#Fn, p, e]]
-             | kw('method') ws pattern:p ws posC:c   -> [#IMeth, c].concat(p),
+  methodDecl = decoratorApp*:as ws kw('method') ws pattern:p ws fnBody:e -> [#DMeth, p, [#DecoExpr, p[0], as, [#Fn, p, e]]]
+             | decoratorApp*:as ws kw('method') ws pattern:p ws posC:c   -> [#IMeth, as, c].concat(p),
 
   implem = kw('implement') ws expr:a ws kw('for') ws expr:b
              ws '{' (ws implDecl)*:xs ws '}' -> [#Impl, a, b, xs],
   implDecl = methodImpl,
-  methodImpl = kw('method') ws pattern:p ws fnBody:e -> [#Meth, p[0], [#Fn, p, e]],
+  methodImpl = decoratorApp*:as ws kw('method') ws pattern:p ws fnBody:e -> [#Meth, p[0], [#DecoExpr, p[0], as, [#Fn, p, e]]],
 
   adt = kw('data') ws identifier:id ws '=' ws struct:xs  -> [#Struct, id, xs]
       | kw('data') ws identifier:id ws '=' ws adtPatterns:xs -> [#Data, id, xs],
@@ -243,7 +243,7 @@ ometa Parser {
   struct = '{' ws listOf(#structField, ','):xs ws '}' -> xs,
   structField = uId:a ws preC:c1-> [#StructF, a, c1],
 
-  decorator = "[|" ws expr:a ws "|]" ws
+  decorator = decoratorApp:a ws
             ( module:m                  -> [#Deco, a, m[1][0], m]
             | adt:b                     -> [#Deco, a, b[1], b]
             | iface:b                   -> [#Deco, a, b[1], b]
@@ -251,6 +251,8 @@ ometa Parser {
             | exportStmt:b              -> [#Deco, a, b[1][1], b]
             | decorator:b               -> [#Deco, a, b[2], b]
             ),
+
+  decoratorApp = "[|" ws expr:a ws "|]" -> a,
 
   importDecl = kw('import') ws namespace:p
                  (ws keywordApp)*:ks)?
@@ -285,9 +287,9 @@ ometa Parser {
   casePatt = '|' ws listOf(#matchCase, ','):cs ws "=>" ws expr:b                     -> [#CPatt, cs, b],
 
   // Expressions
-  letExpr   = kw('let') ws bindingList:xs ws kw('in') ws expr:e -> [#Bind, xs, e],
+  letExpr   = kw('let') ws '{' ws bindingList:xs ws '}' ws kw('in') ws expr:e    -> [#Bind, xs, e],
   ifExpr    = kw('if') ws expr:a ws kw('then') ws expr:b ws kw('else') ws expr:c -> [#IfExpr, a, b, c],
-  whereExpr = appExpr:e ws kw('where') ws bindingList:xs      -> [#Bind, xs, e],
+  whereExpr = appExpr:e ws kw('where') ws '{' ws bindingList:xs ws '}'           -> [#Bind, xs, e],
 
   doExpr = kw('do') ws '{' ws listOf(#doCase, ';'):xs ws '}' -> [#Do, xs],
   doTailAction = expr:e -> [#DoAct, [#Id, '_'], e],
@@ -358,8 +360,8 @@ ometa Parser {
   lambda = (ws pattId)*:as ws fnBody:b -> [#Lambda, as, b],
 
   bindingList = bindingCase:x (ws '|' ws bindingCase)*:xs -> [x].concat(xs),
-  bindingCase = '$' identifier:a ws '=' ws expr:e     -> [#VarBind, a, e]
-              | pattern:p ws fnBody:e   -> [#Let, p[0], [#Fn, p, e]],
+  bindingCase = '$' identifier:a ws '=' ws expr:e         -> [#VarBind, a, e]
+              | decoratorApp*:as ws pattern:p ws fnBody:e -> [#Let, p[0], [#DecoExpr, p[0], as, [#Fn, p, e]]],
 
   fnBody = posC:c ws "=>" ws ( condExpr:e -> [e, c]
                              | expr:e     -> [[#Ret, e], c]
@@ -369,5 +371,5 @@ ometa Parser {
   condCase = '|' ws expr:t ws "=>" ws expr:e -> [#CondCase, t, e],
 
   // Program
-  program = ws module:m ws eof -> { m[3] = true; [#Program, m[1][0], m] }
+  program = ws decoratorApp*:as ws module:m ws eof -> { m = m.slice(0, -1).concat([true, as]); [#Program, m[1][0], m] }
 }

@@ -35,7 +35,7 @@ module Purr.Core {
   export
   interface Equality {
     method $this === $that -> Boolean?
-    method $this =/= $that -> Boolean? => ffi "!$x" where $x = $this === $that
+    method $this =/= $that -> Boolean? => ffi "!$x" where { $x = $this === $that }
   }
 
   export
@@ -117,11 +117,11 @@ module Purr.Core {
     method $this successor -> Enumerable?
     method $this predecessor -> Enumerable?
     method $start up-to: $end -> List? =>
-      let $next = $start sucessor
-        | $max  = $end max: $start upper-bound
-      in
-        if $next >= $max then Nil
-                         else $start :: ($next up-to: $end)
+      let {
+        $next = $start sucessor
+      | $max  = $end max: $start upper-bound
+      } in if $next >= $max then Nil
+                            else $start :: ($next up-to: $end)
   }
 
   export

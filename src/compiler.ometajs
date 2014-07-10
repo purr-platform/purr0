@@ -45,10 +45,11 @@ ometa Compiler {
   CondCase cc:t cc:e                -> [t, e],
 
   Let cc:id cc:val                  -> _.letStmt(id, val),
-  Mod [cc:id [scc*:args] [cc*:cs]] [cc*:body] :t -> _.module(id, args, body, [cs, null], t),
+  Mod [cc:id [scc*:args] [cc*:cs]] [cc*:body] :t [cc*:as] -> _.module(id, args, body, [cs, null], t, as),
   Export cc:id anything?:unpack     -> _.exportStmt(id, unpack),
   Program cc:id cc:mod              -> _.program(id, mod),
   Deco cc:f cc:id cc:e              -> _.decorator(f, id, e),
+  DecoExpr cc:id [cc*:as] cc:e      -> _.decorateExpr(as, id, e),
 
   Import cc:p cc:ks cc:id [cc*:xs]  -> _.importStmt(p, ks, id, xs),
   ImpKw cc:id [cc*:args]            -> [id, args],
@@ -56,7 +57,7 @@ ometa Compiler {
 
   IFace cc:id [cc*:decl]            -> _.ifaceStmt(id, decl),
   Impl cc:proto cc:tag [cc*:impl]   -> _.implStmt(proto, tag, impl),
-  IMeth cc:c cc:a [cc*:args] [cc*:cs] -> _.ifaceMethDecl(a, args, [cs, c]),
+  IMeth [cc*:as] cc:c cc:a [cc*:args] [cc*:cs] -> _.ifaceMethDecl(as, a, args, [cs, c]),
   DMeth [cc:id [cc*:args] :__] cc:val -> _.ifaceMethDef(id, args, val),
   INeed cc:e                        -> _.ifaceNeed(e),
   Meth cc:id cc:val                 -> [id, val],

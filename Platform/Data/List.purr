@@ -18,12 +18,13 @@ module Data.List {
 
   implement Representable for List {
     method $this to-string  => "[" + $this to-string1 + "]"
-                               where
+                               where {
                                  $xs to-string1 => match $xs {
                                    | $x :: Nil => $x to-string
                                    | $x :: $ys => $x to-string + ", " + $ys to-string1
                                    | Nil       => ""
                                    }
+                               }
   }
 
   implement Foldable for List {
@@ -88,11 +89,12 @@ module Data.List {
   export $xs ^List? instersperse: $separator => match $xs {
     | Nil       => Nil
     | $x :: $ys => $x :: ($separator prepended-to-all: $ys)
-  } where 
+  } where {
       $separator' prepended-to-all: $zs => match $zs {
         | Nil        => Nil
         | $z :: $zs' => $separator' :: ($z :: ($separator' prepended-to-all: $zs'))
       }
+    }
     
   export $xs ^List? intercalate: $ys ^List? => ($xs instersperse: $ys) >>= @identity
 

@@ -23,21 +23,23 @@ module Io.Task {
   # -- Runs things (meant for the end of the world, a la Haskell's unsafePerformIO)
   export $t ^Task? run: $f ^Function? recover: $g ^Function? => match $t {
     | Task: $computation Cleanup: $cleanup =>
-        let $state = $computation(@once($value => match $value {
+        let { 
+          $state = $computation(@once($value => match $value {
                                                   | Yield($a) => $f($a)
                                                   | Throw($a) => $g($a)
                                                   | Done      => void
                                                   } ~ (=> $cleanup($state, $value)) delayed))
-        in $state
+        } in $state
    }
 
   export $t ^Task? run: $f ^Function? => match $t {
     | Task: $computation Cleanup: $cleanup => 
-        let $state = $computation(@once($value => match $value {
+        let {
+          $state = $computation(@once($value => match $value {
                                                   | Yield($a) => $f($a)
                                                   | Done      => void
                                                   } ~ (=> $cleanup($state, $value)) delayed))
-        in $state
+        } in $state
     }
 
   # -- Protocols

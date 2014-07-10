@@ -25,21 +25,23 @@ module Io.Plan {
 
   export $plan run => 
     task: $next => $plan go
-      where $p go => match $p {
-        | Halt                            => $next(Unit Yield)
-        | Fail: $e                        => $next($e Throw)
-        | Emit: $v Then: $t               => $v run: (=> $t go)
-                                                recover: ($e => $next($e Throw))
-        | Await: $r Then: $c Fallback: $t => let $res = $r acquire force
-                                             in do {
-                                               $data <- $r step <| $res;
-                                               $x <- match $data {
-                                                 | Nothing  => $t run
-                                                 | Just($a) => $c($a) run
-                                               };
-                                               $r release <| $res;
-                                               return $x
-                                             } run: (=> $next(Unit Yield))
+      where {
+        $p go => match $p {
+          | Halt                            => $next(Unit Yield)
+          | Fail: $e                        => $next($e Throw)
+          | Emit: $v Then: $t               => $v run: (=> $t go)
+                                                  recover: ($e => $next($e Throw))
+          | Await: $r Then: $c Fallback: $t => let { $res = $r acquire force }
+                                               in do {
+                                                 $data <- $r step <| $res;
+                                                 $x <- match $data {
+                                                   | Nothing  => $t run
+                                                   | Just($a) => $c($a) run
+                                                 };
+                                                 $r release <| $res;
+                                                 return $x
+                                               } run: (=> $next(Unit Yield))
+        }
       }
 
   implement Functor for Plan {
@@ -69,7 +71,7 @@ module Io.Plan {
       | Fail: _                          => $p
       | Emit: $v Then: $t                => Emit: $v Then: $t + $f($v)
       | Await: $r Then: $c Fallback: $fb => Await: $r
-                                            Then: ($v => let $t = $c($v)
+                                            Then: ($v => let { $t = $c($v) }
                                                          in match $t {
                                                            | Halt => $f($v)
                                                            | _    => $t >>= $f

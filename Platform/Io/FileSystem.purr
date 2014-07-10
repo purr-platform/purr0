@@ -79,11 +79,13 @@ module Io.FileSystem {
         else        $next(self.Yield(null))
       })
     })"""
-    where render-type($a) => match $a {
-      | Directory => "dir"
-      | File      => "file"
-      | Junction  => "junction"
+    where { 
+      render-type($a) => match $a {
+        | Directory => "dir"
+        | File      => "file"
+        | Junction  => "junction"
       }
+    }
 
   export $p ^Path? read-link =>
     task: ffi """(function($next) {

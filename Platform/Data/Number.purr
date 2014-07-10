@@ -34,7 +34,7 @@ module Data.Number {
   }
 
   implement Parseable for Number {
-    method $this parse: $repr => let $x = ffi "Number($repr)"
+    method $this parse: $repr => let { $x = ffi "Number($repr)" }
                                  in
                                    if $x is-nan? then "Not a number" Failure
                                                  else $x Success

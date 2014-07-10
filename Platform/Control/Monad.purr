@@ -4,9 +4,12 @@ module Control.Monad {
 
   export $xs ^List? sequence-with: $Type ^Applicative? =>
     $xs fold-right: _ >> _ from: ($Type of: [])
-    where $mx >> $mr => do { $x  <- $mx;
-                             $xs <- $mr;
-                             return $x :: $xs }
+    where {
+      $mx >> $mr => do { $x  <- $mx;
+                         $xs <- $mr;
+                         return $x :: $xs
+                       }
+    }
 
   export $monad ^Monoid? when: $test ^Boolean? =>
     | test      => $monad
