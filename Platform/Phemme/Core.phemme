@@ -22,6 +22,7 @@ module Phemme.Core {
   export $x Function? => ffi "typeof $x === 'function'"
   export $x Unit?     => ffi "$x == null"
   export $x Record?   => ffi "self.$tag($x) === '<#Record:<builtin>>'"
+  export $x Date?     => ffi "$x instanceof Date"
 
   # -- Builtin types ---------------------------------------------------
   export data Ordering = Less | Equal | Greater
@@ -203,5 +204,38 @@ module Phemme.Core {
   interface ToList {
     method $this to-list -> List?
     method $this from-list: $xs ^List?
+  }
+
+  # -- Minimal JS interoperability -------------------------------------
+  implement Representable for Number {
+    method $this to-string => ffi "$this.toString()"
+  }
+  implement Representable for String {
+    method $this to-string => ffi "$this.toString()"
+  }
+  implement Representable for Function {
+    method $this to-string => ffi "self.$describe($this)"
+  }
+  implement Representable for Boolean {
+    method $this to-string => ffi "$this.toString()"
+  }
+  implement Representable for Unit {
+    method $this to-string => ffi "<Unit>"
+  }
+  implement Representable for Date {
+    method $this to-string => ffi "$this.toString()"
+  }
+  implement Equality for Number {
+    method $this === $that => ffi "$this === $that"
+    method $this =/= $that => ffi "$this !== $that"
+  }
+  implement Equality for String {
+    method $this === $that ^String? => ffi "$this === $that"
+  }
+  implement Equality for Boolean {
+    method $this === $that ^Boolean? => ffi "$this === $that"
+  }
+  implement Equality for Date {
+    method $this === $that ^Date? => ffi "$this.getTime() === $that.getTime()"
   }
 }

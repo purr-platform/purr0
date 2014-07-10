@@ -4,20 +4,12 @@ module Data.Boolean {
   # -- Implicitly: data Boolean = false | true
   export Boolean?
 
-  implement Equality for Boolean {
-    method $this === $that => ffi "$this === $that"
-  }
-
   implement Ordered for Boolean {
     method $this compare-to: $that => match $this, $that {
       | true, false => Less
       | false, true => Greater
       | _           => Equal
     }
-  }
-
-  implement Representable for Boolean {
-    method $this to-string => ffi "$this.toString()"
   }
 
   implement Parseable for Boolean {

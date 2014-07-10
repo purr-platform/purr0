@@ -1,11 +1,6 @@
 module Data.Number {
   import Phemme.Core
   
-  implement Equality for Number {
-    method $this === $that => ffi "$this === $that"
-    method $this =/= $that => ffi "$this !== $that"
-  }
-
   implement Ordered for Number {
     method $this compare-to: $that ^Number? =>
       | ffi "$this < $that" => Less
@@ -34,10 +29,6 @@ module Data.Number {
     method $this nan? => ffi "isNaN($this)"
     method $this finite? => ffi "isFinite($this)"
     method $this negative-zero? => ffi "(x === 0) && ((1/x) === -Infinity)"
-  }
-
-  implement Representable for Number {
-    method $this to-string => ffi "$this.toString()"
   }
 
   implement Parseable for Number {

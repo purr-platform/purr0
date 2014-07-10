@@ -10,19 +10,11 @@ module Data.String {
   function $asChar(a) { return self.Char().$new(a) }
   """
 
-  implement Equality for String {
-    method $this === $that => ffi "$this === $that"
-  }
-
   implement Ordered for String {
     method $this compare-to: $that ^String? =>
       | ffi "$this > $that" => Greater
       | ffi "$this < $that" => Less
       | otherwise           => Equal
-  }
-
-  implement Representable for String {
-    method $this to-string => $this
   }
 
   implement Bounded for String {

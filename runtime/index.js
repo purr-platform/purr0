@@ -35,9 +35,10 @@ var newTag = new function() {
 }
 
 function tagFor(type) {
-  return type == null?    '<unit>'
-  :      type.$$tag?      type.$$tag
-  :      /* otherwise */  '<' + (typeof type) + '>'
+  return type == null?          '<unit>'
+  :      type instanceof Date?  '<date>'
+  :      type.$$tag?            type.$$tag
+  :      /* otherwise */        '<' + (typeof type) + '>'
 }
 
 function parseName(name) {
@@ -445,7 +446,7 @@ NS.String   = function(){ return { $$tag: '<string>'   } }
 NS.Function = function(){ return { $$tag: '<function>' } }
 NS.Boolean  = function(){ return { $$tag: '<boolean>'  } }
 NS.Unit     = function(){ return { $$tag: '<unit>'     } }
-
+NS.Date     = function(){ return { $$tag: '<date>'     } }
 
 // -- Exporting --------------------------------------------------------
 module.exports = NS
