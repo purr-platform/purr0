@@ -5,11 +5,11 @@ module Data.Vector {
   ffi """
   function $$Vector() { }
   $$Vector.prototype.$$name = 'Vector'
-  $$Vector.prototype.$$tag = $self.$newTag($$Vector.prototype, $$package)
+  $$Vector.prototype.$$tag = self.$newTag($$Vector.prototype, $$package)
   $$Vector.$$tag = $$Vector.prototype.$$tag
   $$Vector.$new = function($xs) {
     var instance = new $$Vector()
-    instance.$items = $self.$listToArray($xs)
+    instance.$items = self.$listToArray($xs)
     return instance
   }
   $$Vector.$make = function($xs) {
@@ -20,13 +20,13 @@ module Data.Vector {
   """
 
   let $xs as-vector => ffi "$$Vector.$make($xs)"
-  export $xs Vector? => ffi "$self.$tagFor($xs) === $$Vector.$$tag"
+  export $xs Vector? => ffi "self.$tagFor($xs) === $$Vector.$$tag"
 
   export Vector => ffi "$$Vector"
   export _ Vector: $xs ^List? => ffi "$$Vector.$new($xs)"
 
   implement Representable for Vector {
-    method $this to-string => "<#Vector: " + ffi "$this.$items.map($self['to-string']).join(', ')" + ">"
+    method $this to-string => "<#Vector: " + ffi "$this.$items.map(self['to-string']).join(', ')" + ">"
   }
 
   implement Bounded for Vector {

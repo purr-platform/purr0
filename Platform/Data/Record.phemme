@@ -6,8 +6,8 @@ module Data.Record {
   }
 
   implement Indexable for Record {
-    method $this at: $index ^String? => ffi "$this[$index]? $self.Just($this.$get($index))
-                                                          : $self.Nothing()"
+    method $this at: $index ^String? => ffi "$this[$index]? self.Just($this.$get($index))
+                                                          : self.Nothing()"
   }
 
   implement Container for Record {

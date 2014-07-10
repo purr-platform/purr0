@@ -35,30 +35,30 @@ module Io.FileSystem {
   # -- Path-level operations
   export $p ^Path? exists? =>
     task: ffi """(function($next) {
-      $fs.exists($self['to-string']($p), function(a) { $next($self.Yield(a)) })
+      $fs.exists(self['to-string']($p), function(a) { $next(self.Yield(a)) })
     })"""
 
   export $p ^Path? rename-to: $p2 ^Path =>
     task: ffi """(function($next) {
-      $fs.rename($self['to-string']($p), $self['to-string']($p2), function(error) {
-        if (error)  $next($self.Throw(error))
-        else        $next($self.Yield(null))
+      $fs.rename(self['to-string']($p), self['to-string']($p2), function(error) {
+        if (error)  $next(self.Throw(error))
+        else        $next(self.Yield(null))
       })
     })"""
 
   export $p ^Path? change-owner: $owner group: $group =>
     task: ffi """(function($next) {
-      $fs.chown($self['to-string']($p), $owner, $group, function(error) {
-        if (error)  $next($self.Throw(error))
-        else        $next($self.Yield(null))
+      $fs.chown(self['to-string']($p), $owner, $group, function(error) {
+        if (error)  $next(self.Throw(error))
+        else        $next(self.Yield(null))
       })
     })"""
 
   export $p ^Path? change-mode: $mode =>
     task: ffi """(function($next) {
-      $fs.chmod($self['to-string']($p), $mode, function(error) {
-        if (error)  $next($self.Throw(error))
-        else        $next($self.Yield(null))
+      $fs.chmod(self['to-string']($p), $mode, function(error) {
+        if (error)  $next(self.Throw(error))
+        else        $next(self.Yield(null))
       })
     })"""
 
@@ -66,17 +66,17 @@ module Io.FileSystem {
   # -- Link operations
   export $p ^Path? link-to: $p2 ^Path? =>
     task: ffi """(function($next) {
-      $fs.link($self['to-string']($p2), $self['to-string']($p), function(error) {
-        if (error)  $next($self.Throw(error))
-        else        $next($self.Yield(null))
+      $fs.link(self['to-string']($p2), self['to-string']($p), function(error) {
+        if (error)  $next(self.Throw(error))
+        else        $next(self.Yield(null))
       })
     })"""
 
   export $p ^Path? link-to: $p2 ^Path? type: $type ^LinkType? =>
     task: ffi """(function($next) {
-      $fs.symlink($self['to-string']($p2), $self['to-string']($p), $self['render-type']($type), function(error) {
-        if (error)  $next($self.Throw(error))
-        else        $next($self.Yield(null))
+      $fs.symlink(self['to-string']($p2), self['to-string']($p), self['render-type']($type), function(error) {
+        if (error)  $next(self.Throw(error))
+        else        $next(self.Yield(null))
       })
     })"""
     where render-type($a) => match $a {
@@ -87,26 +87,26 @@ module Io.FileSystem {
 
   export $p ^Path? read-link =>
     task: ffi """(function($next) {
-      $fs.readlink($self['to-string']($p), function(error, data) {
-        if (error)  $next($self.Throw(error))
-        else        $next($self.Yield($self.asPath(data)))
+      $fs.readlink(self['to-string']($p), function(error, data) {
+        if (error)  $next(self.Throw(error))
+        else        $next(self.Yield(self.asPath(data)))
       })
     })"""
 
   export $p ^Path? real-path =>
     task: ffi """(function($next) {
-      $fs.realpath($self['to-string']($p), function(error, path) {
-        if (error)  $next($self.Throw(error))
-        else        $next($self.Yield($self.asPath(path)))
+      $fs.realpath(self['to-string']($p), function(error, path) {
+        if (error)  $next(self.Throw(error))
+        else        $next(self.Yield(self.asPath(path)))
       })
     })"""
 
   # TODO: we need Structs to be able to expose this method
   let $p ^Path? stat =>
     task: ffi """(function($next) {
-      $fs.stat($self['to-string']($p), function(error, stats) {
-        if (error)  $next($self.Throw(error))
-        else        $next($self.Yield(stats))
+      $fs.stat(self['to-string']($p), function(error, stats) {
+        if (error)  $next(self.Throw(error))
+        else        $next(self.Yield(stats))
       })
     })"""
 
@@ -124,9 +124,9 @@ module Io.FileSystem {
   # -- Node-level operations
   export $p ^Path? read-as: $encoding ^String? =>
     task: ffi """(function($next) {
-      $fs.readFile($self['to-string']($p),  { encoding: $encoding }, function(error, data) {
-        if (error) $next($self.Throw(error))
-        else       $next($self.Yield(data))
+      $fs.readFile(self['to-string']($p),  { encoding: $encoding }, function(error, data) {
+        if (error) $next(self.Throw(error))
+        else       $next(self.Yield(data))
       })
     })"""
 
@@ -134,9 +134,9 @@ module Io.FileSystem {
 
   export $p ^Path? write: $data ^String? mode: $mode encoding: $encoding =>
     task: ffi """(function($next) {
-      $fs.writeFile($self['to-string']($p), $data, { mode: $mode, encoding: $encoding }, function(error) {
-        if (error)  $next($self.Throw(error))
-        else        $next($self.Yield(null))
+      $fs.writeFile(self['to-string']($p), $data, { mode: $mode, encoding: $encoding }, function(error) {
+        if (error)  $next(self.Throw(error))
+        else        $next(self.Yield(null))
       })
     })"""
 
@@ -144,9 +144,9 @@ module Io.FileSystem {
 
   export $p ^Path? append: $data ^String? mode: $mode encoding: $encoding =>
     task: ffi """(function($next) {
-      $fs.appendFile($self['to-string']($p), $data, { mode: $mode, encoding: $encoding }, function(error) {
-        if (error)  $next($self.Throw(error))
-        else        $next($self.Yield(null))
+      $fs.appendFile(self['to-string']($p), $data, { mode: $mode, encoding: $encoding }, function(error) {
+        if (error)  $next(self.Throw(error))
+        else        $next(self.Yield(null))
       })
     })"""
 
@@ -157,17 +157,17 @@ module Io.FileSystem {
 
   let $p remove-file =>
     task: ffi """(function($next) {
-      $fs.unlink($self['to-string']($p), function(error) {
-        if (error)  $next($self.Throw(error))
-        else        $next($self.Yield(null))
+      $fs.unlink(self['to-string']($p), function(error) {
+        if (error)  $next(self.Throw(error))
+        else        $next(self.Yield(null))
       })
     })"""
 
   let $p remove-directory =>
     task: ffi """(function($next) {
-      $fs.rmdir($self['to-string']($p), function(error) {
-        if (error)  $next($self.Throw(error))
-        else        $next($self.Yield(null))
+      $fs.rmdir(self['to-string']($p), function(error) {
+        if (error)  $next(self.Throw(error))
+        else        $next(self.Yield(null))
       })
     })"""
 
@@ -178,9 +178,9 @@ module Io.FileSystem {
 
   let $p ^Path? mkdir: $mode =>
     task: ffi """(function($next) {
-      $fs.mkdir($self['to-string']($p), $mode, function(error) {
-        if (error)  $next($self.Throw(error))
-        else        $next($self.Yield(null))
+      $fs.mkdir(self['to-string']($p), $mode, function(error) {
+        if (error)  $next(self.Throw(error))
+        else        $next(self.Yield(null))
       })
     })"""
 
@@ -195,9 +195,9 @@ module Io.FileSystem {
 
   export $p ^Path? list-directory =>
     task: ffi """(function($next) {
-      $fs.readdir($self['to-string']($p), function(error, files) {
-        if (error)  $next($self.Throw(error))
-        else        $next($self.Yield($self.$arrayToList(files.map($self.asPath))))
+      $fs.readdir(self['to-string']($p), function(error, files) {
+        if (error)  $next(self.Throw(error))
+        else        $next(self.Yield(self.$arrayToList(files.map(self.asPath))))
       })
     })"""
 

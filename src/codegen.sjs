@@ -216,7 +216,7 @@ function prog(body) {
 function scoped(expr) {
   return call(
     lambda(null, [id("$$scope")], ret(expr)),
-    [call(smember(identifier("self"), id("$clone")), [])]
+    [call(smember(self(), id("$clone")), [])]
   )
 }
 
@@ -229,7 +229,7 @@ function force(value) {
 }
 
 function get(name) {
-  return member(identifier("self"), name)
+  return member(self(), name)
 }
 
 function thunk(expr) {
@@ -279,7 +279,7 @@ function string(text) {
 exports.letStmt = letStmt;
 function letStmt(name, value) {
   return expr(call(
-    smember(identifier("self"), id("$add")),
+    smember(self(), id("$add")),
     [name, value]
   ))
 }
@@ -300,11 +300,11 @@ function module(name, args, body, contracts, topLevel) {
         [
           varsDecl([
             [id("$$package"), ns],
-            [identifier("self"), call(smember(id("$$Phemme"), id("$makeNamespace")), [id("$$package")])],
+            [self(), call(builtin("$makeNamespace"), [id("$$package")])],
           ])
         ].concat(sort(flatten(body)))
          .concat([
-           ret(smember(identifier("self"), id("$exports")))
+           ret(smember(self(), id("$exports")))
          ])
       )
     )
@@ -324,7 +324,7 @@ function ifaceStmt(name, decls) {
       )
     ),
     expr(call(
-      smember(identifier("self"), id("$defProtocol")),
+      smember(self(), id("$defProtocol")),
       [id("$$proto")]
     ))
   ].concat(sort(flatten(decls))));
@@ -384,7 +384,7 @@ function implStmt(proto, tag, impl) {
   var implementation = makeImpl(impl);
   
   return atImplementationPhase(expr(call(
-    smember(identifier("self"), id("$implementProtocol")),
+    smember(self(), id("$implementProtocol")),
     [proto, tag, implementation, lit(true)]
   )));
 
@@ -458,7 +458,7 @@ exports.exportStmt = exportStmt;
 function exportStmt(name, unpack) {
   return atExportPhase(expr(
     call(
-      smember(identifier("self"), id("$doExport")),
+      smember(self(), id("$doExport")),
       [name, lit(!!unpack)]
     )
   ))
@@ -479,11 +479,11 @@ function parseExpr(js) {
 exports.program = program;
 function program(name, module) {
   return prog([
-    varsDecl([[identifier("self"), obj([])]]),
+    varsDecl([[self(), obj([])]]),
     module,
     expr(set(
       smember(id("module"), id("exports")),
-      member(identifier("self"), name)
+      member(self(), name)
     ))
   ])
 }
@@ -742,7 +742,7 @@ function caseKw(tag, args) {
 exports.use = use
 function use(e) {
   return delayed(
-    expr(call(builtin("$destructiveExtend"), [identifier("self"), e]))
+    expr(call(builtin("$destructiveExtend"), [self(), e]))
   )
 }
 
@@ -771,10 +771,10 @@ function binding(vars, e) {
   return call(
     fn(
       null,
-      [identifier("self")],
+      [self()],
       vars.concat([ret(e)])
     ),
-    [call(smember(identifier("self"), id("$clone")), [])]
+    [call(smember(self(), id("$clone")), [])]
   )
 }
 
@@ -782,10 +782,10 @@ exports.list = list
 function list(xs) {
   return xs.reduceRight(function(result, x) {
     return call(
-      member(identifier("self"), lit("::")),
+      member(self(), lit("::")),
       [x, result]
     )
-  }, call(member(identifier("self"), lit("Nil")), []))
+  }, call(member(self(), lit("Nil")), []))
 }
 
 exports.ifExpr = ifExpr
@@ -848,7 +848,7 @@ function importStmt(p, kw, name, binds) {
         binds.map(compileBind),
         ( name?           letStmt(name, id("$$mod"))
         : !binds.length?  expr(call(
-                            smember(identifier("self"), id("$doImport")),
+                            smember(self(), id("$doImport")),
                             [id("$$mod")]
                           ))
         : /* otherwise */ [])
@@ -863,7 +863,7 @@ function importStmt(p, kw, name, binds) {
   }
 
   function instantiate(kw) {
-    var pub = smember(identifier("self"), id("$exports"))
+    var pub = smember(self(), id("$exports"))
     if (kw === null) return call(id("$$mod"), [pub]);
     else             return call(member(id("$$mod"), kw[0]), [pub].concat(kw[1]))
   }
@@ -896,7 +896,7 @@ function doExpr(xs) {
 
   function compile(name, e, result) {
     return call(
-      member(identifier("self"), lit('chain:')),
+      member(self(), lit('chain:')),
       [
         e,
         fn(
@@ -913,7 +913,7 @@ function doExpr(xs) {
 
 exports.doRet = doRet
 function doRet(x) {
-  return call(member(identifier("self"), lit('of:')), [id("$$doType"), x])
+  return call(member(self(), lit('of:')), [id("$$doType"), x])
 }
 
 exports.structStmt = structStmt
@@ -1027,4 +1027,9 @@ function structStmt(name, fields) {
 exports.makeStruct = makeStruct
 function makeStruct(expr, map) {
   return call(smember(expr, id("$new")), [map])
+}
+
+exports.self = self
+function self() {
+  return id('self')
 }

@@ -13,7 +13,7 @@ module Phemme.Core {
   export _ otherwise => true
 
   [| doc: "Retrieves the internal `tag' of an object." |]
-  export $x tag => ffi "$self.$tag($x)"
+  export $x tag => ffi "self.$tag($x)"
 
   # -- Predicates ------------------------------------------------------
   export $x Number?   => ffi "typeof $x === 'number'"

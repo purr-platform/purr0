@@ -30,7 +30,7 @@ module Io.Console {
     task: ffi """(function($next) {
       var rl = readline.createInterface({ input: process.stdin, output: process.stdout })
       rl.question($prompt, function($text) {
-        $next($self.Yield($text))
+        $next(self.Yield($text))
       })
       return rl
     })"""

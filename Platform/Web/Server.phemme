@@ -10,9 +10,9 @@ module Web.Server {
     return function(req, res) {
       var request = $$Request.$new(req)
       var task = app(request)
-      $self['run:recover:'](task, function(value) {
-        if ($self.$tag(value) !== $self.Response().$$tag) {
-          console.error('Expected a Response, got: ' + $self.$tag(value))
+      self['run:recover:'](task, function(value) {
+        if (self.$tag(value) !== self.Response().$$tag) {
+          console.error('Expected a Response, got: ' + self.$tag(value))
           res.writeHead(500)
           res.end()
         } else {
@@ -34,7 +34,7 @@ module Web.Server {
 
   function $$Request() { }
   $$Request.$$name = 'Request'
-  $$Request.$$tag = $self.$newTag($$Request, $$package)
+  $$Request.$$tag = self.$newTag($$Request, $$package)
   $$Request.prototype.$$tag = $$Request.$$tag
   $$Request.$new = function(req) {
     var $$this = new $$Request()
@@ -50,8 +50,8 @@ module Web.Server {
   }
   $$Request.prototype.$get = function(name) {
     var v = this._meta[name]
-    if (v == null)  return $self.Nothing()
-    else            return $self.Just(v)
+    if (v == null)  return self.Nothing()
+    else            return self.Just(v)
   }
   $$Request.prototype['http-method'] = function(self) {
     return self._req.method
@@ -66,7 +66,7 @@ module Web.Server {
     return self._req.url
   }
   $$Request.prototype.body = function(self) {
-    return $self['task:']($self, function($next) {
+    return self['task:'](self, function($next) {
       var data   = ''
       var source = self._req
 
@@ -76,11 +76,11 @@ module Web.Server {
 
       function fail(error) {
         cleanup()
-        $next($self.Throw(error))
+        $next(self.Throw(error))
       }
       function fulfill() {
         cleanup()
-        $next($self.Yield(data))
+        $next(self.Yield(data))
       }
       function grabChunk() {
         var chunk = source.read()
@@ -96,7 +96,7 @@ module Web.Server {
   """
 
   export Request => ffi "$$Request"
-  export $x Request? => ffi "$self.$tag($x) === $$Request.$$tag"
+  export $x Request? => ffi "self.$tag($x) === $$Request.$$tag"
   export $this ^Request? body => ffi "$this.body($this)"
   export $this ^Request? http-method => ffi "$this['http-method']($this)"
   export $this ^Request? url => ffi "$this.url($this)"
@@ -125,10 +125,10 @@ module Web.Server {
     task: ffi """(function($next) {
       var server = $factory($wrapApplication($app))
       server.listen($port, $host, function(error) {
-        if (error)  $next($self.Throw(error))
+        if (error)  $next(self.Throw(error))
         else {
           var addr = this.address()
-          $next($self.Yield($self.Address().$new(addr)))
+          $next(self.Yield(self.Address().$new(addr)))
         }
       })
       return server

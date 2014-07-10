@@ -9,7 +9,7 @@ module Concurrency.Timers {
   export $n ^Time? delay =>
     task: ffi """(function($next) {
       return setTimeout(function(){
-        $next($self.Yield(null)) 
+        $next(self.Yield(null)) 
       }, $n)
     })"""
     cleanup: ffi """(function(timerId) {
@@ -19,7 +19,7 @@ module Concurrency.Timers {
   export $n ^Time? timeout =>
     task: ffi """(function($next) {
       return setTimeout(function(){
-        $next($self.Throw('Timeouted after ' + $n + ' milliseconds.')) 
+        $next(self.Throw('Timeouted after ' + $n + ' milliseconds.')) 
       }, $n)
     })"""
     cleanup: ffi """(function(timerId) {

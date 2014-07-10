@@ -63,6 +63,7 @@ var reserved = [ ':'  // Method parameter
                , 'else'
                , 'do'
                , 'return'
+               , 'self'
                ]
 
 /**
@@ -177,7 +178,7 @@ ometa Parser {
 
   preC = ('^' contractExpr:e)? -> e || [#Nil],
   posC = ("->" ws contractExpr:e)? -> e || [#Nil],
-  contractExpr = extendedId:id -> [#Member, [#Var, 'self'], id],
+  contractExpr = extendedId:id -> [#Member, [#Self], id],
 
   // Declarations
   declaration = module
@@ -315,16 +316,16 @@ ometa Parser {
           | binaryExpr,
 
 
-  nsMember = ('@' identifier:a ('.' identifier)*:xs -> [[#Member, [#Var, 'self'], a], xs]
+  nsMember = ('@' identifier:a ('.' identifier)*:xs -> [[#Member, [#Self], a], xs]
              | varName:a ('.' identifier)*:xs       -> [[#Var, a[1]], xs]
              ):ys -> ys[1].reduce(function(bs, b) {
                        return [#Member, bs, b]
                      }, ys[0]),
 
   nsKw = nsMember:n '.' keywordApp:p -> [n, p]
-       | keywordApp:p                -> [[#Var, 'self'], p],
+       | keywordApp:p                -> [[#Self], p],
   nsSym = nsMember:n '.' symbols:s -> [n, s]
-        | symbols:s                -> [[#Var, 'self'], s],
+        | symbols:s                -> [[#Self], s],
 
   keywordExpr = binaryExpr?:a ws nsKw:x (ws keywordApp)*:as -> (function() {
     var kws = [x[1]].concat(as)
@@ -332,7 +333,7 @@ ometa Parser {
   }()),
   binaryExpr  = binaryExpr:a ws nsSym:s ws unaryExpr:b -> [#App, s[0], s[1], [a, b]]
               | unaryExpr,
-  unaryExpr   = unaryExpr:a ws identifier:i            -> [#App, [#Var, 'self'], i, [a]]
+  unaryExpr   = unaryExpr:a ws identifier:i            -> [#App, [#Self], i, [a]]
               | postfixExpr,
   postfixExpr = postfixExpr:a ws '.' ws extendedId:i                 -> [#Member, a, i]
               | postfixExpr:a ws '(' ws listOf(#expr, ','):bs ws ')' -> [#FnApp, a, bs]
@@ -344,9 +345,10 @@ ometa Parser {
               | doExpr
               | value
               | lambda
-              | identifier:a         -> [#App, [#Var, 'self'], a, [[#Var, 'self']]]
-              | '@' extendedId:i     -> [#Member, [#Var, 'self'], i]
+              | identifier:a         -> [#App, [#Self], a, [[#Self]]]
+              | '@' extendedId:i     -> [#Member, [#Self], i]
               | varName:a            -> [#Var, a[1]]
+              | kw('self')           -> [#Self]
               | '(' ws expr:a ws ')' -> a,
 
   keywordApp = keyword:k ws binaryExpr:v -> [k, v],

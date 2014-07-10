@@ -6,9 +6,9 @@ module Debug.Trace {
   ffi """
   function $inspect($value) {
     try {
-      return $self.$tag($value) + ' ' + $self['to-string']($value)
+      return self.$tag($value) + ' ' + self['to-string']($value)
     } catch(e) {
-      return $self.$tag($value) + ' ' + $self.$describe($value)
+      return self.$tag($value) + ' ' + self.$describe($value)
     }
   }
   function $pad(n, text) {
@@ -25,7 +25,7 @@ module Debug.Trace {
   })()"
 
   export observe: $description => ffi """(function(fn, name, pkg) {
-    var show    = $self.$describe
+    var show    = self.$describe
     var toArray = Function.call.bind([].slice)
     return function() {
       var result = fn.apply(this, arguments)

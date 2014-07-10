@@ -25,6 +25,7 @@ ometa Compiler {
   sId :a                            -> _.identifier(a),
   Id :a                             -> _.string(a),
   Var :a                            -> _.identifier(a),
+  Self                              -> _.self(),
   Num :s :a :b :c                   -> _.number(s, a, b, c),
   Bool :a                           -> _.bool(a),
   List [cc*:xs]                     -> _.list(xs),

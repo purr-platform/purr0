@@ -37,7 +37,7 @@ module Io.FileSystem.Path {
 
   implement Parseable for Path {
     method _ parse: $text => ffi """$p.split('/').reduce(function(xs, x) {
-                                    return $self['\\'](xs, x)
+                                    return self['\\'](xs, x)
                                   }, $top)""" Success
                                   where $p   = $normalise($text)
                                       | $top = if ffi "/^\\//.test($p)" then Root

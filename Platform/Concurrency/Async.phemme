@@ -12,21 +12,21 @@ module Concurrency.Async {
   export $xs ^List? concurrently =>
     task: ffi """
     (function($next) {
-      var xs       = $self.$listToArray($xs)
+      var xs       = self.$listToArray($xs)
       var len      = xs.length
       var result   = new Array(len)
 
       return [xs, xs.map(runComputation)]
 
       function runComputation(task, i) {
-        $self['run:recover:'](function Success(value) {
+        self['run:recover:'](function Success(value) {
           result[i] = value
           len = len - 1
           if (len === 0) {
-            $next($self.Yield($self.Vector().$make(result)))
+            $next(self.Yield(self.Vector().$make(result)))
           }
         }, function Failure(error) {
-          $next($self.Throw(error))
+          $next(self.Throw(error))
         })
       }
     })"""
@@ -38,13 +38,13 @@ module Concurrency.Async {
   export $t1 ^Task? or: $t2 ^Task? =>
     task: ffi """
     (function($next) {
-      var a = $self['run:recover:']($t1, succeed, fail)
-      var b = $self['run:recover:']($t2, succeed, fail)
+      var a = self['run:recover:']($t1, succeed, fail)
+      var b = self['run:recover:']($t2, succeed, fail)
 
       return [[$t1, a], [$t2, b]]
 
-      function succeed(v) { $next($self.Yield(v)) }
-      function fail(e)    { $next($self.Throw(e)) }
+      function succeed(v) { $next(self.Yield(v)) }
+      function fail(e)    { $next(self.Throw(e)) }
     })"""
     cleanup: ffi """(function($state) {
       $state.forEach(function(x){ x[0].$$1(x[1]) })
@@ -55,23 +55,23 @@ module Concurrency.Async {
   export $xs ^List? try-all =>
     task: ffi """
     (function($next) {
-      var xs       = $self.$listToArray($xs)
+      var xs       = self.$listToArray($xs)
       var pending  = xs.length
       var failures = new Array(pending)
 
       return xs.map(function(x, i) {
-        return [x, $self['run:recover:'](x, succeed, accumulateFailure(i))]
+        return [x, self['run:recover:'](x, succeed, accumulateFailure(i))]
       })
 
       function succeed(value) {
-        $next($self.Yield(value))
+        $next(self.Yield(value))
       }
 
       function accumulateFailure(index){ return function(error) {
         failures[index] = error
         pending = pending - 1
         if (pending === 0)
-          $next($self.Throw($self.Vector().$make(failures)))
+          $next(self.Throw(self.Vector().$make(failures)))
       }}
     })"""
     cleanup: ffi """(function($state) {

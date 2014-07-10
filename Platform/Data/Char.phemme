@@ -6,7 +6,7 @@ module Data.Char {
 
   ffi """
   function $$Char() {}
-  $$Char.$$tag = $self.$newTag('Char', $$package)
+  $$Char.$$tag = self.$newTag('Char', $$package)
   $$Char.$$name = 'Char'
   $$Char.prototype.$$tag = $$Char.$$tag
   $$Char.$new = function(chr) {
