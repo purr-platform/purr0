@@ -1,7 +1,5 @@
 module HelloWorld {
-  import Phemme.Core
-  import Data.String
-  import Io.Console
+  import Prelude
 
   export main => do {
     $name <- get-line: "Your name> ";
