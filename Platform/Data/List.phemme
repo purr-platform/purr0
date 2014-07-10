@@ -69,12 +69,12 @@ module Data.List {
 
   export $xs ^List? reverse => $xs fold: ($a $b => $b :: $a) from: Nil
 
-  export $xs ^List? first => match $xs {
+  export $xs ^List? head => match $xs {
     | Nil     => Nothing
     | $x :: _ => $x Just
   }
 
-  export $xs ^List? first! => match $xs {
+  export $xs ^List? head! => match $xs {
     | $x :: _ => $x
   }
 
