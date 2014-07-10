@@ -10,7 +10,7 @@ module Data.Record {
                                                           : self.Nothing()"
   }
 
-  implement Container for Record {
+  implement IndexedContainer for Record {
     method $this at: $index ^String? put: $value => ffi "$this.$clone().$add($index, $value)"
     method $this remove-at: $index => ffi "(function() {
       var result = $this.$clone()

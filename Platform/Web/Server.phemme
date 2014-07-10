@@ -106,7 +106,7 @@ module Web.Server {
   implement Indexable for Request {
     method $this at: $key ^String? => ffi "$this.$get($key)"
   }
-  implement Container for Request {
+  implement IndexedContainer for Request {
     method $this at: $key ^String? put: $value => ffi "$this.$set($key, $value)"
     method $this remove-at: $key ^String? => ffi "$this.$remove($key)"
   }
