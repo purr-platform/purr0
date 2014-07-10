@@ -111,10 +111,9 @@ module Web.Server {
     method $this remove-at: $key ^String? => ffi "$this.$remove($key)"
   }
 
-  export data Response = $status ^Number? Headers: _ Body: _
+  export data Response = Status: _ ^Number? Headers: _ Body: _
 
-  export Status: $a Headers: $b Body: $c => $a Headers: $b Body: $c
-  export Body: $c => 200 Headers: {} Body: $c
+  export Body: $c => Status: 200 Headers: {} Body: $c
 
   export data Address = { address ^String?  # Bound address
                         , family ^String?   # IP family
