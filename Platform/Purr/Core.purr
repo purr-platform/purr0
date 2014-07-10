@@ -1,4 +1,4 @@
-module Phemme.Core {
+module Purr.Core {
  
   [| doc: "Attachs documentation to an object." |]
   export _ doc: $text ^String? => ffi "(function($data) {

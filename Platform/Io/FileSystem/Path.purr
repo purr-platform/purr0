@@ -1,5 +1,5 @@
 module Io.FileSystem.Path {
-  import Phemme.Core
+  import Purr.Core
   import Data.Boolean
 
   ffi """

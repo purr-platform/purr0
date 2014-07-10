@@ -1,7 +1,7 @@
--- The Phemme platform has the following libraries
+-- The Purr platform has the following libraries
 
--- | Core functionality of Phemme
-module Phemme.Core where
+-- | Core functionality of Purr
+module Purr.Core where
 
 -- | Attachs documentation to an object
 _ doc: String -> Function -> Function

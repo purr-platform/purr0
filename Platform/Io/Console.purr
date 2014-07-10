@@ -1,5 +1,5 @@
 module Io.Console {
-  import Phemme.Core
+  import Purr.Core
   import Io.Task
 
   ffi "var readline = require('readline')"

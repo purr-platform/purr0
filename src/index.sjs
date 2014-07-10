@@ -22,7 +22,7 @@
 /**
  * A small, portable functional language for writing highly concurrent web servers.
  *
- * @module phemme
+ * @module purr
  */
 
 var fs        = require('fs')
@@ -67,7 +67,7 @@ function run(file, rt) {
                                  , clearTimeout: clearTimeout
                                  , __dirname: path.dirname(path.resolve(file))
                                  , __file: file
-                                 , $Phemme: rt
+                                 , $Purr: rt
                                  , module:  module });
   vm.runInNewContext(source, context, file)
   return module.exports
@@ -91,7 +91,7 @@ function $require(module, dir) {
   if (module in this.$moduleCache)
     return this.$moduleCache[module];
 
-  var file     = module.replace(/\./g, '/') + '.phemme';
+  var file     = module.replace(/\./g, '/') + '.purr';
   var fullPath = null
   for (var i = 0; i < this.$lookupPaths.length; ++i) {
     fullPath = path.join(this.$lookupPaths[i], file);

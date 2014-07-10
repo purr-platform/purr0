@@ -1,10 +1,10 @@
-Phemme
-======
+Purr
+====
 
-Phemme is a small functional language designed for writing concurrent
+Purr is a small functional language designed for writing concurrent
 web-servers. It focuses on easy of development, security and concurrency.
 
-(See the [Rationale](https://github.com/robotlolita/phemme/wiki/Rationale) page
+(See the [Rationale](https://github.com/robotlolita/purr/wiki/Rationale) page
 for more details)
 
 > **NOTE**
@@ -17,5 +17,5 @@ for more details)
 
 ## Resources
 
-  - [The Wiki](https://github.com/robotlolita/phemme/wiki) has some information on the project.
-  - [The Gitter chat](https://gitter.im/robotlolita/phemme) is used for discussing project-related things.
+  - [The Wiki](https://github.com/robotlolita/purr/wiki) has some information on the project.
+  - [The Gitter chat](https://gitter.im/robotlolita/purr) is used for discussing project-related things.

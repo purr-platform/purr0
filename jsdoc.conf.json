@@ -11,7 +11,7 @@
 		"template": "./node_modules/ink-docstrap/template"
 	},
 	"templates": {
-		"systemName": "phemme",
+		"systemName": "Purr",
 		"theme": "cerulean",
 		"linenums": true,
 		"navType": "vertical",

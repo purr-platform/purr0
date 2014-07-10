@@ -1,4 +1,5 @@
 module Data.Function {
+  import Purr.Core
 
   export ( Function? )
   

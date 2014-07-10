@@ -1,5 +1,5 @@
 module Data.Maybe {
-  import Phemme.Core
+  import Purr.Core
 
   # -- Implicitly: data Maybe = Nothing | Just(_)
   export ( Nothing, Just, Maybe, Maybe? )

@@ -1,6 +1,6 @@
-# Phemme Specification
+# Purr Specification
 
-This is a draft of Phemme's language specification.
+This is a draft of Purr's language specification.
 
 Some of the features it offers:
 
@@ -24,18 +24,18 @@ Some of the features it offers:
 
 ## 0) Prelude
 
-Phemme is a small domain-specific language for writing highly-concurrent
+Purr is a small domain-specific language for writing highly-concurrent
 web-servers. It runs on top of Node, and integrates fully with its host,
 so you can use any Node library. Most of the difference comes from the
-fact that Phemme uses promises all the way down, so you don't need to
+fact that Purr uses promises all the way down, so you don't need to
 concern yourself with callbacks and all that.
 
-Besides this, Phemme is a functional language with extensible syntax and
+Besides this, Purr is a functional language with extensible syntax and
 ad-hoc polymorphism (Clojure style). And it's syntax absolutely rocks
 for writing RESTful services.
 
 
-## 1) Overview of Phemme
+## 1) Overview of Purr
 
 
 ## 2) Concepts

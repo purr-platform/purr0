@@ -1,5 +1,5 @@
 module Data.Either {
-  import Phemme.Core
+  import Purr.Core
 
   # -- Implicitly: data Either = Failure(_) | Success(_)
   export ( Either, Either?, Failure, Success )

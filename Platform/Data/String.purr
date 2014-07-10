@@ -1,5 +1,5 @@
 module Data.String {
-  import Phemme.Core
+  import Purr.Core
   import Data.Char
   import Data.Number
 

@@ -1,6 +1,6 @@
 module Io.Task {
 
-  import Phemme.Core
+  import Purr.Core
   import Data.Function
 
   export data Task = Task: _ ^Function? Cleanup: _ ^Function?

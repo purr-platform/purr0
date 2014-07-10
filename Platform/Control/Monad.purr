@@ -1,5 +1,5 @@
 module Control.Monad {
-  import Phemme.Core
+  import Purr.Core
   import Data.List
 
   export $xs ^List? sequence-with: $Type ^Applicative? =>

@@ -20,15 +20,15 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-var doc = [ 'phemme — A minimal & portable language for concurrent web servers.'
+var doc = [ 'purr — A minimal & portable language for concurrent web servers.'
           , ''
           , 'Usage:'
-          , '  phemme [options] <file>'
-          , '  phemme --version'
-          , '  phemme --help'
+          , '  purr [options] <file>'
+          , '  purr --version'
+          , '  purr --help'
           , ''
           , 'Options:'
-          , '  -a, --ast                Displays the Phemme AST in JSON.'
+          , '  -a, --ast                Displays the Purr AST in JSON.'
           , '  -j, --js-ast             Displays the generated JS ast in JSON.'
           , '  -c, --compile            Compiles the file instead of running.'
           , '  -h, --help               Displays the help screen.'
@@ -39,7 +39,7 @@ var doc = [ 'phemme — A minimal & portable language for concurrent web servers
 var fs     = require('fs')
 var docopt = require('docopt').docopt
 var pkg    = require('../package.json')
-var phemme = require('../lib/')
+var purr   = require('../lib/')
 
 
 // -- Helpers ----------------------------------------------------------
@@ -57,7 +57,7 @@ void function Main() {
   var args = docopt(doc, { help: false })
 
   ; args['--help']?     show(doc)
-  : args['--version']?  show('phemme version ' + pkg.version)
-  : args['--compile']?  show(phemme(read(args['<file>'])))
-  : /* otherwise */     phemme.runFile(args['<file>'])
+  : args['--version']?  show('purr version ' + pkg.version)
+  : args['--compile']?  show(purr(read(args['<file>'])))
+  : /* otherwise */     purr.runFile(args['<file>'])
 }()

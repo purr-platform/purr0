@@ -1,5 +1,5 @@
 module Concurrency.Async {
-  import Phemme.Core
+  import Purr.Core
   import Data.List
   import Data.Vector
   import Io.Task

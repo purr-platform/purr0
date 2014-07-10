@@ -1,5 +1,5 @@
 module Data.List {
-  import Phemme.Core
+  import Purr.Core
   import Data.Boolean
   import Data.Number
   import Data.Function

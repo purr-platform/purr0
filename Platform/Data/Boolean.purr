@@ -1,5 +1,5 @@
 module Data.Boolean {
-  import Phemme.Core
+  import Purr.Core
 
   # -- Implicitly: data Boolean = false | true
   export ( Boolean? )

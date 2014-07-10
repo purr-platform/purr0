@@ -1,5 +1,5 @@
 module Data.Vector {
-  import Phemme.Core
+  import Purr.Core
   import Data.List
 
   ffi """

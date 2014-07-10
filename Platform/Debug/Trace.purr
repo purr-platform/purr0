@@ -1,5 +1,5 @@
 module Debug.Trace {
-  import Phemme.Core
+  import Purr.Core
 
   # Convenient functions for analysing the execution of the program
   

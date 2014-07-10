@@ -1,5 +1,5 @@
 module Data.Tuple {
-  import Phemme.Core
+  import Purr.Core
   import Data.Boolean
 
   # -- Implicitly: Tuple: _ With: _

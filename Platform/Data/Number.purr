@@ -1,5 +1,5 @@
 module Data.Number {
-  import Phemme.Core
+  import Purr.Core
 
   export ( Number? )
   

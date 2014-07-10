@@ -1,5 +1,5 @@
 {
-  "name": "phemme",
+  "name": "Purr",
   "version": "0.0.0",
   "description": "A small, portable functional language for writing highly concurrent web servers.",
   "main": "lib/index.js",
@@ -8,13 +8,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/robotlolita/phemme"
+    "url": "https://github.com/robotlolita/purr"
   },
   "keywords": [],
   "author": "Quildreen Motta",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/robotlolita/phemme/issues"
+    "url": "https://github.com/robotlolita/purr/issues"
   },
   "dependencies": {
     "core.lambda": "^1.0.0",

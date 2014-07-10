@@ -1,5 +1,5 @@
 module Data.Record {
-  import Phemme.Core
+  import Purr.Core
   import Data.List
   import Data.Tuple use (first => fst, second => snd)
 

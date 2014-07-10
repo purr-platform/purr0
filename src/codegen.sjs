@@ -196,7 +196,7 @@ function newExpr(callee, args) {
 }
 
 function builtin(name) {
-  return smember(id("$$Phemme"), id(name))
+  return smember(id("$$Purr"), id(name))
 }
 
 function set(what, value) {
@@ -296,7 +296,7 @@ function module(name, args, body, contracts, topLevel) {
       contracts,
       fn(
         identifier(name.value),
-        [id("$$Phemme")].concat(args),
+        [id("$$Purr")].concat(args),
         [
           varsDecl([
             [id("$$package"), ns],

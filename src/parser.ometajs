@@ -20,9 +20,9 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /**
- * The parser for the Phemme language.
+ * The parser for the Purr language.
  *
- * @module phemme/parser
+ * @module purr/parser
  */
 
 /**

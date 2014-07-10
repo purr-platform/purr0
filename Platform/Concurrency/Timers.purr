@@ -1,5 +1,5 @@
 module Concurrency.Timers {
-  import Phemme.Core
+  import Purr.Core
   import Data.Number
   import Data.Boolean
   import Data.Task

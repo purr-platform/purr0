@@ -1,5 +1,5 @@
 module Prelude {
-  import Phemme.Core as Core
+  import Purr.Core as Core
   # -- Core data types
   import Data.Boolean as Boolean
   import Data.Number as Number

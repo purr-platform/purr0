@@ -1,5 +1,5 @@
 module Data.Char {
-  import Phemme.Core
+  import Purr.Core
   import Data.Number
 
   let $a CharCode? => ffi "($a > 0) && ($a < 0xFFFF)"
