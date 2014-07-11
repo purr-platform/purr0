@@ -18,6 +18,30 @@ for more details)
 > the language is constantly changing at this stage.
 
 
+## Getting started
+
+You'll need to clone the repository, install the dependencies, and compile the
+Sweet.js/OMeta files (you'll need Make, and Node properly installed).
+
+```shell
+$ git clone git://github.com/robotlolita/purr.git
+$ cd purr
+$ npm install
+$ make all
+$ bin/ipurr
+Type :quit to exit (or ^D).
+*** Loaded the Prelude from: /home/queen/Projects/PLs/purr/Platform/Prelude.purr
+
+> "Hello, world"
+"Hello, world"
+```
+
+To run files, use the `purr` command:
+
+```shell
+$ bin/purr some-file.purr
+```
+
 ## Resources
 
   - [The Wiki](https://github.com/robotlolita/purr/wiki) has some information on the project.
