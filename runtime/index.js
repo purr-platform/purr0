@@ -46,6 +46,11 @@ function parseName(name) {
              .replace(/^\$/, '')
 }
 
+function sanitiseName(name) {
+  return '$' + name.replace(/(\W)/g, function(x) {
+                                       return '$' + x.charCodeAt(0) + '_' })
+}
+
 function describeFn(fn) {
   return '<function: ' + fnName(fn) + '>'
 }

@@ -371,5 +371,6 @@ ometa Parser {
   condCase = '|' ws expr:t ws "=>" ws expr:e -> [#CondCase, t, e],
 
   // Program
-  program = ws decoratorApp*:as ws module:m ws eof -> { m = m.slice(0, -1).concat([true, as]); [#Program, m[1][0], m] }
+  program  = ws decoratorApp*:as ws module:m ws eof -> { m = m.slice(0, -1).concat([true, as]); [#Program, m[1][0], m] },
+  replDecl = ws (declaration | expr):d ws eof -> d
 }

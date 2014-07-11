@@ -91,6 +91,7 @@ function runFile(file) {
   return run(file, rt)(rt).$main()
 }
 
+exports.$require = $require
 function $require(module, dir) {
   if (module in this.$moduleCache)
     return this.$moduleCache[module];
