@@ -7,55 +7,33 @@ module Web.Routing {
   ffi "var path = require('path'), url = require('url')"
 
   export
-  data RoutePart = _ ^Segment? SegmentR
+  data Router = { paths ^Record?, fallback ^Maybe?, wildcard ^Maybe? }
+
+  export
+  data RoutePart = _ ^SegmentR? SegmentR
                  | _ ^String? VariableR
                  | WildcardR
+  
   export
-  data RouteSpec = _ ^RouteSpec /*/ _ ^RoutePart
-                 | RootR
+  data RouteSpec = _ ^SegmentR? \*\ _ RouteSpec?
+                 | NilR
 
-  let $x Segment? => ffi """!/^(\.|\.\.)/.test($x)"""
+  let $x SegmentR? => ffi """!/^(\.|\.\.)/.test($x)"""
+  export $a /*/ $b => $b \*\ $a
 
-  implement Equality for RoutePart {
-    method $this === $that ^RoutePart? => match $this, $that {
-      | WildcardR,     _            => true
-      | _,             WildcardR     => true
-      | SegmentR($a),  SegmentR($b)  => $a === $b
-      | VariableR($a), VariableR($b) => $a === $b
-      | _,            _            => false
-    }      
-  }
 
-  implement Representable for RoutePart {
-    method $this to-string => match $this {
-      | WildcardR     => "*"
-      | VariableR($a) => "$" + $a
-      | SegmentR($a)  => ffi "encodeURIComponent($a)"
-    }
-  }
-
-  implement Equality for RouteSpec {
-    method $this === $that ^RouteSpec? => match $this, $that {
-      | RootR,             RootR             => true
-      | $xs /*/ $x,        $ys /*/ $y       => ($x === $y) && ($xs === $ys)
-      | _,                 _                => false
-    }
-  }
-
-  implement Representable for RouteSpec {
-    method $this to-string => match $this {
-      | RootR       => ""
-      | $xs /*/ $x  => $xs to-string + "/" + $x to-string
-    }
-  }
-
-  implement Parseable for RouteSpec {
-    method _ parse: $path => ffi """(function() {
-      var p        = path.normalize(url.parse($path).pathname || '/').split('/').filter(Boolean)
-      var segments = p.map(decodeURIComponent)
-      return self.Success(segments.reduce(function(result, x) {
-        return self['/*/'](result, self.SegmentR(x))
-      }, self.RootR()))
-    }())"""
-  }
+  # Routes are represented as a prefix tree:
+  #
+  # GET /foo/bar/baz F
+  # POST /foo/qux G
+  #
+  # + foo
+  # |--+ bar
+  # |  `--+ baz
+  # |     `--o F
+  # `--+ qux
+  #    `--o G
+  #
+  # 
+  
 }

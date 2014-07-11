@@ -37,16 +37,24 @@ var faded  = colours.gray;
 var error  = colours.red;
 var result = colours.cyan;
 
+function showError(e, options) {
+  console.log(error(e));
+  if (options.verbose) console.log(faded(e.stack));
+}
+
 module.exports = repl
-function repl(loadPaths, prelude) {
+function repl(loadPaths, prelude, options) {
   console.log('Type :quit to exit (or ^D).');
   var c = replContext(loadPaths);
   var context = c.context;
   var module = c.module;
-  loadPrelude(prelude, context);
+  loadPrelude(prelude, context, options);
 
   console.log('');
-  loopEvaluation(module, context, readline.createInterface({ input: process.stdin, output: process.stdout }));
+  loopEvaluation( module
+                , context
+                , readline.createInterface({ input: process.stdin, output: process.stdout })
+                , options);
 }
 
 function replContext(loadPaths) {
@@ -68,10 +76,10 @@ function replContext(loadPaths) {
     $$Purr: runtime,
     __dirname: process.cwd()
   });
-  return { context: context, module: runtime }
+  return { context: context, module: runtime };
 }
 
-function loadPrelude(prelude, context) {
+function loadPrelude(prelude, context, options) {
   try {
     var module = { exports: { } };
     context.module = module;
@@ -81,74 +89,71 @@ function loadPrelude(prelude, context) {
     console.log(faded('*** Loaded the Prelude from: ' + prelude));
   } catch(e) {
     console.log(error('*** Unable to read the Prelude from: ' + prelude));
-    console.log(error(e));
+    showError(e, options);
   }
 }
 
-function loopEvaluation(module, context, rl) {
+function loopEvaluation(module, context, rl, options) {
   rl.question('> ', function(program) {
-    finishReplLoop(module, context, rl, program)
-  })
+    finishReplLoop(module, context, rl, program, options);
+  });
 }
 
-function finishReplLoop(module, context, rl, program) {
-  evaluateCommand(module, context, rl, program)
-  loopEvaluation(module, context, rl)
+function finishReplLoop(module, context, rl, program, options) {
+  evaluateCommand(module, context, rl, program, options);
+  loopEvaluation(module, context, rl, options);
 }
 
-function continueRepl(err, module, context, rl, program) {
+function continueRepl(err, module, context, rl, program, options) {
   rl.question('... ', function(newProgram) {
     if (!newProgram.trim()) {
-      console.log(error(err));
-      console.log(faded(err.stack));
-      loopEvaluation(module, context, rl)
+      showError(err, options);
+      loopEvaluation(module, context, rl, options);
     } else {
-      finishReplLoop(module, context, rl, program + '\n' + newProgram)
+      finishReplLoop(module, context, rl, program + '\n' + newProgram, options);
     }
-  })
+  });
 }
 
-function evaluateCommand(module, context, rl, program) {
+function evaluateCommand(module, context, rl, program, options) {
   return program === ':quit'?  process.exit(0)
-  :      /* otherwise */       maybeLog(module, run(module, context, rl, program))
+  :      /* otherwise */       maybeLog(module, run(module, context, rl, program, options))
 }
 
 function maybeLog(module, a) {
-  if (a != null)  console.log(faded('=>'), result(show(module, a)))
+  if (a != null)  console.log(faded('=>'), result(show(module, a)));
 }
 
 function show(module, a) {
   try {
     var impl = module.$getImplementation(module.$protocols['<#Representable:Purr.Core>'], a);
-    return impl['to-string'](a)
+    return impl['to-string'](a);
   } catch(e) {
-    return module.$describe(a)
+    return module.$describe(a);
   }
 }
 
-function run(module, context, rl, program) {
+function run(module, context, rl, program, options) {
   if (!(program || '').trim())  return;
   
   try {
-    var ast = Parser.matchAll(program.trim(), 'replDecl')
+    var ast = Parser.matchAll(program.trim(), 'replDecl');
   } catch (e) {
-    return continueRepl(e, module, context, rl, program)
+    return continueRepl(e, module, context, rl, program, options);
   }
 
   try {
     var code = purr.compile(ast);
     var js   = purr.generate(code);
-console.log(faded(js));
+    if (options.showJs)  console.log(faded(js));
   } catch(e) {
-    console.log(error(e));
-    console.log(faded(e.stack))
+    showError(e, options);
   }
 
   try {
-    return runProgram(context, js)
+    return runProgram(context, js);
   } catch(e) {
-    console.log(error(e));
-    console.log(faded(e.stack));
+    showError(e, options);
   }
 }
 

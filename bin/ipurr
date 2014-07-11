@@ -30,6 +30,8 @@ var doc = [ 'ipurr — A Read-Eval-Print-Loop (interactive session) for Purr.'
           , 'Options:'
           , '  -h, --help               Displays the help screen.'
           , '  -v, --version            Displays the compiler version.'
+          , '  --show-js                Displays the compiled JS for the expression.'
+          , '  --verbose                Outputs all information ever!!1'
           ].join('\n')
 
 var docopt = require('docopt').docopt
@@ -37,11 +39,19 @@ var path = require('path')
 var pkg = require('../package.json')
 var repl = require('../lib/repl')
 
+function toOptions(args) {
+  return { showJs: args['--show-js']
+         , verbose: args['--verbose']
+         }
+}
+
 
 void function Main() {
   var args = docopt(doc, { help: false })
 
   ; args['--help']?     console.log(doc)
   : args['--version']?  console.log('ipurr version ' + pkg.version)
-  : /* otherwise */     repl([process.cwd()], path.join(__dirname, '../Platform/Prelude.purr'))
+  : /* otherwise */     repl( [process.cwd()]
+                            , path.join(__dirname, '../Platform/Prelude.purr')
+                            , toOptions(args))
 }()
