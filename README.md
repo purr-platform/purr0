@@ -5,7 +5,7 @@ Purr
 src="https://raw.githubusercontent.com/robotlolita/purr/master/purr-tan.png" align="right">
 
 Purr is a small functional language designed for writing concurrent
-web-servers. It focuses on easy of development, security and concurrency.
+web-servers. It focuses on ease of development, security and concurrency.
 
 (See the [Rationale](https://github.com/robotlolita/purr/wiki/Rationale) page
 for more details)
