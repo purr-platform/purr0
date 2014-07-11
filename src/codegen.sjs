@@ -1041,3 +1041,13 @@ function self() {
   return id('self')
 }
 
+exports.replDecl = replDecl
+function replDecl(body) {
+  if (!Array.isArray(body)) body = [body]
+  return prog(sort(flatten(body)))
+}
+
+exports.replExpr = replExpr
+function replExpr(e) {
+  return expr(e)
+}

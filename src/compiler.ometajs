@@ -87,6 +87,9 @@ ometa Compiler {
   StructF cc:n cc:c                 -> [n, c],
   New cc:a cc:m                     -> _.makeStruct(a, m),
 
+  ReplDecl cc:a                     -> _.replDecl(a),
+  ReplExpr cc:a                     -> _.replExpr(a),
+
   Multi cc*:as                      -> as,
   Nil                               -> null,
   Empty                             -> _.empty(),
