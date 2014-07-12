@@ -345,6 +345,7 @@ ometa Parser {
               | caseExpr
               | doExpr
               | value
+              | thunk
               | lambda
               | identifier:a         -> [#App, [#Self], a, [[#Self]]]
               | '@' extendedId:i     -> [#Member, [#Self], i]
@@ -356,6 +357,7 @@ ometa Parser {
 
   ffi = kw('ffi') ws string:a -> [#FFI, a],
 
+  thunk  = "^{" ws expr:e ws '}' -> [#Lambda, [], [[#Ret, e], [#Nil]]],
   lambda = (ws pattId)*:as ws fnBody:b -> [#Lambda, as, b],
 
   bindingList = bindingCase:x (ws '|' ws bindingCase)*:xs -> [x].concat(xs),
