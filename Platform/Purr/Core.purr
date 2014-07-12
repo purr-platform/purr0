@@ -206,6 +206,16 @@ interface ToList {
   method $this from-list: $xs ^List?
 }
 
+export
+interface JsonEncoder {
+  method $this to-json -> String
+}
+
+export
+interface JsonDecoder {
+  method $type from-json: $text ^String -> Either?
+}
+
 # -- Minimal JS interoperability -------------------------------------
 implement Representable for Number {
   method $this to-string => ffi "$this.toString()"
@@ -225,9 +235,10 @@ implement Representable for Unit {
 implement Representable for Date {
   method $this to-string => ffi "$this.toString()"
 }
+
 implement Equality for Number {
-  method $this === $that => ffi "$this === $that"
-  method $this =/= $that => ffi "$this !== $that"
+  method $this === $that ^Number? => ffi "$this === $that"
+  method $this =/= $that ^Number? => ffi "$this !== $that"
 }
 implement Equality for String {
   method $this === $that ^String? => ffi "$this === $that"
@@ -238,3 +249,47 @@ implement Equality for Boolean {
 implement Equality for Date {
   method $this === $that ^Date? => ffi "$this.getTime() === $that.getTime()"
 }
+implement Equality for Unit {
+  method $this === $that ^Unit? => true
+}
+
+implement JsonEncoder for Number {
+  method $this to-json => ffi "JSON.stringify($this)"
+}
+implement JsonEncoder for String {
+  method $this to-json => ffi "JSON.stringify($this)"
+}
+implement JsonEncoder for Boolean {
+  method $this to-json => ffi "JSON.stringify($this)"
+}
+implement JsonEncoder for Unit {
+  method $this to-json => "null"
+}
+
+implement JsonDecoder for Number {
+  method from-json: $text => $text parse-json-as: Number? type: "Number"
+}
+implement JsonDecoder for String {
+  method from-json: $text => $text parse-json-as: String? type: "String"
+}
+implement JsonDecoder for Boolean {
+  method from-json: $text => $text parse-json-as: Boolean? type: "Boolean"
+}
+implement JsonDecoder for Unit {
+  method from-json: $text =>
+    | $text === "null" => (ffi "null") Success
+    | otherwise        => "Unable to parse JSON as Unit" Failure
+}
+
+
+
+
+let $x parse-json-as: $pred type: $msg => ffi "(function() {
+  try {
+    var x = JSON.parse($x)
+    if ($pred(x))  return self.Success($x)
+    else           return self.Failure(new Error('Unable to parse JSON as ' + $type))
+  } catch (e) {
+    return self.Failure(e)
+  }
+}())"
