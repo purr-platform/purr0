@@ -16,9 +16,9 @@ module Web.Server {
           res.writeHead(500)
           res.end()
         } else {
-          var status  = value.$$1
-          var headers = value.$$2.$toPlainObject()
-          var body    = value.$$3
+          var status  = value.$$1()
+          var headers = value.$$2().$toPlainObject()
+          var body    = value.$$3()
 
           res.writeHead(status, headers)
           res.write(body)

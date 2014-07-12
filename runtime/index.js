@@ -194,7 +194,7 @@ Record.$toPlainObject = function() {
   for (var k in this) {
     if (k[0] === '$')  continue
     var v = this[k]
-    if (v != null && typeof v !== 'function')  r[k] = v
+    if (v != null)  r[k] = v(this)
   }
   return r
 }
