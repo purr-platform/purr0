@@ -145,17 +145,13 @@ ometa Parser {
   map = '{' ws mapExpr:hd (ws ',' ws mapExpr)*:tl ws '}' -> [#Map, [hd].concat(tl)]
       | '{' ws '}'                                       -> [#Map, []],
 
-  mapExpr = uId:a ws "=>" ws expr:b    -> [#MapField, a, b]
-          | string:a ws "=>" ws expr:b -> [#MapField, a, b],
- 
-  set = '#' vector:xs -> [#Set, xs[1]],
+  mapExpr = pattern:p ws fnBody:e -> [#MapField, p[0], [#Fn, p, e]],
 
   value = number
         | string
         | bool
         | vector
-        | map
-        | set,
+        | map,
 
   // Patterns
   pattern = keywordPattern
