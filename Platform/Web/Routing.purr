@@ -1,30 +1,30 @@
-module Web.Routing {
-  import Purr.Core
-  import Data.String
-  import Data.List
-  import Data.Boolean
-  import Web.Data
+module Web.Routing where
 
-  ffi "var path = require('path'), url = require('url')"
+import Purr.Core
+import Data.String
+import Data.List
+import Data.Boolean
+import Web.Data
 
-#  data RouteSpec = { match:with: ^Function?   # (Path, [Binding]) → Maybe[RouteMatch]
-#                   , bindings ^List?
-#                   , http-method ^Method?
-#                   , handler ^Function?
-#                   }
-#
-#  data RouteMatch = { bindings ^Record?, rest ^String? }
+ffi """
+var path = require('path'), url = require('url')
+"""
 
-  export $routes ^List? match: $path ^String? on: $method ^Method? => match $routes {
-    | $spec :: $rest => if $method === $spec http-method then
-                          match $spec matcher match: $path with: $spec bindings {
-                            | Nothing => $rest match: $path on: $method
-                            | $a Just => $a Just
-                          }
-                        else
-                          $rest match: $path on: $method
-    | Nil            => Nothing
+data RouteSpec = { match: $path ^String? with: $binding ^List? -> Maybe?
+                 , bindings -> List?
+                 , http-method -> Method?
+                 , handler -> Function?
+                 }
 
-  let $matcher match: $path with: $bindings => $matcher($path, $bindings)
-  
+data RouteMatch = { bindings -> Record?, rest -> String? }
+
+export $routes ^List? match: $path ^String? on: $method ^Method? => match $routes {
+  | $spec :: $rest => if $method === $spec http-method then
+                        match $spec match: $path with: $spec bindings {
+                          | Nothing => $rest match: $path on: $method
+                          | $a Just => $a Just
+                        }
+                      else
+                        $rest match: $path on: $method
+  | Nil            => Nothing
 }

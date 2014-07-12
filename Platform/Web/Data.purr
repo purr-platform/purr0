@@ -1,35 +1,33 @@
-module Web.Data {
-  import Purr.Core
+module Web.Data where
 
-  # -- Methods 
-  export
-  data Method = OPTIONS
-              | GET
-              | HEAD
-              | POST
-              | PUT
-              | DELETE
-              | TRACE
-              | CONNECT
+import Purr.Core
 
-  implement Equality for Method {
-    method $this === $that ^Method? => ffi "$this.$$ctag === $that.$$ctag"
-  }
+# -- Methods 
+export
+data Method = OPTIONS
+            | GET
+            | HEAD
+            | POST
+            | PUT
+            | DELETE
+            | TRACE
+            | CONNECT
 
-  implement Representable for Method {
-    method $this to-string => ffi "$this.$$ctag"
-  }
-
-  implement Parseable for Method {
-    method _ parse: $text => ffi "(function() {
-      $text = $text.toUpperCase()
-      var m = self.Method()[$text]
-      if (m)  return self.Success(m())
-      else    return self.Failure('Not a Method: ' + $text)
-    })"
-  }
-
-  
-  # -- Statuses
-  
+implement Equality for Method {
+  method $this === $that ^Method? => ffi "$this.$$ctag === $that.$$ctag"
 }
+
+implement Representable for Method {
+  method $this to-string => ffi "$this.$$ctag"
+}
+
+implement Parseable for Method {
+  method _ parse: $text => ffi "(function() {
+    $text = $text.toUpperCase()
+    var m = self.Method()[$text]
+    if (m)  return self.Success(m())
+    else    return self.Failure('Not a Method: ' + $text)
+  })"
+}
+
+

@@ -1,29 +1,28 @@
-module Concurrency.Timers {
-  import Purr.Core
-  import Data.Number
-  import Data.Boolean
-  import Io.Task
+module Concurrency.Timers where
 
-  let $n Time? => ($n > 0) && ($n < 2147483647) # Max Int32
+import Purr.Core
+import Data.Number
+import Data.Boolean
+import Io.Task
 
-  export $n ^Time? delay =>
-    task: ffi """(function($next) {
-      return setTimeout(function(){
-        $next(self.Yield(null)) 
-      }, $n)
-    })"""
-    cleanup: ffi """(function(timerId) {
-      clearTimeout(timerId)
-    })"""
+let $n Time? => ($n > 0) && ($n < 2147483647) # Max Int32
 
-  export $n ^Time? timeout =>
-    task: ffi """(function($next) {
-      return setTimeout(function(){
-        $next(self.Throw('Timeouted after ' + $n + ' milliseconds.')) 
-      }, $n)
-    })"""
-    cleanup: ffi """(function(timerId) {
-      clearTimeout(timerId)
-    })"""
+export $n ^Time? delay =>
+  task: ffi """(function($next) {
+    return setTimeout(function(){
+      $next(self.Yield(null)) 
+    }, $n)
+  })"""
+  cleanup: ffi """(function(timerId) {
+    clearTimeout(timerId)
+  })"""
 
-}
+export $n ^Time? timeout =>
+  task: ffi """(function($next) {
+    return setTimeout(function(){
+      $next(self.Throw('Timeouted after ' + $n + ' milliseconds.')) 
+    }, $n)
+  })"""
+  cleanup: ffi """(function(timerId) {
+    clearTimeout(timerId)
+  })"""

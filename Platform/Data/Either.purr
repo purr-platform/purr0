@@ -1,52 +1,52 @@
-module Data.Either {
-  import Purr.Core
+module Data.Either where
 
-  # -- Implicitly: data Either = Failure(_) | Success(_)
-  export ( Either, Either?, Failure, Success )
+import Purr.Core
 
-  implement Equality for Either {
-    method $this === $that ^Either? => match $this, $that {
-      | Failure($a), Failure($b) => $a === $b
-      | Success($a), Success($b) => $a === $b
-      | _, _                     => false
-    }
+# -- Implicitly: data Either = Failure(_) | Success(_)
+export ( Either, Either?, Failure, Success )
+
+implement Equality for Either {
+  method $this === $that ^Either? => match $this, $that {
+    | Failure($a), Failure($b) => $a === $b
+    | Success($a), Success($b) => $a === $b
+    | _, _                     => false
   }
+}
 
-  implement Representable for Either {
-    method $this to-string => match $this {
-      | Failure($a) => "Failure(" + $a to-string + ")"
-      | Success($a) => "Success(" + $a to-string + ")"
-    }
+implement Representable for Either {
+  method $this to-string => match $this {
+    | Failure($a) => "Failure(" + $a to-string + ")"
+    | Success($a) => "Success(" + $a to-string + ")"
   }
+}
 
-  implement Semigroup for Either {
-    method $this + $that ^Either? => match $this, $that {
-      | Failure(_), _            => $this
-      | _,           Failure(_)  => $that
-      | Success($a), Success($b) => ($a + $b) Success
-    }
+implement Semigroup for Either {
+  method $this + $that ^Either? => match $this, $that {
+    | Failure(_), _            => $this
+    | _,           Failure(_)  => $that
+    | Success($a), Success($b) => ($a + $b) Success
   }
+}
 
-  implement Functor for Either {
-    method $this map: $f => match $this {
-      | Failure(_)  => $this
-      | Success($a) => $f($a) Success
-    }
+implement Functor for Either {
+  method $this map: $f => match $this {
+    | Failure(_)  => $this
+    | Success($a) => $f($a) Success
   }
+}
 
-  implement Applicative for Either {
-    method _ of: $x => $x Success
-    method $this apply-to: $b => match $this {
-      | Failure(_)  => $this
-      | Success($f) => $b map: $f
-    }
+implement Applicative for Either {
+  method _ of: $x => $x Success
+  method $this apply-to: $b => match $this {
+    | Failure(_)  => $this
+    | Success($f) => $b map: $f
   }
+}
 
-  implement Alternative for Either {
-    method none => Unit Failure
-    method $this else: $that ^Either? => match $this {
-      | Failure(_) => $that
-      | _          => $this
-    }
+implement Alternative for Either {
+  method none => Unit Failure
+  method $this else: $that ^Either? => match $this {
+    | Failure(_) => $that
+    | _          => $this
   }
 }

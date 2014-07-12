@@ -1,40 +1,40 @@
-module Io.Console {
-  import Purr.Core
-  import Io.Task
+module Io.Console where
 
-  ffi "var readline = require('readline')"
+import Purr.Core
+import Io.Task
 
-  let _ ~ $x => $x
-  let void => Unit Yield
+ffi "var readline = require('readline')"
 
-  export $x ^Representable? display => 
-    task: ($next => ffi "console.log($text)" ~ $next(void))
-    where { $text = $x to-string }
+let _ ~ $x => $x
+let void => Unit Yield
 
-  export $x ^Representable? display-error =>
-    task: ($next => ffi "console.error($text)" ~ $next(void))
-    where { $text = $x to-string }
+export $x ^Representable? display => 
+  task: ($next => ffi "console.log($text)" ~ $next(void))
+  where { $text = $x to-string }
 
-  export $x ^Representable? display-warning =>
-    task: ($next => ffi "console.warn($text)" ~ $next(void))
-    where { $text = $x to-string }
+export $x ^Representable? display-error =>
+  task: ($next => ffi "console.error($text)" ~ $next(void))
+  where { $text = $x to-string }
 
-  export $x ^Representable? display-info =>
-    task: ($next => ffi "console.info($text)" ~ $next(void))
-    where { $text = $x to-string }
+export $x ^Representable? display-warning =>
+  task: ($next => ffi "console.warn($text)" ~ $next(void))
+  where { $text = $x to-string }
 
-  export $text ^String? write => 
-    task: ($next => ffi "process.stdout.write($text)" ~ $next(void))
+export $x ^Representable? display-info =>
+  task: ($next => ffi "console.info($text)" ~ $next(void))
+  where { $text = $x to-string }
 
-  export get-line: $prompt ^String? =>
-    task: ffi """(function($next) {
-      var rl = readline.createInterface({ input: process.stdin, output: process.stdout })
-      rl.question($prompt, function($text) {
-        $next(self.Yield($text))
-      })
-      return rl
-    })"""
-    cleanup: $rl => ffi "$rl.close()"
+export $text ^String? write => 
+  task: ($next => ffi "process.stdout.write($text)" ~ $next(void))
 
-  export get-line => get-line: ""
-}
+export get-line: $prompt ^String? =>
+  task: ffi """(function($next) {
+    var rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+    rl.question($prompt, function($text) {
+      $next(self.Yield($text))
+    })
+    return rl
+  })"""
+  cleanup: $rl => ffi "$rl.close()"
+
+export get-line => get-line: ""

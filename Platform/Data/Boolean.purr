@@ -1,46 +1,45 @@
-module Data.Boolean {
-  import Purr.Core
+module Data.Boolean where
 
-  # -- Implicitly: data Boolean = false | true
-  export ( Boolean? )
+import Purr.Core
 
-  implement Ordered for Boolean {
-    method $this compare-to: $that => match $this, $that {
-      | true, false => Less
-      | false, true => Greater
-      | _           => Equal
-    }
+# -- Implicitly: data Boolean = false | true
+export ( Boolean? )
+
+implement Ordered for Boolean {
+  method $this compare-to: $that => match $this, $that {
+    | true, false => Less
+    | false, true => Greater
+    | _           => Equal
   }
-
-  implement Parseable for Boolean {
-    method $this parse: $text -> Boolean? =>
-      | $text === "true"  => true Success
-      | $text === "false" => false Success
-      | otherwise         => "Not a Boolean." Failure
-  }
-
-  implement Bounded for Boolean {
-    method $this upper-bound => true
-    method $this lower-bound => false
-  }
-
-  implement Enumerable for Boolean {
-    method $this successor => match $this {
-                              | false => true
-                              }
-    method $this predecessor => match $this {
-                                | true => false
-                                }
-  }
-
-  implement BooleanAlgebra for Boolean {
-    method $this && $that ^Boolean? => ffi "$this && $that"
-    method $this || $that ^Boolean? => ffi "$this || $that"
-    method not($this) => ffi "!$this"
-  }
-
-  export $test ^Boolean? then: $consequent ^Function? else: $alternate ^Function? =>
-    | ($test)   => $consequent()
-    | otherwise => $alternate()
-
 }
+
+implement Parseable for Boolean {
+  method $this parse: $text -> Boolean? =>
+    | $text === "true"  => true Success
+    | $text === "false" => false Success
+    | otherwise         => "Not a Boolean." Failure
+}
+
+implement Bounded for Boolean {
+  method $this upper-bound => true
+  method $this lower-bound => false
+}
+
+implement Enumerable for Boolean {
+  method $this successor => match $this {
+                            | false => true
+                            }
+  method $this predecessor => match $this {
+                              | true => false
+                              }
+}
+
+implement BooleanAlgebra for Boolean {
+  method $this && $that ^Boolean? => ffi "$this && $that"
+  method $this || $that ^Boolean? => ffi "$this || $that"
+  method not($this) => ffi "!$this"
+}
+
+export $test ^Boolean? then: $consequent ^Function? else: $alternate ^Function? =>
+  | ($test)   => $consequent()
+  | otherwise => $alternate()

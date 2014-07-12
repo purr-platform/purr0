@@ -1,12 +1,11 @@
-module Data.Function {
-  import Purr.Core
+module Data.Function where
 
-  export ( Function? )
-  
-  export $a identity => $a
-  export $a constant => $b => $a
-  export $f ->> $g => $a => $g($f($a))
-  export $f <<- $g => $a => $f($g($a))
-  export $f flip => $a $b => $f($b, $a)
+import Purr.Core
 
-}
+export ( Function? )
+
+export $a identity => $a
+export $a constant => $b => $a
+export $f ->> $g => $a => $g($f($a))
+export $f <<- $g => $a => $f($g($a))
+export $f flip => $a $b => $f($b, $a)

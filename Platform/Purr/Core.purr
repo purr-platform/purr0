@@ -1,241 +1,240 @@
-module Purr.Core {
+module Purr.Core where
  
-  [| doc: "Attachs documentation to an object." |]
-  export _ doc: $text ^String? => ffi "(function($data) {
-    $data.$doc = $text;
-    return $data
-  })"
+[| doc: "Attachs documentation to an object." |]
+export _ doc: $text ^String? => ffi "(function($data) {
+  $data.$doc = $text;
+  return $data
+})"
 
-  [| doc: "Retrieves the documentation from an object." |]
-  export $data doc => ffi "_data.$doc || '(No documentation available)'"
+[| doc: "Retrieves the documentation from an object." |]
+export $data doc => ffi "_data.$doc || '(No documentation available)'"
 
-  [| doc: "An alias for `true'" |]
-  export _ otherwise => true
+[| doc: "An alias for `true'" |]
+export _ otherwise => true
 
-  [| doc: "Retrieves the internal `tag' of an object." |]
-  export $x tag => ffi "self.$tag($x)"
+[| doc: "Retrieves the internal `tag' of an object." |]
+export $x tag => ffi "self.$tag($x)"
 
-  # -- Predicates ------------------------------------------------------
-  export $x Number?   => ffi "typeof $x === 'number'"
-  export $x String?   => ffi "typeof $x === 'string'"
-  export $x Boolean?  => ffi "typeof $x === 'boolean'" 
-  export $x Function? => ffi "typeof $x === 'function'"
-  export $x Unit?     => ffi "$x == null"
-  export $x Record?   => ffi "self.$tag($x) === '<#Record:<builtin>>'"
-  export $x Date?     => ffi "$x instanceof Date"
+# -- Predicates ------------------------------------------------------
+export $x Number?   => ffi "typeof $x === 'number'"
+export $x String?   => ffi "typeof $x === 'string'"
+export $x Boolean?  => ffi "typeof $x === 'boolean'" 
+export $x Function? => ffi "typeof $x === 'function'"
+export $x Unit?     => ffi "$x == null"
+export $x Record?   => ffi "self.$tag($x) === '<#Record:<builtin>>'"
+export $x Date?     => ffi "$x instanceof Date"
 
-  # -- Builtin types ---------------------------------------------------
-  export data Ordering = Less | Equal | Greater
-  export data Maybe    = Nothing | Just(_)
-  export data Either   = Failure(_) | Success(_)
-  export data List     = Nil | _ :: _ ^List?
-  export data Tuple    = Tuple: _ With: _
+# -- Builtin types ---------------------------------------------------
+export data Ordering = Less | Equal | Greater
+export data Maybe    = Nothing | Just(_)
+export data Either   = Failure(_) | Success(_)
+export data List     = Nil | _ :: _ ^List?
+export data Tuple    = Tuple: _ With: _
 
-  # -- Protocols -------------------------------------------------------
-  export
-  interface Equality {
-    method $this === $that -> Boolean?
-    method $this =/= $that -> Boolean? => ffi "!$x" where { $x = $this === $that }
-  }
+# -- Protocols -------------------------------------------------------
+export
+interface Equality {
+  method $this === $that -> Boolean?
+  method $this =/= $that -> Boolean? => ffi "!$x" where { $x = $this === $that }
+}
 
-  export
-  interface Clonable {
-    method $this clone
-  }
+export
+interface Clonable {
+  method $this clone
+}
 
-  export
-  interface Ordered {
-    need Equality
-    method $this compare-to: $that -> Ordering?
-    method $this < $that -> Boolean?  => ($this compare-to: $that) === Less
-    method $this > $that -> Boolean?  => ($this compare-to: $that) =/= Greater
-    method $this <= $that -> Boolean? => ($this compare-to: $that) === Greater
-    method $this >= $that -> Boolean? => ($this compare-to: $that) =/= Less
-    method $this max: $that =>
-      | this > that => $this
-      | otherise    => $that
-    method $this min: $that =>
-      | this < that => $this
-      | otherwise   => $that
-  }
+export
+interface Ordered {
+  need Equality
+  method $this compare-to: $that -> Ordering?
+  method $this < $that -> Boolean?  => ($this compare-to: $that) === Less
+  method $this > $that -> Boolean?  => ($this compare-to: $that) =/= Greater
+  method $this <= $that -> Boolean? => ($this compare-to: $that) === Greater
+  method $this >= $that -> Boolean? => ($this compare-to: $that) =/= Less
+  method $this max: $that =>
+    | this > that => $this
+    | otherise    => $that
+  method $this min: $that =>
+    | this < that => $this
+    | otherwise   => $that
+}
 
-  export
-  interface BooleanAlgebra {
-    method $this || $that -> BooleanAlgebra?
-    method $this && $that -> BooleanAlgebra?
-    method not($this) -> BooleanAlgebra?
-  }
+export
+interface BooleanAlgebra {
+  method $this || $that -> BooleanAlgebra?
+  method $this && $that -> BooleanAlgebra?
+  method not($this) -> BooleanAlgebra?
+}
 
-  export
-  interface Numeric {
-    method $this - $that -> Numeric?
-    method $this * $that -> Numeric?
-    method $this absolute -> Numeric?
-    method $this negate -> Numeric?
-  }
+export
+interface Numeric {
+  method $this - $that -> Numeric?
+  method $this * $that -> Numeric?
+  method $this absolute -> Numeric?
+  method $this negate -> Numeric?
+}
 
-  export
-  interface Integral {
-    need Numeric
-    method $this divide-by: $that
-    method $this modulus: $that -> Integral?
-  }
+export
+interface Integral {
+  need Numeric
+  method $this divide-by: $that
+  method $this modulus: $that -> Integral?
+}
 
-  export
-  interface Floating {
-    need Numeric
-    method $this / $that -> Floating?
-    method $this truncate -> Floating?
-    method $this round -> Floating?
-    method $this ceiling -> Floating?
-    method $this floor -> Floating?
-    method $this nan? -> Boolean?
-    method $this finite? -> Boolean?
-    method $this negative-zero? -> Boolean?
-  }
+export
+interface Floating {
+  need Numeric
+  method $this / $that -> Floating?
+  method $this truncate -> Floating?
+  method $this round -> Floating?
+  method $this ceiling -> Floating?
+  method $this floor -> Floating?
+  method $this nan? -> Boolean?
+  method $this finite? -> Boolean?
+  method $this negative-zero? -> Boolean?
+}
 
-  export
-  interface Representable {
-    method $this to-string -> String?
-  }
-  
-  export
-  interface Parseable {
-    method $type parse: $representation ^String? -> Either?
-  }
+export
+interface Representable {
+  method $this to-string -> String?
+}
 
-  export
-  interface Bounded {
-    method $this upper-bound -> Bounded?
-    method $this lower-bound -> Bounded?
-  }
+export
+interface Parseable {
+  method $type parse: $representation ^String? -> Either?
+}
 
-  export
-  interface Enumerable {
-    need Bounded
-    need Ordered
-    method $this successor -> Enumerable?
-    method $this predecessor -> Enumerable?
-    method $start up-to: $end -> List? =>
-      let {
-        $next = $start sucessor
-      | $max  = $end max: $start upper-bound
-      } in if $next >= $max then Nil
-                            else $start :: ($next up-to: $end)
-  }
+export
+interface Bounded {
+  method $this upper-bound -> Bounded?
+  method $this lower-bound -> Bounded?
+}
 
-  export
-  interface Indexable {
-    method $this at: $index -> Maybe?
-    method $this includes?: $index -> Boolean? => match $this at: $index {
-                                                  | Nothing => false
-                                                  | _       => true
-                                                  }
-  }
+export
+interface Enumerable {
+  need Bounded
+  need Ordered
+  method $this successor -> Enumerable?
+  method $this predecessor -> Enumerable?
+  method $start up-to: $end -> List? =>
+    let {
+      $next = $start sucessor
+    | $max  = $end max: $start upper-bound
+    } in if $next >= $max then Nil
+                          else $start :: ($next up-to: $end)
+}
 
-  export
-  interface Container {
-    method $this add: $value -> Container?
-    method $this remove: $value -> Container?
-  }  
+export
+interface Indexable {
+  method $this at: $index -> Maybe?
+  method $this includes?: $index -> Boolean? => match $this at: $index {
+                                                | Nothing => false
+                                                | _       => true
+                                                }
+}
 
-  export
-  interface IndexedContainer {
-    need Indexable
-    method $this at: $index put: $value -> IndexedContainer?
-    method $this remove-at: $index -> IndexedContainer?
-  }
+export
+interface Container {
+  method $this add: $value -> Container?
+  method $this remove: $value -> Container?
+}  
 
-  export
-  interface Sliceable {
-    need Bounded
-    need Indexable
-    method $this slice-from: $start to: $end -> Sliceable?
-  }
+export
+interface IndexedContainer {
+  need Indexable
+  method $this at: $index put: $value -> IndexedContainer?
+  method $this remove-at: $index -> IndexedContainer?
+}
 
-  export
-  interface Semigroup {
-    method $this + $that ^Semigroup? -> Semigroup?
-  }
+export
+interface Sliceable {
+  need Bounded
+  need Indexable
+  method $this slice-from: $start to: $end -> Sliceable?
+}
 
-  export
-  interface Monoid {
-    need Semigroup
-    method $this empty -> Monoid?
-  }
+export
+interface Semigroup {
+  method $this + $that ^Semigroup? -> Semigroup?
+}
 
-  export
-  interface Functor {
-    method $this map: $transformation ^Function? -> Functor?
-  }
- 
-  export
-  interface Applicative {
-    need Functor
-    method $this of: $value
-    method $this apply-to: $a ^Functor?
-    method $this <*> $a => $this apply-to: $a
-  }
+export
+interface Monoid {
+  need Semigroup
+  method $this empty -> Monoid?
+}
 
-  export
-  interface Chainable {
-    method $this chain: $transformation ^Function?
-    method $this >>= $f => $this chain: $f
-  }
+export
+interface Functor {
+  method $this map: $transformation ^Function? -> Functor?
+}
 
-  export
-  interface Alternative {
-    need Applicative
-    method $this none -> Alternative?
-    method $this else: $that -> Alternative?
-    method $this <|> $that => $this else: $that
-  }
+export
+interface Applicative {
+  need Functor
+  method $this of: $value
+  method $this apply-to: $a ^Functor?
+  method $this <*> $a => $this apply-to: $a
+}
 
-  export
-  interface Foldable {
-    need Monoid
-    method $this fold-right: $transformation ^Function? from: $initial-value
-    method $this fold => $this fold-right: _ + _ from: $this empty
-    method $this fold-using: $f => $this fold-right: ($a $b => $f($a) + $b) from: $this empty
-    method $this fold: $f from: $initial => $this fold-right: ($a $b => $f($b, $a)) from: $initial
-  }
+export
+interface Chainable {
+  method $this chain: $transformation ^Function?
+  method $this >>= $f => $this chain: $f
+}
 
-  export
-  interface ToList {
-    method $this to-list -> List?
-    method $this from-list: $xs ^List?
-  }
+export
+interface Alternative {
+  need Applicative
+  method $this none -> Alternative?
+  method $this else: $that -> Alternative?
+  method $this <|> $that => $this else: $that
+}
 
-  # -- Minimal JS interoperability -------------------------------------
-  implement Representable for Number {
-    method $this to-string => ffi "$this.toString()"
-  }
-  implement Representable for String {
-    method $this to-string => ffi "$this.toString()"
-  }
-  implement Representable for Function {
-    method $this to-string => ffi "self.$describe($this)"
-  }
-  implement Representable for Boolean {
-    method $this to-string => ffi "$this.toString()"
-  }
-  implement Representable for Unit {
-    method $this to-string => "<Unit>"
-  }
-  implement Representable for Date {
-    method $this to-string => ffi "$this.toString()"
-  }
-  implement Equality for Number {
-    method $this === $that => ffi "$this === $that"
-    method $this =/= $that => ffi "$this !== $that"
-  }
-  implement Equality for String {
-    method $this === $that ^String? => ffi "$this === $that"
-  }
-  implement Equality for Boolean {
-    method $this === $that ^Boolean? => ffi "$this === $that"
-  }
-  implement Equality for Date {
-    method $this === $that ^Date? => ffi "$this.getTime() === $that.getTime()"
-  }
+export
+interface Foldable {
+  need Monoid
+  method $this fold-right: $transformation ^Function? from: $initial-value
+  method $this fold => $this fold-right: _ + _ from: $this empty
+  method $this fold-using: $f => $this fold-right: ($a $b => $f($a) + $b) from: $this empty
+  method $this fold: $f from: $initial => $this fold-right: ($a $b => $f($b, $a)) from: $initial
+}
+
+export
+interface ToList {
+  method $this to-list -> List?
+  method $this from-list: $xs ^List?
+}
+
+# -- Minimal JS interoperability -------------------------------------
+implement Representable for Number {
+  method $this to-string => ffi "$this.toString()"
+}
+implement Representable for String {
+  method $this to-string => ffi "$this.toString()"
+}
+implement Representable for Function {
+  method $this to-string => ffi "self.$describe($this)"
+}
+implement Representable for Boolean {
+  method $this to-string => ffi "$this.toString()"
+}
+implement Representable for Unit {
+  method $this to-string => "<Unit>"
+}
+implement Representable for Date {
+  method $this to-string => ffi "$this.toString()"
+}
+implement Equality for Number {
+  method $this === $that => ffi "$this === $that"
+  method $this =/= $that => ffi "$this !== $that"
+}
+implement Equality for String {
+  method $this === $that ^String? => ffi "$this === $that"
+}
+implement Equality for Boolean {
+  method $this === $that ^Boolean? => ffi "$this === $that"
+}
+implement Equality for Date {
+  method $this === $that ^Date? => ffi "$this.getTime() === $that.getTime()"
 }

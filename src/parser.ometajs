@@ -179,8 +179,7 @@ ometa Parser {
   contractExpr = extendedId:id -> [#Member, [#Self], id],
 
   // Declarations
-  declaration = module
-              | decorator
+  declaration = decorator
               | iface
               | implem
               | adt
@@ -208,7 +207,7 @@ ometa Parser {
 
   letStmt = kw('let') ws pattern:p ws fnBody:e -> [#Let, p[0], [#Fn, p, e]],
 
-  module = kw('module') ws mparms:p ws '{' (ws declaration)*:xs ws '}' -> [#Mod, p, xs, false],
+  module = decoratorApp*:as ws kw('module') ws mparms:p ws kw('where') ws (ws declaration)*:xs -> [#Mod, p, xs, as],
   mparms = namespace:ns (ws keywordArg)*:ks -> (function(i, xs, cs) {
                                                  if (i[1]) ns[1] = ns[1] + ':' + i[1]
                                                  return [ns, xs, cs]
@@ -372,7 +371,7 @@ ometa Parser {
   condCase = '|' ws expr:t ws "=>" ws expr:e -> [#CondCase, t, e],
 
   // Program
-  program  = ws decoratorApp*:as ws module:m ws eof -> { m = m.slice(0, -1).concat([true, as]); [#Program, m[1][0], m] },
+  program  = (ws module)*:ms ws eof -> [#Program, ms],
   replDecl = ws ( declaration:d -> [#ReplDecl, d] 
                 | expr:e        -> [#ReplExpr, e] ):a ws eof -> a
 }

@@ -285,12 +285,11 @@ function letStmt(name, value) {
 }
 
 exports.module = module;
-function module(name, args, body, contracts, topLevel, decos) {
-  if (!topLevel)  throw new Error('Submodules are not supported right now.')
+function module(name, args, body, contracts, decos) {
   var ns = lit(name.value.split(':')[0]);
 
-  return lets(
-    name,
+  return expr(set(
+    member(smember(id("module"), id("exports")), name),
     compileContract(
       identifier(name.value),
       contracts,
@@ -311,7 +310,7 @@ function module(name, args, body, contracts, topLevel, decos) {
          ])
       )
     )
-  )
+  ))
 }
 
 exports.ifaceStmt = ifaceStmt;
@@ -484,15 +483,8 @@ function parseExpr(js) {
 }
 
 exports.program = program;
-function program(name, module) {
-  return prog([
-    varsDecl([[self(), obj([])]]),
-    module,
-    expr(set(
-      smember(id("module"), id("exports")),
-      member(self(), name)
-    ))
-  ])
+function program(modules) {
+  return prog(modules)
 }
 
 exports.rawId = id;
@@ -851,7 +843,7 @@ function importStmt(p, kw, name, binds) {
       null,
       [id("$$mod")],
       [
-        expr(set(id("$$mod"), instantiate(kw))),
+        expr(set(id("$$mod"), instantiate(p, kw))),
         binds.map(compileBind),
         ( name?           letStmt(name, thunk(id("$$mod")))
         : !binds.length?  expr(call(
@@ -869,10 +861,10 @@ function importStmt(p, kw, name, binds) {
     return letStmt(to, call(smember(id("$$mod"), id("$get")), [from]))
   }
 
-  function instantiate(kw) {
-    var pub = smember(self(), id("$exports"))
-    if (kw === null) return call(id("$$mod"), [pub]);
-    else             return call(member(id("$$mod"), kw[0]), [pub].concat(kw[1]))
+  function instantiate(name, kw) {
+    var pub  = smember(self(), id("$exports"));
+    var prop = kw? lit(name.value + ':' + kw[0].value) : name;
+    return call(member(id("$$mod"), prop), [pub].concat(kw ? kw[1] : []))
   }
 }
 

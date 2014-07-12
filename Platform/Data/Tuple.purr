@@ -1,27 +1,27 @@
-module Data.Tuple {
-  import Purr.Core
-  import Data.Boolean
+module Data.Tuple where
 
-  # -- Implicitly: Tuple: _ With: _
-  export ( Tuple:With:, Tuple? )
-  
-  implement Equality for Tuple {
-    method $this === $that ^Tuple? => match $this, $that {
-      | Tuple: $x With: $y, Tuple: $x' With: $y' => ($x === $x') && ($y === $y')
-    }
-  }
+import Purr.Core
+import Data.Boolean
 
-  implement Representable for Tuple {
-    method $this to-string => match $this {
-      | Tuple: $x With: $y => "(" + $x to-string + ", " + $y to-string + ")"
-    }
-  }
+# -- Implicitly: Tuple: _ With: _
+export ( Tuple:With:, Tuple? )
 
-  export $this first => match $this {
-    | Tuple: $x With: _ => $x
+implement Equality for Tuple {
+  method $this === $that ^Tuple? => match $this, $that {
+    | Tuple: $x With: $y, Tuple: $x' With: $y' => ($x === $x') && ($y === $y')
   }
+}
 
-  export $this second => match $this {
-    | Tuple: _ With: $x => $x
+implement Representable for Tuple {
+  method $this to-string => match $this {
+    | Tuple: $x With: $y => "(" + $x to-string + ", " + $y to-string + ")"
   }
+}
+
+export $this first => match $this {
+  | Tuple: $x With: _ => $x
+}
+
+export $this second => match $this {
+  | Tuple: _ With: $x => $x
 }

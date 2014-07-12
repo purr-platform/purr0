@@ -1,61 +1,60 @@
-module Data.Number {
-  import Purr.Core
+module Data.Number where
 
-  export ( Number? )
-  
-  implement Ordered for Number {
-    method $this compare-to: $that ^Number? =>
-      | ffi "$this < $that" => Less
-      | ffi "$this > $that" => Greater
-      | otherwise           => Equal
+import Purr.Core
 
-    method $this < $that ^Number? => ffi "$this < $that"
-    method $this > $that ^Number? => ffi "$this > $that"
-    method $this <= $that ^Number? => ffi "$this <= $that"
-    method $this >= $that ^Number? => ffi "$this >= $that"
-  }
+export ( Number? )
 
-  implement Numeric for Number {
-    method $this - $that ^Number? => ffi "$this - $that"
-    method $this * $that ^Number? => ffi "$this * $that"
-    method $this absolute => ffi "Math.abs($this)"
-    method $this negate => ffi "-$this"
-  }
+implement Ordered for Number {
+  method $this compare-to: $that ^Number? =>
+    | ffi "$this < $that" => Less
+    | ffi "$this > $that" => Greater
+    | otherwise           => Equal
 
-  implement Floating for Number {
-    method $this / $that => ffi "$this / $that"
-    method $this truncate => ffi "Math.max(0, Math.floor($this))"
-    method $this round => ffi "Math.round($this)"
-    method $this ceiling => ffi "Math.ceil($this)"
-    method $this floor => ffi "Math.floor($this)"
-    method $this nan? => ffi "isNaN($this)"
-    method $this finite? => ffi "isFinite($this)"
-    method $this negative-zero? => ffi "(x === 0) && ((1/x) === -Infinity)"
-  }
+  method $this < $that ^Number? => ffi "$this < $that"
+  method $this > $that ^Number? => ffi "$this > $that"
+  method $this <= $that ^Number? => ffi "$this <= $that"
+  method $this >= $that ^Number? => ffi "$this >= $that"
+}
 
-  implement Parseable for Number {
-    method $this parse: $repr => let { $x = ffi "Number($repr)" }
-                                 in
-                                   if $x is-nan? then "Not a number" Failure
-                                                 else $x Success
-  }
+implement Numeric for Number {
+  method $this - $that ^Number? => ffi "$this - $that"
+  method $this * $that ^Number? => ffi "$this * $that"
+  method $this absolute => ffi "Math.abs($this)"
+  method $this negate => ffi "-$this"
+}
 
-  implement Bounded for Number {
-    method upper-bound => ffi "$this.MAX_VALUE"
-    method lower-bound => ffi "$this.MIN_VALUE"
-  }
+implement Floating for Number {
+  method $this / $that => ffi "$this / $that"
+  method $this truncate => ffi "Math.max(0, Math.floor($this))"
+  method $this round => ffi "Math.round($this)"
+  method $this ceiling => ffi "Math.ceil($this)"
+  method $this floor => ffi "Math.floor($this)"
+  method $this nan? => ffi "isNaN($this)"
+  method $this finite? => ffi "isFinite($this)"
+  method $this negative-zero? => ffi "(x === 0) && ((1/x) === -Infinity)"
+}
 
-  implement Enumerable for Number {
-    method $this successor => ffi "$this + 1"
-    method $this predecessor => ffi "$this - 1"
-  }
+implement Parseable for Number {
+  method $this parse: $repr => let { $x = ffi "Number($repr)" }
+                               in
+                                 if $x is-nan? then "Not a number" Failure
+                                               else $x Success
+}
 
-  implement Semigroup for Number {
-    method $this + $that ^Number? => ffi "$this + $that"
-  }
+implement Bounded for Number {
+  method upper-bound => ffi "$this.MAX_VALUE"
+  method lower-bound => ffi "$this.MIN_VALUE"
+}
 
-  implement Monoid for Number {
-    method $this empty => 0
-  }
+implement Enumerable for Number {
+  method $this successor => ffi "$this + 1"
+  method $this predecessor => ffi "$this - 1"
+}
 
+implement Semigroup for Number {
+  method $this + $that ^Number? => ffi "$this + $that"
+}
+
+implement Monoid for Number {
+  method $this empty => 0
 }

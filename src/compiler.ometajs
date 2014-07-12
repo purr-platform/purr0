@@ -45,9 +45,9 @@ ometa Compiler {
   CondCase cc:t cc:e                           -> [t, e],
 
   Let cc:id cc:val                                        -> _.letStmt(id, val),
-  Mod [cc:id [scc*:args] [cc*:cs]] [cc*:body] :t [cc*:as] -> _.module(id, args, body, [cs, null], t, as),
+  Mod [cc:id [scc*:args] [cc*:cs]] [cc*:body] [cc*:as]    -> _.module(id, args, body, [cs, null], as),
   Export cc:id anything?:unpack                           -> _.exportStmt(id, unpack),
-  Program cc:id cc:mod                                    -> _.program(id, mod),
+  Program [cc*:mods]                                      -> _.program(mods),
   Deco cc:f cc:id cc:e                                    -> _.decorator(f, id, e),
   DecoExpr cc:id [cc*:as] cc:e                            -> _.decorateExpr(as, id, e),
 

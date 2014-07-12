@@ -85,7 +85,7 @@ function loadPrelude(prelude, context, options) {
     context.module = module;
     runProgram(context, purr(prelude), prelude);
     context.module = { exports: { } };
-    context.$$Purr.$doImport(module.exports(context.self.$exports));
+    context.$$Purr.$doImport(module.exports['Prelude'](context.self.$exports));
     console.log(faded('*** Loaded the Prelude from: ' + prelude));
   } catch(e) {
     console.log(error('*** Unable to read the Prelude from: ' + prelude));
