@@ -120,7 +120,7 @@ function evaluateCommand(module, context, rl, program, options) {
 }
 
 function maybeLog(module, a) {
-  if (a != null)  console.log(faded('=>'), result(show(module, a)));
+  if (a != null)  console.log(faded('=>'), faded('(' + module.$tag(a) + ')'), result(show(module, a)));
 }
 
 function show(module, a) {
@@ -166,6 +166,7 @@ function run(module, context, rl, program, options) {
     }
   } catch(e) {
     showError(e, options);
+    loopEvaluation(module, context, rl, options);
   }
 }
 
