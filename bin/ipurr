@@ -31,6 +31,7 @@ var doc = [ 'ipurr — A Read-Eval-Print-Loop (interactive session) for Purr.'
           , '  -h, --help               Displays the help screen.'
           , '  -v, --version            Displays the compiler version.'
           , '  --show-js                Displays the compiled JS for the expression.'
+          , '  --run-io                 Runs IO tasks automatically in the REPL.'
           , '  --verbose                Outputs all information ever!!1'
           ].join('\n')
 
@@ -42,6 +43,7 @@ var repl = require('../lib/repl')
 function toOptions(args) {
   return { showJs: args['--show-js']
          , verbose: args['--verbose']
+         , runIO: args['--run-io']
          }
 }
 

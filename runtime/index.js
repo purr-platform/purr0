@@ -402,16 +402,24 @@ NS.$makeNamespace = function(pkg) {
       })
     })
     var task = ns.main(xs)
-    if (task.$$tag !== '<#Task:Io.Task>')
-      throw new TypeError('Expected a Task, got: ' + tagFor(task))
-    var computation = task.$$1
-    var cleanup = task.$$2
-    computation(function(val) {
-      cleanup()
-      if (val.$$ctag === 'Failure') throw val.$$0
+    this.$runIO(task, function(error, value) {
+      if (error)  throw error
     })
   }
   return ns
+}
+NS.$runIO = function(task, continuation) {
+  if (task.$$tag !== '<#Task:Io.Task>')
+    throw new TypeError('Expected a Task, got: ' + tagFor(task))
+  var computation = task.$$1
+  var cleanup = task.$$2
+  computation(function(val) {
+    cleanup()
+    if (val.$$ctag === 'Throw')  return continuation(val.$$1)
+    if (val.$$ctag === 'Yield')  return continuation(null, val.$$1)
+    if (val.$$ctag === 'Done')   return continuation(null)
+    else throw new Error('Unexpected Task result: ' + tagFor(val))
+  })
 }
 NS.$defProtocol = function(protocol) {
   var tag    = tagFor(protocol)

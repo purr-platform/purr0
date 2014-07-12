@@ -101,7 +101,6 @@ function loopEvaluation(module, context, rl, options) {
 
 function finishReplLoop(module, context, rl, program, options) {
   evaluateCommand(module, context, rl, program, options);
-  loopEvaluation(module, context, rl, options);
 }
 
 function continueRepl(err, module, context, rl, program, options) {
@@ -117,7 +116,7 @@ function continueRepl(err, module, context, rl, program, options) {
 
 function evaluateCommand(module, context, rl, program, options) {
   return program === ':quit'?  process.exit(0)
-  :      /* otherwise */       maybeLog(module, run(module, context, rl, program, options))
+  :      /* otherwise */       run(module, context, rl, program, options)
 }
 
 function maybeLog(module, a) {
@@ -151,7 +150,20 @@ function run(module, context, rl, program, options) {
   }
 
   try {
-    return runProgram(context, js);
+    var result = runProgram(context, js);
+    if (options.runIO && result && result.$$tag === '<#Task:Io.Task>') {
+      context.$$Purr.$runIO(result, function(error, result) {
+        if (error) {
+          showError(e, options);
+        } else {
+          maybeLog(module, result);
+          loopEvaluation(module, context, rl, options);          
+        }
+      });
+    } else {
+      maybeLog(module, result);
+      loopEvaluation(module, context, rl, options);
+    }
   } catch(e) {
     showError(e, options);
   }
