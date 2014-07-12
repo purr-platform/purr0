@@ -993,19 +993,25 @@ function structStmt(name, fields) {
   ])
 
   function decl(field) {
-    var fname = field[0];
+    var fname = field[1];
+    var args  = field[2].slice(1).map(function(_, i){ return id('$$' + i) });
+    var ctr   = field[3];
+
     return letStmt(
       fname,
       set(
         member(id("$$methods"), fname),
         compileContract(
           identifier(fname.value),
-          [[id('$$pred')]],
+          [[id('$$pred')].concat(ctr[0].slice(1)), ctr[1]],
           fn(
             identifier(fname.value),
-            [id("$$this")],
+            [id("$$this")].concat(args),
             [
-              ret(member(id("$$this"), lit("_" + fname.value)))
+              ret(call(
+                member(id("$$this"), lit("_" + fname.value)),
+                [id("$$this")].concat(args)
+              ))
             ]
           )
         )
@@ -1014,18 +1020,16 @@ function structStmt(name, fields) {
   }
 
   function compileField(field, i) {
-    var fname = field[0];
-    var fctr  = field[1];
+    var ftag  = field[0];
+    var fname = field[1];
     var _id   = id("$$" + i);
 
     return [
       varsDecl([[_id, member(id("$$map"), fname)]]),
       ifStmt(
-        like(_id, lit(null)),
-        throwStmt(newExpr(id('ReferenceError'), [lit('Missing required field: ' + fname.value)])),
-        null
+        binary('!==', unary('typeof', true, _id), lit('function')),
+        throwStmt(newExpr(id('TypeError'), [lit('Required ' + fname.value + ' field has to be a Function?')]))
       ),
-      fctr? expr(call(builtin("$checkContract"), [fctr, _id, name])) : null,
       expr(set(member(id("$$this"), lit('_' + fname.value)), _id))
     ].filter(Boolean)
   }

@@ -16,9 +16,9 @@ module Io.Plan {
             | Await: $resource Then: _ ^Function? Fallback: _ ^Plan?
 
   export
-  data Resource = { acquire ^Function?  # Unit → Task[Error, R]
-                  , release ^Function?  # R → Task[Error, Unit]
-                  , step ^Function?     # R → Task[Error, A]
+  data Resource = { acquire -> Function?  # Unit → Task[Error, R]
+                  , release -> Function?  # R → Task[Error, Unit]
+                  , step    -> Function?  # R → Task[Error, A]
                   }
 
   let $f force => $f()

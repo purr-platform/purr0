@@ -3,37 +3,28 @@ module Web.Routing {
   import Data.String
   import Data.List
   import Data.Boolean
+  import Web.Data
 
   ffi "var path = require('path'), url = require('url')"
 
-  export
-  data Router = { paths ^Record?, fallback ^Maybe?, wildcard ^Maybe? }
+#  data RouteSpec = { match:with: ^Function?   # (Path, [Binding]) → Maybe[RouteMatch]
+#                   , bindings ^List?
+#                   , http-method ^Method?
+#                   , handler ^Function?
+#                   }
+#
+#  data RouteMatch = { bindings ^Record?, rest ^String? }
 
-  export
-  data RoutePart = _ ^SegmentR? SegmentR
-                 | _ ^String? VariableR
-                 | WildcardR
-  
-  export
-  data RouteSpec = _ ^SegmentR? \*\ _ RouteSpec?
-                 | NilR
+  export $routes ^List? match: $path ^String? on: $method ^Method? => match $routes {
+    | $spec :: $rest => if $method === $spec http-method then
+                          match $spec matcher match: $path with: $spec bindings {
+                            | Nothing => $rest match: $path on: $method
+                            | $a Just => $a Just
+                          }
+                        else
+                          $rest match: $path on: $method
+    | Nil            => Nothing
 
-  let $x SegmentR? => ffi """!/^(\.|\.\.)/.test($x)"""
-  export $a /*/ $b => $b \*\ $a
-
-
-  # Routes are represented as a prefix tree:
-  #
-  # GET /foo/bar/baz F
-  # POST /foo/qux G
-  #
-  # + foo
-  # |--+ bar
-  # |  `--+ baz
-  # |     `--o F
-  # `--+ qux
-  #    `--o G
-  #
-  # 
+  let $matcher match: $path with: $bindings => $matcher($path, $bindings)
   
 }

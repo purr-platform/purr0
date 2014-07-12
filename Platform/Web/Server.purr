@@ -115,9 +115,10 @@ module Web.Server {
 
   export Body: $c => Status: 200 Headers: {} Body: $c
 
-  export data Address = { address ^String?  # Bound address
-                        , family ^String?   # IP family
-                        , port ^Number? }   # Bound port number
+  export data Address = { address -> String?  # Bound address
+                        , family  -> String?  # IP family
+                        , port    -> Number?  # Bound port number
+                        }
 
   
   let $app listen: $port host: $host server-factory: $factory =>

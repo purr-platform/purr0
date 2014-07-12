@@ -170,7 +170,8 @@ ometa Parser {
                  | identifier:a ws '(' ws pattId:b ws preC:c1 ws ')'         -> [a, [b], [c1]],
   unaryPattern   = rUnaryPattern
                  | preC:c1 ws identifier:a                                   -> [a, [[#Id, '_']], [c1]],
-  binaryPattern  = pattId:a ws preC:c1 ws symbols:b ws pattId:c ws preC:c2 -> [b, [a, c], [c1, c2]],
+  binaryPattern  = pattId:a ws preC:c1 ws symbols:b ws pattId:c ws preC:c2   -> [b, [a, c], [c1, c2]],
+  spBinaryPatt   = symbols:b ws pattId:a ws preC:c                           -> [b, [a], [c]],
 
   keywordLeading = (pattId:a ws preC:c1 -> [a, c1])?:xs -> xs || [[#Id, '_'], [#Nil]],
   keywordArg     = keyword:k ws pattId:n ws preC:c -> [k, n, c],
@@ -234,14 +235,16 @@ ometa Parser {
 
   adt = kw('data') ws identifier:id ws '=' ws struct:xs  -> [#Struct, id, xs]
       | kw('data') ws identifier:id ws '=' ws adtPatterns:xs -> [#Data, id, xs],
-  adtPatt = spKeywordPatt:p  -> [#DataCtor, [#Kw].concat(p)]
-          | binaryPattern:p  -> [#DataCtor, [#Bin].concat(p)]
-          | rUnaryPattern:p  -> [#DataCtor, [#Un].concat(p)]
-          | identifier:a     -> [#DataCtor, [#Val, a, [], []]],
+  adtPatt    = spKeywordPatt:p         -> [#DataCtor, [#Kw].concat(p)]
+             | binaryPattern:p         -> [#DataCtor, [#Bin].concat(p)]
+             | rUnaryPattern:p         -> [#DataCtor, [#Un].concat(p)]
+             | identifier:a            -> [#DataCtor, [#Val, a, [], []]],
   adtPatterns = adtPatt:a (ws '|' ws adtPatt)*:as -> [a].concat(as),
 
-  struct = '{' ws listOf(#structField, ','):xs ws '}' -> xs,
-  structField = uId:a ws preC:c1-> [#StructF, a, c1],
+  struct = '{' ws listOf(#structPatt, ','):xs ws '}' -> xs,
+  structPatt = spKeywordPatt:p ws posC:c1 -> [#StructCtor, [#Kw].concat(p), c1]
+             | spBinaryPatt:p ws posC:c1  -> [#StructCtor, [#Bin].concat(p), c1]
+             | identifier:p ws posC:c1    -> [#StructCtor, [#Val, p, [], []], c1],
 
   decorator = decoratorApp:a ws
             ( module:m                  -> [#Deco, a, m[1][0], m]
