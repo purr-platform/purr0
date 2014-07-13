@@ -206,7 +206,7 @@ ometa Parser {
 
   letStmt = kw('let') ws pattern:p ws fnBody:e -> [#Let, p[0], [#Fn, p, e]],
 
-  module = decoratorApp*:as ws kw('module') ws mparms:p ws kw('where') ws (ws declaration)*:xs -> [#Mod, p, xs, as],
+  module = decoratorApp*:as ws kw('module') ws mparms:p ws '{' ws (ws declaration)*:xs '}' -> [#Mod, p, xs, as],
   mparms = namespace:ns (ws keywordArg)*:ks -> (function(i, xs, cs) {
                                                  if (i[1]) ns[1] = ns[1] + ':' + i[1]
                                                  return [ns, xs, cs]
