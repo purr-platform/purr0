@@ -35,6 +35,7 @@ ometa Compiler {
   App cc:scope cc:id [cc*:args]                -> _.app(scope, id, args),
   FnApp cc:fn [cc*:args]                       -> _.call(fn, args),
   Member cc:a cc:b                             -> _.member(a, b),
+  ApMember cc:a cc:b                           -> _.apMember(a, b),
   Lambda [scc*:args] [cc:e :c]                 -> _.lambda(null, args, e, [[]]),
   Fn [scc:id [scc*:args] [cc*:cs]] [cc:e cc:c] -> _.lambda(id, args, e, [cs, c]),
   FFI cc:code                                  -> _.parseExpr(code.value),

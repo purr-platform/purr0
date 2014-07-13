@@ -316,16 +316,18 @@ ometa Parser {
           | binaryExpr,
 
 
-  nsMember = ( '@' identifier:a ('.' identifier)*:xs -> [[#App, [#Self], a, [[#Self]]], xs]
+  nsMember = ( identifier:a ('.' identifier)*:xs -> [[#App, [#Self], a, [[#Self]]], xs]
              | varName:a ('.' identifier)*:xs       -> [[#Var, a[1]], xs]
              ):ys -> ys[1].reduce(function(bs, b) {
-                       return [#Member, bs, b]
+                       return [#ApMember, bs, b]
                      }, ys[0]),
 
-  nsKw = nsMember:n '.' keywordApp:p -> [n, p]
-       | keywordApp:p                -> [[#Self], p],
-  nsSym = nsMember:n '.' symbols:s -> [n, s]
-        | symbols:s                -> [[#Self], s],
+  nsKw  = nsMember:n '.' keywordApp:p -> [n, p]
+        | keywordApp:p                -> [[#Self], p],
+  nsSym = nsMember:n '.' symbols:s    -> [n, s]
+        | symbols:s                   -> [[#Self], s],
+  nsUn  = nsMember:n ~'.'             -> [n[1], n[2]],
+        | identifier:i                -> [[#Self], i],
 
   keywordExpr = binaryExpr?:a ws nsKw:x (ws keywordApp)*:as -> (function() {
     var kws = [x[1]].concat(as)
@@ -333,10 +335,9 @@ ometa Parser {
   }()),
   binaryExpr  = binaryExpr:a ws nsSym:s ws unaryExpr:b -> [#App, s[0], s[1], [a, b]]
               | unaryExpr,
-  unaryExpr   = unaryExpr:a ws identifier:i            -> [#App, [#Self], i, [a]]
+  unaryExpr   = unaryExpr:a ws nsUn:i                  -> [#App, i[0], i[1], [a]]
               | postfixExpr,
-  postfixExpr = postfixExpr:a ws '.' ws extendedId:i                 -> [#Member, a, i]
-              | postfixExpr:a ws '(' ws listOf(#expr, ','):bs ws ')' -> [#FnApp, a, bs]
+  postfixExpr = postfixExpr:a ws '(' ws listOf(#expr, ','):bs ws ')' -> [#FnApp, a, bs]
               | postfixExpr:a ws map:m                               -> [#New, a, m]
               | primaryExpr,
   primaryExpr = ffi
@@ -346,8 +347,7 @@ ometa Parser {
               | value
               | thunk
               | lambda
-              | identifier:a         -> [#App, [#Self], a, [[#Self]]]
-              | '@' extendedId:i     -> [#Member, [#Self], i]
+              | identifier:a    -> [#App, [#Self], a, [[#Self]]]
               | varName:a            -> [#Var, a[1]]
               | kw('self')           -> [#Self]
               | '(' ws expr:a ws ')' -> a,

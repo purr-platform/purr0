@@ -438,15 +438,15 @@ function lambda(id, args, expr, contracts) {
 }
 
 exports.app = app;
-function app(scope, name, args) {
+function app(ns, name, args) {
   if (args.some(isPartial))
     return fn(
       null,
       generatePartialArgs(args),
-      [ret(call(member(scope, name), rewritePartials(args)))]
-    )
+      [ret(call(member(ns, name), rewritePartials(args)))]
+    );
   else
-    return call(member(scope, name), args)
+    return call(member(ns, name), args);
 }
 
 exports.call = call;
@@ -807,6 +807,14 @@ exports.member = memberExpr;
 function memberExpr(obj, name) {
   return call(
     smember(obj, id("$get")),
+    [name]
+  )
+}
+
+exports.apMember = apMemberExpr;
+function apMemberExpr(obj, name) {
+  return call(
+    smember(obj, id("$getApply")),
     [name]
   )
 }
