@@ -18,9 +18,9 @@ function $wrapApplication(app) {
         res.writeHead(500)
         res.end()
       } else {
-        var status  = value.$$1()
-        var headers = value.$$2().$toPlainObject()
-        var body    = value.$$3()
+        var status  = value.$$1
+        var headers = value.$$2.$toPlainObject()
+        var body    = value.$$3
 
         res.writeHead(status, headers)
         res.write(body)
@@ -56,7 +56,7 @@ $$Request.prototype.$get = function(name) {
   else            return self.Just(v)
 }
 $$Request.prototype['http-method'] = function(self) {
-  return self['get-success'](self['parse:'](self.Method(), self._req.method))
+  return self['parse:'](self.Method(), self._req.method).toUpperCase()
 }
 $$Request.prototype['http-version'] = function(self) {
   return self._req.httpVersion
@@ -97,10 +97,6 @@ $$Request.prototype.body = function(self) {
 }
 """
 
-let $x get-success => match $x {
-  | Success($x') => $x'
-}
-
 export Request => ffi "$$Request"
 export $x Request? => ffi "self.$tag($x) === $$Request.$$tag"
 export $this ^Request? body => ffi "$this.body($this)"
@@ -117,7 +113,7 @@ implement IndexedContainer for Request {
   method $this remove-at: $key ^String? => ffi "$this.$remove($key)"
 }
 
-export data Response = Status: _ ^Number? Headers: _ Body: _
+export data Response = Status: _ ^Number? Headers: _ ^Record? Body: _
 
 export Body: $c => Status: 200 Headers: {} Body: $c
 
@@ -134,7 +130,11 @@ let $app listen: $port host: $host server-factory: $factory =>
       if (error)  $next(self.Throw(error))
       else {
         var addr = this.address()
-        $next(self.Yield(self.Address().$new(addr)))
+        $next(self.Yield(self.Address().$new({
+          address: function $address(_){ return addr.address },
+          family:  function $family(_){ return addr.family },
+          port:    function $port(_){ return addr.port }
+        })))
       }
     })
     return server
