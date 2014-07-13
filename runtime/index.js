@@ -183,6 +183,9 @@ Record.$get = function(name) {
 
   return this[name]
 }
+Record.$getApply = function(name) {
+  return this.$get(name)(this)
+}
 Record.$namespace = function() {
   return this
 }
