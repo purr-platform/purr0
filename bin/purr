@@ -28,8 +28,7 @@ var doc = [ 'purr — A minimal & portable language for concurrent web servers.'
           , '  purr --help'
           , ''
           , 'Options:'
-          , '  -a, --ast                Displays the Purr AST in JSON.'
-          , '  -j, --js-ast             Displays the generated JS ast in JSON.'
+          , '  -m, --module=<MODULE>    The name of the module to run. [default: Main]'
           , '  -c, --compile            Compiles the file instead of running.'
           , '  -h, --help               Displays the help screen.'
           , '  -v, --version            Displays the compiler version.'
@@ -53,5 +52,5 @@ void function Main() {
   ; args['--help']?     show(doc)
   : args['--version']?  show('purr version ' + pkg.version)
   : args['--compile']?  show(purr(args['<file>']))
-  : /* otherwise */     purr.runFile(args['<file>'])
+  : /* otherwise */     purr.runFile(args['<file>'], args['--module'])
 }()

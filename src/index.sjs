@@ -84,11 +84,15 @@ function runtime(file) {
 }
 
 exports.runFile = runFile
-function runFile(file) {
+function runFile(file, name) {
   var rt = runtime(file);
   rt.$lookupPaths = [path.dirname(file), path.join(__dirname, '../Platform')];
   rt.$moduleCache = { };
-  return run(file, rt)(rt).$main()
+  var module = run(file, rt);
+  var keys   = Object.keys(module);
+  return name?               module[name](rt).$main()
+  :      keys.length === 1?  module[keys[0]](rt).$main()
+  :      /* otherwise */     module['Main'](rt).$main()
 }
 
 exports.$require = $require
