@@ -116,3 +116,19 @@ implement ToList for Vector {
   method $this to-list => ffi "self.$arrayToList($this.$items)"
   method $this from-list: $xs => ffi "$$Vector.$new($xs)"
 }
+
+implement JsonEncoder for List {
+  method $this to-json => ffi "JSON.stringify($this.$items)"
+}
+
+implement JsonDecoder for List {
+  method from-json: $text => ffi "(function() {
+    try {
+      var x = JSON.parse($text)
+      if (Array.isArray(x))  return self.Success($$Vector.$new(x))
+      else                   return self.Failure(new Error('Unable to parse JSON as List'))
+    } catch(e) {
+      return self.Failure(e)
+    }
+  }())"
+}

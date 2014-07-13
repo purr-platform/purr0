@@ -66,6 +66,22 @@ implement Chainable for List {
   method $this chain: $f => $this map: ($a => $f($a)) |> _ fold: (_ + _) from: Nil
 }
 
+implement JsonEncoder for List {
+  method $this to-json => ffi "JSON.stringify(self.$listToArray($this))"
+}
+
+implement JsonDecoder for List {
+  method from-json: $text => ffi "(function() {
+    try {
+      var x = JSON.parse($text)
+      if (Array.isArray(x))  return self.Success(self.$arrayToList($this))
+      else                   return self.Failure(new Error('Unable to parse JSON as List'))
+    } catch(e) {
+      return self.Failure(e)
+    }
+  }())"
+}
+
 export $xs ^List? reverse => $xs fold: ($a $b => $b :: $a) from: Nil
 
 export $xs ^List? head => match $xs {
