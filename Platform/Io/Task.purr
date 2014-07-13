@@ -55,7 +55,7 @@ implement Functor for Task {
 }
 
 implement Applicative for Task {
-  method _ of: $value => task: ($next => $next($value Yield))
+  method of: $value => task: ($next => $next($value Yield))
   method $task apply-to: $mappable => $task >>= ($f => $mappable map: $f)
 }
 
