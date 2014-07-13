@@ -163,7 +163,6 @@ ometa Parser {
                                                                                 }([k].concat(ks))),
   keywordPattern = keywordLeading:bs (ws keywordArg)+:ks                     -> [kwId(ks), [bs[0]].concat(kwArgs(ks)), [bs[1]].concat(kwCont(ks))],
   rUnaryPattern  = pattId:a ws preC:c1 ws identifier:b                       -> [b, [a], [c1]]
-                 | identifier:a ws '(' ws pattId:b ws preC:c1 ws ')'         -> [a, [b], [c1]],
   unaryPattern   = rUnaryPattern
                  | preC:c1 ws identifier:a                                   -> [a, [[#Id, '_']], [c1]],
   binaryPattern  = pattId:a ws preC:c1 ws symbols:b ws pattId:c ws preC:c2   -> [b, [a, c], [c1, c2]],
@@ -273,7 +272,6 @@ ometa Parser {
              | matchCase4,
   matchCase4 = '_'                                       -> [#CaseAny]
              | varName:a                                 -> [#CaseVar, a]
-             | identifier:a ws '(' ws matchCase:b ws ')' -> [#CaseUn, a, b]
              | identifier:a                              -> [#CaseId, a]
              | number:a                                  -> [#CaseVal, a]
              | bool:a                                    -> [#CaseVal, a]
