@@ -56,7 +56,7 @@ $$Request.prototype.$get = function(name) {
   else            return self.Just(v)
 }
 $$Request.prototype['http-method'] = function(self) {
-  return self['parse:'](self.Method(), self._req.method).toUpperCase()
+  return self._req.method.toUpperCase()
 }
 $$Request.prototype['http-version'] = function(self) {
   return self._req.httpVersion

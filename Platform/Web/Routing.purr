@@ -5,7 +5,8 @@ import Data.String
 import Data.List
 import Data.Boolean
 import Data.Record
-import Web.Data
+import Web.Server
+import Io.Task
 
 ffi """
 var path = require('path'), url = require('url')
@@ -23,6 +24,8 @@ function merge(groups, keys_) {
 }
 """
 
+let $x Segment? => ffi "/[^\\/]/.test($x)"
+
 export
 data RoutePart = _ ^Segment? Segment
                | _ ^String? Binding
@@ -39,19 +42,16 @@ data RouteSpec = { match: $path ^String? with: $binding ^List? -> Maybe?
                  , bindings -> List?
                  }
 
-
-export $routes ^List? router => $app => $req =>
+import Debug.Trace
+export router: $routes ^List? => $app => $req =>
   let { $handler = $routes match: $req url  }
   in match $handler {
-    | Nothing                      => Status: 404 
-                                      Headers: {} 
-                                      Body: "Not Found"
-    | Just(Route: _ Handlers: $hs) => match $hs at: $req http-method {
-                                        | Just($f) => $f($req)
-                                        | Nothing  => Status: 405
-                                                      Headers: {}
-                                                      Body: "Method Not Allowed"
-                                      }
+    | Nothing => $app($req)
+    | Just(Tuple: (Route: $r Handlers: $hs) With: $bindings) =>
+        match $hs at: $req http-method {
+          | Just($f) => $f()($req at: "params" put: $bindings)
+          | Nothing  => Task of: (Status: 405 Headers: {} Body: "Method Not Allowed")
+        }
   }
 
 export $path ^RoutePath? compile-to-spec =>
@@ -73,7 +73,7 @@ let $routes ^List? match: $path ^String? => match $routes {
     match $hd {
       | Route: $spec Handlers: _ => match $spec match: $path with: $spec.bindings() {
                                       | Nothing => $rest match: $path
-                                      | $a Just => $a Just
+                                      | $a Just => @Just(Tuple: $hd With: $a)
                                     }
     }
   | Nil            => Nothing
