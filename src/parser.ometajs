@@ -162,7 +162,7 @@ ometa Parser {
                                                                                   return [kwId(kws), [[#Id, '_']].concat(kwArgs(kws)), [[#Nil]].concat(kwCont(kws))]
                                                                                 }([k].concat(ks))),
   keywordPattern = keywordLeading:bs (ws keywordArg)+:ks                     -> [kwId(ks), [bs[0]].concat(kwArgs(ks)), [bs[1]].concat(kwCont(ks))],
-  rUnaryPattern  = pattId:a ws preC:c1 ws identifier:b                       -> [b, [a], [c1]]
+  rUnaryPattern  = pattId:a ws preC:c1 ws identifier:b                       -> [b, [a], [c1]],
   unaryPattern   = rUnaryPattern
                  | preC:c1 ws identifier:a                                   -> [a, [[#Id, '_']], [c1]],
   binaryPattern  = pattId:a ws preC:c1 ws symbols:b ws pattId:c ws preC:c2   -> [b, [a, c], [c1, c2]],
@@ -206,7 +206,7 @@ ometa Parser {
 
   letStmt = kw('let') ws pattern:p ws fnBody:e -> [#Let, p[0], [#Fn, p, e]],
 
-  module = decoratorApp*:as ws kw('module') ws mparms:p ws '{' ws (ws declaration)*:xs '}' -> [#Mod, p, xs, as],
+  module = decoratorApp*:as ws kw('module') ws mparms:p ws '{' (ws declaration)*:xs ws '}' -> [#Mod, p, xs, as],
   mparms = namespace:ns (ws keywordArg)*:ks -> (function(i, xs, cs) {
                                                  if (i[1]) ns[1] = ns[1] + ':' + i[1]
                                                  return [ns, xs, cs]
@@ -343,9 +343,8 @@ ometa Parser {
               | caseExpr
               | doExpr
               | value
-              | thunk
               | lambda
-              | identifier:a    -> [#App, [#Self], a, [[#Self]]]
+              | identifier:a         -> [#App, [#Self], a, [[#Self]]]
               | varName:a            -> [#Var, a[1]]
               | kw('self')           -> [#Self]
               | '(' ws expr:a ws ')' -> a,
@@ -354,8 +353,8 @@ ometa Parser {
 
   ffi = kw('ffi') ws string:a -> [#FFI, a],
 
-  thunk  = "^{" ws expr:e ws '}' -> [#Lambda, [], [[#Ret, e], [#Nil]]],
-  lambda = (ws pattId)*:as ws fnBody:b -> [#Lambda, as, b],
+  lambda = "@{" ws expr:e ws '}'                   -> [#Lambda, [], [[#Ret, e], [#Nil]]]
+         | "@{" (ws pattId)+:as ws fnBody:b ws '}' -> [#Lambda, as, b],
 
   bindingList = bindingCase:x (ws '|' ws bindingCase)*:xs -> [x].concat(xs),
   bindingCase = '$' identifier:a ws '=' ws expr:e         -> [#VarBind, a, e]
