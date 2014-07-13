@@ -316,7 +316,7 @@ ometa Parser {
           | binaryExpr,
 
 
-  nsMember = ('@' identifier:a ('.' identifier)*:xs -> [[#Member, [#Self], a], xs]
+  nsMember = ( '@' identifier:a ('.' identifier)*:xs -> [[#App, [#Self], a, [[#Self]]], xs]
              | varName:a ('.' identifier)*:xs       -> [[#Var, a[1]], xs]
              ):ys -> ys[1].reduce(function(bs, b) {
                        return [#Member, bs, b]
