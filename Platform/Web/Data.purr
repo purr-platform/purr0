@@ -22,12 +22,10 @@ implement Representable for Method {
 }
 
 implement Parseable for Method {
-  method _ parse: $text => ffi "(function() {
+  method parse: $text => ffi "(function() {
     $text = $text.toUpperCase()
     var m = self.Method()[$text]
     if (m)  return self.Success(m())
     else    return self.Failure('Not a Method: ' + $text)
   })"
 }
-
-

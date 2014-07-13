@@ -4,27 +4,96 @@ import Purr.Core
 import Data.String
 import Data.List
 import Data.Boolean
+import Data.Record
 import Web.Data
 
 ffi """
 var path = require('path'), url = require('url')
+
+function merge(groups, keys_) {
+  var keys = self.$listToArray(keys_)
+  if (groups.length !== keys.length)
+    throw new Error("Can't associate the bindings in the route spec. The RoutePath is incorrect")
+
+  return self.$ExtRecord.$fromObject(groups.reduce(function(result, value, index) {
+    var key = keys[index]
+    result[key] = value
+    return result
+  }, {}))
+}
 """
+
+export
+data RoutePart = _ ^Segment? Segment
+               | _ ^String? Binding
+               | Wildcard
+
+export
+data RoutePath = _ ^RoutePath? /*/ _ ^RoutePart?
+               | Root
+
+export
+data RouteHandler = Route: _ ^RouteSpec? Handlers: _ ^Record?
 
 data RouteSpec = { match: $path ^String? with: $binding ^List? -> Maybe?
                  , bindings -> List?
-                 , http-method -> Method?
-                 , handler -> Function?
                  }
 
-data RouteMatch = { bindings -> Record?, rest -> String? }
 
-export $routes ^List? match: $path ^String? on: $method ^Method? => match $routes {
-  | $spec :: $rest => if $method === $spec http-method then
-                        match $spec match: $path with: $spec bindings {
-                          | Nothing => $rest match: $path on: $method
-                          | $a Just => $a Just
-                        }
-                      else
-                        $rest match: $path on: $method
+export $routes ^List? router => $app => $req =>
+  let { $handler = $routes match: $req url  }
+  in match $handler {
+    | Nothing                      => Status: 404 
+                                      Headers: {} 
+                                      Body: "Not Found"
+    | Just(Route: _ Handlers: $hs) => match $hs at: $req http-method {
+                                        | Just($f) => $f($req)
+                                        | Nothing  => Status: 405
+                                                      Headers: {}
+                                                      Body: "Method Not Allowed"
+                                      }
+  }
+
+export $path ^RoutePath? compile-to-spec =>
+  let { $re   = $path compile-regexp
+      | $vars = $path collect-bindings
+      }
+  in RouteSpec {
+    bindings => $vars,
+    match: $p with: $bs => ffi "(function() {
+      var re = new RegExp($re, 'i')
+      var xs = $p.match(re)
+      if (xs == null)  return self.Nothing()
+      else return self.Just(self.$ExtRecord.$fromObject(merge(xs.slice(1), $bs)))
+    }())"
+  }
+
+let $routes ^List? match: $path ^String? => match $routes {
+  | $hd :: $rest =>
+    match $hd {
+      | Route: $spec Handlers: _ => match $spec match: $path with: $spec.bindings() {
+                                      | Nothing => $rest match: $path
+                                      | $a Just => $a Just
+                                    }
+    }
   | Nil            => Nothing
 }
+
+let $path compile-regexp => $path compile + "$"
+where {
+  $p compile => match $p {
+    | Root               => "^"
+    | $xs /*/ Wildcard   => $xs compile + "\\/(.*?)"
+    | $xs /*/ _ Binding  => $xs compile + "\\/([^\\/]+)"
+    | $xs /*/ $a Segment => $xs compile + "\\/" + $a escape-regexp
+  }
+}
+
+let $path collect-bindings => match $path {
+  | Root               => Nil
+  | $xs /*/ $a Binding => $a :: $xs collect-bindings
+  | $xs /*/ Wildcard   => "wildcard" :: $xs collect-bindings
+  | $xs /*/ _ Segment  => $xs collect-bindings
+} reverse
+
+let $a escape-regexp => ffi """String($a).replace(/\W/, '\\$1')"""

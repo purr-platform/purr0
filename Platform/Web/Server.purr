@@ -2,6 +2,7 @@ module Web.Server where
 
 import Purr.Core
 import Io.Task
+import Web.Data
 
 ffi """
 var $http  = require('http')
@@ -55,7 +56,7 @@ $$Request.prototype.$get = function(name) {
   else            return self.Just(v)
 }
 $$Request.prototype['http-method'] = function(self) {
-  return self._req.method
+  return self['get-success'](self['parse:'](self.Method(), self._req.method))
 }
 $$Request.prototype['http-version'] = function(self) {
   return self._req.httpVersion
@@ -95,6 +96,10 @@ $$Request.prototype.body = function(self) {
   })
 }
 """
+
+let $x get-success => match $x {
+  | Success($x') => $x'
+}
 
 export Request => ffi "$$Request"
 export $x Request? => ffi "self.$tag($x) === $$Request.$$tag"
