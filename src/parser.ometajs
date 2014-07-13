@@ -289,7 +289,7 @@ ometa Parser {
   ifExpr    = kw('if') ws expr:a ws kw('then') ws expr:b ws kw('else') ws expr:c -> [#IfExpr, a, b, c],
   whereExpr = appExpr:e ws kw('where') ws '{' ws bindingList:xs ws '}'           -> [#Bind, xs, e],
 
-  doExpr = kw('do') ws '{' ws listOf(#doCase, ';'):xs ws '}' -> [#Do, xs],
+  doExpr = kw('do') ws '{' ws listOf(#doCase, ';'):xs ws ';'? ws '}' -> [#Do, xs],
   doTailAction = expr:e -> [#DoAct, [#Id, '_'], e],
   doAction = pattId:a ws "<-" ws expr:e -> [#DoAct, a, e]
            | doTailAction,
