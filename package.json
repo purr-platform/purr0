@@ -17,6 +17,7 @@
     "url": "https://github.com/robotlolita/purr/issues"
   },
   "dependencies": {
+    "chalk": "^0.5.1",
     "core.lambda": "^1.0.0",
     "deep-equal": "^0.2.1",
     "docopt": "^0.4.0",
