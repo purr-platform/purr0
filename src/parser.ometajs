@@ -35,6 +35,7 @@ var reserved = [ ':'  // Method parameter
                , '|'  // Case separators
                , '<-' // Do binding
                , '<|', '|>'  // pipes
+               , "'"  // Symbol
                // Protocols
                , 'interface'
                , 'implement'
@@ -249,7 +250,7 @@ ometa Parser {
             | decorator:b               -> [#Deco, a, b[2], b]
             ),
 
-  decoratorApp = "[|" ws expr:a ws "|]" -> a,
+  decoratorApp = "@|" ws expr:a -> a,
 
   importDecl = kw('import') ws namespace:p
                  (ws keywordApp)*:ks)?
@@ -344,6 +345,7 @@ ometa Parser {
               | doExpr
               | value
               | lambda
+              | '\'' extendedId:i    -> i
               | identifier:a         -> [#App, [#Self], a, [[#Self]]]
               | varName:a            -> [#Var, a[1]]
               | kw('self')           -> [#Self]
