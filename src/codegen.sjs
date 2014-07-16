@@ -870,7 +870,7 @@ function importStmt(p, kw, name, binds) {
   }
 
   function instantiate(name, kw) {
-    var pub  = smember(self(), id("$exports"));
+    var pub  = id("$$Purr");
     var prop = kw? lit(name.value + ':' + kw[0].value) : name;
     return call(member(id("$$mod"), prop), [pub].concat(kw ? kw[1] : []))
   }
