@@ -1,295 +1,622 @@
-module Purr.Core where
+module Purr.Core {
  
-[| doc: "Attachs documentation to an object." |]
-export _ doc: $text ^String? => ffi "(function($data) {
-  $data.$doc = $text;
-  return $data
-})"
+  @| doc: "Attachs documentation to an object."
+  @| category: "Decorator"
+  export doc: $text ^String? => ffi "(function($data) {
+    $data.$doc = $text;
+    return $data
+  })"
 
-[| doc: "Retrieves the documentation from an object." |]
-export $data doc => ffi "_data.$doc || '(No documentation available)'"
+  @| doc: "Defines a category for the object in the documentation."
+  @| category: "Decorator"
+  export category: $text ^String? => ffi "(function($data) {
+    $data.$doc_category = $text;
+    return $data
+  })"
+  
 
-[| doc: "An alias for `true'" |]
-export _ otherwise => true
+  @| doc: "Retrieves the documentation from an object."
+  export $data doc => ffi "Object($data).$doc || '(No documentation available)'"
 
-[| doc: "Retrieves the internal `tag' of an object." |]
-export $x tag => ffi "self.$tag($x)"
+  @| doc: "Retrieves the documentation category for an object."
+  export $data category => ffi "Object($data).$doc_category || 'Uncategorised'"
 
-# -- Predicates ------------------------------------------------------
-export $x Number?   => ffi "typeof $x === 'number'"
-export $x String?   => ffi "typeof $x === 'string'"
-export $x Boolean?  => ffi "typeof $x === 'boolean'" 
-export $x Function? => ffi "typeof $x === 'function'"
-export $x Unit?     => ffi "$x == null"
-export $x Record?   => ffi "self.$tag($x) === '<#Record:<builtin>>'"
-export $x Date?     => ffi "$x instanceof Date"
+  
+  @| doc: "An alias for `true'"
+  export otherwise => true
+  
+  @| doc: "Retrieves the internal `tag' of an object."
+  export $x tag => ffi "self.$tag($x)"
+  
+
+  # -- Predicates ------------------------------------------------------
+  @| doc: "Tests if a value is a Number."
+  @| category: "Predicate"
+  export $x Number? => ffi "typeof $x === 'number'"
 
-# -- Builtin types ---------------------------------------------------
-export data Ordering = Less | Equal | Greater
-export data Maybe    = Nothing | Just(_)
-export data Either   = Failure(_) | Success(_)
-export data List     = Nil | _ :: _ ^List?
-export data Tuple    = Tuple: _ With: _
+  @| doc: "Tests if a value is a String."
+  @| category: "Predicate"
+  export $x String? => ffi "typeof $x === 'string'"
 
-# -- Protocols -------------------------------------------------------
-export
-interface Equality {
-  method $this === $that -> Boolean?
-  method $this =/= $that -> Boolean? => ffi "!$x" where { $x = $this === $that }
-}
+  @| doc: "Tests if a value is a Boolean."
+  @| category: "Predicate"
+  export $x Boolean? => ffi "typeof $x === 'boolean'"
 
-export
-interface Clonable {
-  method $this clone
-}
+  @| doc: "Tests if a value is a Function."
+  @| category: "Predicate"
+  export $x Function? => ffi "typeof $x === 'function'"
 
-export
-interface Ordered {
-  need Equality
-  method $this compare-to: $that -> Ordering?
-  method $this < $that -> Boolean?  => ($this compare-to: $that) === Less
-  method $this > $that -> Boolean?  => ($this compare-to: $that) =/= Greater
-  method $this <= $that -> Boolean? => ($this compare-to: $that) === Greater
-  method $this >= $that -> Boolean? => ($this compare-to: $that) =/= Less
-  method $this max: $that =>
-    | this > that => $this
-    | otherise    => $that
-  method $this min: $that =>
-    | this < that => $this
-    | otherwise   => $that
-}
+  @| doc: """
+  Tests if a value is a Unit.
 
-export
-interface BooleanAlgebra {
-  method $this || $that -> BooleanAlgebra?
-  method $this && $that -> BooleanAlgebra?
-  method not($this) -> BooleanAlgebra?
-}
+  Unit is a value used to indicate that the expression can't evaluate
+  to any interesting value, usually this means that the expression
+  is evaluated only for its effects (for example, displaying some
+  text on the screen).
+  """
+  export $x Unit? => ffi "$x == null"
 
-export
-interface Numeric {
-  method $this - $that -> Numeric?
-  method $this * $that -> Numeric?
-  method $this absolute -> Numeric?
-  method $this negate -> Numeric?
-}
+  @| doc: "Tests if a value is a Record."
+  export $x Record? => ffi "self.$tag($x) === '<#Record:<builtin>>'"
 
-export
-interface Integral {
-  need Numeric
-  method $this divide-by: $that
-  method $this modulus: $that -> Integral?
-}
+  @| doc: "Tests if a value is a Date."
+  export $x Date? => ffi "$x instanceof Date"
+  
+
+  # -- Builtin types ---------------------------------------------------
+  @| doc: """
+  A data structure that represents the order of one value in relation
+  to another value.
+  """
+  export data Ordering = Less | Equal | Greater
 
-export
-interface Floating {
-  need Numeric
-  method $this / $that -> Floating?
-  method $this truncate -> Floating?
-  method $this round -> Floating?
-  method $this ceiling -> Floating?
-  method $this floor -> Floating?
-  method $this nan? -> Boolean?
-  method $this finite? -> Boolean?
-  method $this negative-zero? -> Boolean?
-}
+  @| doc: """
+  A data structure that represents an expression that might fail, but
+  where no interesting information for the failure needs to be conveyed.
 
-export
-interface Representable {
-  method $this to-string -> String?
-}
+  This is usually used for things like: `collection at: key`, where a
+  result of `Nothing` just conveys that there was no such `key`, and
+  a result of `Just` conveys that the `key` was found, alongside with
+  the value stored for that `key`.
 
-export
-interface Parseable {
-  method $type parse: $representation ^String? -> Either?
-}
+  See [[Either]] for a value that can also convey additional information
+  for the failure case.
+  """
+  export data Maybe = Nothing | Just(_)
 
-export
-interface Bounded {
-  method $this upper-bound -> Bounded?
-  method $this lower-bound -> Bounded?
-}
+  @| doc: """
+  A data structure that represents an expression that might fail, and
+  for which information about the failure must be conveyed.
 
-export
-interface Enumerable {
-  need Bounded
-  need Ordered
-  method $this successor -> Enumerable?
-  method $this predecessor -> Enumerable?
-  method $start up-to: $end -> List? =>
-    let {
-      $next = $start sucessor
-    | $max  = $end max: $start upper-bound
-    } in if $next >= $max then Nil
-                          else $start :: ($next up-to: $end)
-}
+  See [[Maybe]] for a data structure a simpler data structure that
+  doesn't convey additional failure information.
+  """
+  export data Either = Failure(_) | Success(_)
 
-export
-interface Indexable {
-  method $this at: $index -> Maybe?
-  method $this includes?: $index -> Boolean? => match $this at: $index {
-                                                | Nothing => false
-                                                | _       => true
-                                                }
-}
+  @| doc: """
+  An ordered collection that allows duplicate elements (at different indexes).
 
-export
-interface Container {
-  method $this add: $value -> Container?
-  method $this remove: $value -> Container?
-}  
+  Being represented as an eager forward linked list, prepending an item to the
+  list is constant time, but all other operations (accessing an item at an
+  arbitrary position, calculating the number of elements, and appending elements
+  to the list) are all O(n).
 
-export
-interface IndexedContainer {
-  need Indexable
-  method $this at: $index put: $value -> IndexedContainer?
-  method $this remove-at: $index -> IndexedContainer?
-}
+  For an ordered collection that makes better guarantees for appending and random
+  access check [[Data.Vector]].
+  """
+  export data List = Nil | _ :: _ ^List?
 
-export
-interface Sliceable {
-  need Bounded
-  need Indexable
-  method $this slice-from: $start to: $end -> Sliceable?
-}
+  @| doc: """
+  A cartesian product of two elements.
+  """
+  export data Tuple = Tuple: _ With: _
 
-export
-interface Semigroup {
-  method $this + $that ^Semigroup? -> Semigroup?
-}
+  
+
+  # -- Protocols -------------------------------------------------------
 
-export
-interface Monoid {
-  need Semigroup
-  method $this empty -> Monoid?
-}
+  @| doc: """
+  A protocol for values that can be compared for equality. It will make
+  sense for most values to implement structural equality (two values are
+  equal if they have the same contents), since the semantics of Purr
+  encourage the heavy use of immutability.
 
-export
-interface Functor {
-  method $this map: $transformation ^Function? -> Functor?
-}
+  A minimal definition requires only the [[===]] method, but the [[=/=]]
+  method is included for values where inequality is not a composition
+  of logical negation and [[===]], such as IEEE 754 floating point numbers.
+  """
+  export
+  interface Equality {
+    @| doc: "Tests if two values are equal. The values should be of the same type."
+    method $this === $that -> Boolean?
 
-export
-interface Applicative {
-  need Functor
-  method $this of: $value
-  method $this apply-to: $a ^Functor?
-  method $this <*> $a => $this apply-to: $a
-}
-
-export
-interface Chainable {
-  method $this chain: $transformation ^Function?
-  method $this >>= $f => $this chain: $f
-}
-
-export
-interface Alternative {
-  need Applicative
-  method $this none -> Alternative?
-  method $this else: $that -> Alternative?
-  method $this <|> $that => $this else: $that
-}
-
-export
-interface Foldable {
-  need Monoid
-  method $this fold-right: $transformation ^Function? from: $initial-value
-  method $this fold => $this fold-right: _ + _ from: $this empty
-  method $this fold-using: $f => $this fold-right: ($a $b => $f($a) + $b) from: $this empty
-  method $this fold: $f from: $initial => $this fold-right: ($a $b => $f($b, $a)) from: $initial
-}
-
-export
-interface ToList {
-  method $this to-list -> List?
-  method $this from-list: $xs ^List?
-}
-
-export
-interface JsonEncoder {
-  method $this to-json -> String
-}
-
-export
-interface JsonDecoder {
-  method $type from-json: $text ^String -> Either?
-}
-
-# -- Minimal JS interoperability -------------------------------------
-implement Representable for Number {
-  method $this to-string => ffi "$this.toString()"
-}
-implement Representable for String {
-  method $this to-string => ffi "$this.toString()"
-}
-implement Representable for Function {
-  method $this to-string => ffi "self.$describe($this)"
-}
-implement Representable for Boolean {
-  method $this to-string => ffi "$this.toString()"
-}
-implement Representable for Unit {
-  method $this to-string => "<Unit>"
-}
-implement Representable for Date {
-  method $this to-string => ffi "$this.toString()"
-}
-
-implement Equality for Number {
-  method $this === $that ^Number? => ffi "$this === $that"
-  method $this =/= $that ^Number? => ffi "$this !== $that"
-}
-implement Equality for String {
-  method $this === $that ^String? => ffi "$this === $that"
-}
-implement Equality for Boolean {
-  method $this === $that ^Boolean? => ffi "$this === $that"
-}
-implement Equality for Date {
-  method $this === $that ^Date? => ffi "$this.getTime() === $that.getTime()"
-}
-implement Equality for Unit {
-  method $this === $that ^Unit? => true
-}
-
-implement JsonEncoder for Number {
-  method $this to-json => ffi "JSON.stringify($this)"
-}
-implement JsonEncoder for String {
-  method $this to-json => ffi "JSON.stringify($this)"
-}
-implement JsonEncoder for Boolean {
-  method $this to-json => ffi "JSON.stringify($this)"
-}
-implement JsonEncoder for Unit {
-  method $this to-json => "null"
-}
-
-implement JsonDecoder for Number {
-  method from-json: $text => $text parse-json-as: Number? type: "Number"
-}
-implement JsonDecoder for String {
-  method from-json: $text => $text parse-json-as: String? type: "String"
-}
-implement JsonDecoder for Boolean {
-  method from-json: $text => $text parse-json-as: Boolean? type: "Boolean"
-}
-implement JsonDecoder for Unit {
-  method from-json: $text =>
-    | $text === "null" => (ffi "null") Success
-    | otherwise        => "Unable to parse JSON as Unit" Failure
-}
-
-
-
-
-let $x parse-json-as: $pred type: $msg => ffi "(function() {
-  try {
-    var x = JSON.parse($x)
-    if ($pred(x))  return self.Success($x)
-    else           return self.Failure(new Error('Unable to parse JSON as ' + $type))
-  } catch (e) {
-    return self.Failure(e)
+    @| doc: "Tests if two values are inequal. The values should be of the same type."
+    method $this =/= $that -> Boolean? => ffi "!$x" where { $x = $this === $that }
   }
-}())"
+  
+  @| doc: """
+  A protocol for values for which there exists a well-defined ordering.
+
+  Implementations of this protocol are required to implement only the
+  [[compare-to:]] method, since all the others can be derived from it.
+  """
+  export
+  interface Ordered {
+    need Equality
+
+    @| doc: "Returns how two values of the same type compare to each other."
+    method $this compare-to: $that -> Ordering?
+
+    @| doc: "Tests if `$this` is less than `$that`."
+    method $this < $that -> Boolean? => ($this compare-to: $that) === Less
+
+    @| doc: "Tests if `$this` is greater than `$that`."
+    method $this > $that -> Boolean? => ($this compare-to: $that) === Greater
+
+    @| doc: "Tests if `$this` is less or equal to `$that`."
+    method $this <= $that -> Boolean? => ($this compare-to: $that) =/= Greater
+
+    @| doc: "Tests if `$this` is greater or equal to `$that`."
+    method $this >= $that -> Boolean? => ($this compare-to: $that) =/= Less
+
+    @| doc: "Returns the greatest of two values."
+    method $this if-greater-else: $that =>
+      | this > that => $this
+      | otherise    => $that
+
+    @| doc: "Returns the lesser of two values."
+    method $this if-lesser-else: $that =>
+      | this < that => $this
+      | otherwise   => $that
+  }
+  
+  @| doc: """
+  A protocol for values that can have an interesting textual representation.
+  """
+  export
+  interface Representable {
+    method $this to-string -> String?
+  }
+
+  @| doc: """
+  A protocol for values that can be constructed from textual representations.
+
+  The [[parse:]] method takes a single argument (besides the dispatch argument
+  before the keyword) containing the textual representation to be parsed, and
+  should return a `Success(_)` with the value if one can parse the representation,
+  or `Failure(_)` along with a description of the failure otherwise.
+  """
+  export
+  interface Parseable {
+    method _ parse: $representation ^String? -> Either?
+  }
+
+
+  @| doc: """
+  A protocol for values for which the boolean algebra operations make sense.
+
+  Implementations of this protocol should satisfy the following laws:
+
+    * Associativity of \/               x \/ (y \/ z) = (x \/ y) \/ z
+    * Associativity of /\               x /\ (y /\ z) = (x /\ y) /\ z
+    * Commutativity of \/               x \/ y = y \/ x
+    * Commutativity of /\               x /\ y = y /\ x
+    * Distributivity of \/ over /\      x \/ (y /\ z) = (x /\ y) \/ (x /\ z)
+    * Idempotence of \/                 x \/ x = x
+    * Idempotence of /\                 x /\ x = x
+    * Absorption                        x /\ (x \/ y) = x
+                                        x \/ (x /\ y) = x
+    * Distributivity of \/ over /\      x \/ (y /\ z) = (x \/ y) /\ (x \/ z)
+    * Double negation                   not(not(x)) = x
+  """
+  export
+  interface Boolean-Algebra {
+    @| doc: "Logical disjunction."
+    method $this \/ $that
+
+    @| doc: "Logical conjunction."
+    method $this /\ $that
+
+    @| doc: "Logical negation."
+    method $this not
+  }
+
+  
+  # -- Abstractions derived from Group/Ring theory
+  @| doc: """
+  A protocol for a set of values that can have an associative binary operation.
+
+  Semigroup implementations should conform to the following laws:
+
+    * Associativity             (x + y) + z = x + (y + z)
+  """
+  export
+  interface Semigroup {
+    @| doc: "An associative operation (usually concatenation)"
+    method $this + $that
+  }
+
+  @| doc: """
+  A semigroup with an identity value.
+
+  Monoid implementations should conform to the following laws:
+
+    * Identity                  empty + x = x + empty = x
+  """
+  export
+  interface Monoid {
+    need Semigroup
+
+    @| doc: "The identity element."
+    method $this empty
+  }
+
+  @| doc: """
+  A commutative group (where the binary operation doesn't depend on order).
+
+  Only the [[negate]] method is required for a full implementation of this
+  protocol, as [[-]] can be derived from the other operations, but you can
+  provide both for performance depending on the structure.
+
+  Abelian-Group implementations should conform to the following laws:
+
+    * Closure                   a + b ∈ A,      ∀a, b ∈ A
+    * Inverse                   a negate + b = b + a negate = b
+    * Commutativity             a + b = b + a
+  """
+  export
+  interface Abelian-Group {
+    need Monoid
+
+    @| doc: "Returns the inverse of the value."
+    method $this negate
+
+    @| doc: "Associates this value with the inverse of that."
+    method $this - $that => $this + ($that negate)
+
+    @| doc: "An alias for [[empty]] that makes more sense for numbers"
+    method $this zero => $this empty
+  }
+
+  @| doc: """
+  An [[Abelian-Group]] with a second binary operation that is distributive over
+  the group and is associative. In essence, Rings allow generalising over both
+  addition and multiplication.
+
+  Ring implementations should conform to the following laws:
+
+    * Associativity of (*)              (a * b) * c = a * (b * c)
+    * Identity of (*)                   a * one = one * a = a
+    * Left distributivity               a * (b + c) = (a * b) + (a * c)
+    * Right distributivity              (b + c) * a = (b * a) + (c * a)
+  """
+  export
+  interface Ring {
+    need Abelian-Group
+
+    @| doc: "The multiplication operation."
+    method $this * $that
+
+    @| doc: "The identity of the multiplication."
+    method $this one
+  }
+
+  @| doc: """
+  A protocol for all values that can be treated as numbers.
+  """
+  export
+  interface Numeric {
+    need Ring
+
+    @| doc: "Returns the absolute value of an element in this set."
+    method $this absolute
+  }
+
+  @| doc: """
+  A [[Ring]] with a multiplicative inverse.
+
+  A minimal implementation of this protocol involves defining either
+  [[reciprocal]] or [[/]], since each one can be derived from the
+  other.
+
+  Do note that both [[/]] and [[reciprocal]] are partial functions, since
+  the set of elements might have zero values.
+  """
+  export
+  interface Division-Ring {
+    need Ring
+
+    @| doc: "The multiplicative inverse."
+    method $this reciprocal -> Either? => $this one / $this
+
+    @| doc: "Non-zero division."
+    method $this / $that -> Either? => match $that reciprocal {
+      | Success($that')  => $this * $that'
+      | Failure($reason) => Failure($reason)
+    }
+  }
+  
+  @| doc: """
+  A protocol representing integral numbers.
+  """
+  export
+  interface Integral {
+    need Numeric
+
+    @| doc: "The quotient of dividing `$this` by `$that`."
+    method $this divide-by: $that -> Either?
+
+    @| doc: "The modulus of dividing `$this` by `$that`."
+    method $this modulus: $that -> Either?
+  }
+  
+  @| doc: """
+  A protocol representing floating point numbers.
+  """
+  export
+  interface Floating {
+    need Numeric
+    need Division-Ring
+    
+    @| doc: "Returns the nearest integer between zero and `$this`."
+    method $this truncate -> Floating?
+
+    @| doc: "Returns the nearest integer to `$this`."
+    method $this round -> Floating?
+
+    @| doc: "Returns the least integer not less than `$this`."
+    method $this ceiling -> Floating?
+
+    @| doc: "Returns the greatest integer not greater than `$this`."
+    method $this floor -> Floating?
+
+    @| doc: "Tests if the value is an IEEE 754 NaN."
+    method $this nan? -> Boolean?
+
+    @| doc: "Tests if the value is an IEEE 754 infinity or negative infinity."
+    method $this infinite? -> Boolean?
+
+    @| doc: "Tests if the value is an IEEE 754 negative zero."
+    method $this negative-zero? -> Boolean?
+  }
+
+
+  # -- Abstractions derived from Category Theory
+  @| doc: """
+  A mapping between categories.
+
+  Functors are often used to provide a sensible way of transforming elements of
+  a collection by using a transformation function. For example, an implementation
+  of this protocol for List structures would allow the following idiom:
+
+      [1, 2, 3] map: (_ + 1)    # => [2, 3, 4]
+
+  Implementations of Functor should satisfy the following laws:
+
+    * Identity                  $a map: ^{ $b => $b } = $a
+    * Composition               $a map: ^{ $b => $b g f } = ($a map: $g) map: $f
+  """
+  export
+  interface Functor {
+    @| doc: "Transforms values of the functor."
+    method $this map: $transformation ^Function?
+  }
+
+  @| doc: """
+  Implementations of Applicative should satisfy the following laws:
+
+    * Composition               $a map: ^{ $f => ^{ $g => ^{ $x => $f($g($x)) }}}
+                                |> _ apply-to: $b
+                                |> _ apply-to: $c
+                                = $a apply-to: ($b apply-to: $c)
+    * Identity                  ($a of: ^{ $b => $b }) apply-to: $b = $b
+    * Homomorphism              ($a of: $f) apply-to: ($a of: $x) = $a of: $f($x)
+    * Interchange               $a apply-to: ($b of: $c) = ($b of: ^{ $f => $f($c) }) apply-to: $a
+  """
+  export
+  interface Applicative {
+    need Functor
+    
+    @| doc: "Applies this value to another functor."
+    method $this apply-to: $that ^Functor?
+
+    @| doc: "Constructs a new value for the applicative."
+    method _ of: $value
+  }
+
+  @| doc: """
+  Implementations of Monad should satisfy the following laws:
+
+    * Associativity             ($a >>= $f) >>= $g = $a >>= ^{ $x => $f($x) >>= $g }
+    * Left identity             (T of: $a) >>= $f = $f($a)
+    * Right identity            ($m >>= (T of: _)) = $m
+  """
+  export
+  interface Monad {
+    need Applicative
+
+    @| doc: "Transforms the value to another monad of the same type."
+    method $this >>= $transformation ^Function?
+  }
+
+  @| doc: """
+  Implementations of Comonad should satisfy the following laws:
+
+    * ($c extend: $f)(_ extend: $g) = $c extend: $f(_ extend: $g)
+    * $c extend: (T extract: _) = $c
+    * T extract: ($c extend: $f) = $f($c)
+    * $c extend: $f = ($c extend: ^{ $x => $x }) map: $f
+  """
+  export
+  interface Comonad {
+    need Functor
+
+    @| doc: "Returns the value inside the Comonad."
+    method _ extract: $comonad
+
+    @| doc: "Transforms the value inside the Comonad, and returns it."
+    method $this extend: $transformation ^Function?
+  }
+  
+
+  # -- Lawless (but useful for sharing operation names) protocols
+  export
+  interface Bounded {
+    method $this upper-bound -> Bounded?
+    method $this lower-bound -> Bounded?
+  }
+  
+  export
+  interface Enumerable {
+    need Bounded
+    need Ordered
+    method $this successor -> Enumerable?
+    method $this predecessor -> Enumerable?
+    method $start up-to: $end -> List? =>
+      let {
+        $next = $start sucessor
+      | $max  = $end max: $start upper-bound
+      } in if $next >= $max then Nil
+                            else $start :: ($next up-to: $end)
+  }
+  
+  export
+  interface Indexable {
+    method $this at: $index -> Maybe?
+    method $this includes?: $index -> Boolean? => match $this at: $index {
+                                                  | Nothing => false
+                                                  | _       => true
+                                                  }
+  }
+  
+  export
+  interface Container {
+    method $this add: $value -> Container?
+    method $this remove: $value -> Container?
+  }  
+  
+  export
+  interface IndexedContainer {
+    need Indexable
+    method $this at: $index put: $value -> IndexedContainer?
+    method $this remove-at: $index -> IndexedContainer?
+  }
+  
+  export
+  interface Sliceable {
+    need Bounded
+    need Indexable
+    method $this slice-from: $start to: $end -> Sliceable?
+  }
+    
+  export
+  interface Alternative {
+    need Applicative
+    method $this none -> Alternative?
+    method $this else: $that -> Alternative?
+    method $this <|> $that => $this else: $that
+  }
+  
+  export
+  interface Foldable {
+    need Monoid
+    method $this fold-right: $transformation ^Function? from: $initial-value
+    method $this fold => $this fold-right: _ + _ from: $this empty
+    method $this fold-using: $f => $this fold-right: ($a $b => $f($a) + $b) from: $this empty
+    method $this fold: $f from: $initial => $this fold-right: ($a $b => $f($b, $a)) from: $initial
+  }
+  
+  export
+  interface ToList {
+    method $this to-list -> List?
+    method $this from-list: $xs ^List?
+  }
+  
+  export
+  interface JsonEncoder {
+    method $this to-json -> String
+  }
+  
+  export
+  interface JsonDecoder {
+    method $type from-json: $text ^String -> Either?
+  }
+  
+  # -- Minimal JS interoperability -------------------------------------
+  implement Representable for Number {
+    method $this to-string => ffi "$this.toString()"
+  }
+  implement Representable for String {
+    method $this to-string => ffi "$this.toString()"
+  }
+  implement Representable for Function {
+    method $this to-string => ffi "self.$describe($this)"
+  }
+  implement Representable for Boolean {
+    method $this to-string => ffi "$this.toString()"
+  }
+  implement Representable for Unit {
+    method $this to-string => "<Unit>"
+  }
+  implement Representable for Date {
+    method $this to-string => ffi "$this.toString()"
+  }
+  
+  implement Equality for Number {
+    method $this === $that ^Number? => ffi "$this === $that"
+    method $this =/= $that ^Number? => ffi "$this !== $that"
+  }
+  implement Equality for String {
+    method $this === $that ^String? => ffi "$this === $that"
+  }
+  implement Equality for Boolean {
+    method $this === $that ^Boolean? => ffi "$this === $that"
+  }
+  implement Equality for Date {
+    method $this === $that ^Date? => ffi "$this.getTime() === $that.getTime()"
+  }
+  implement Equality for Unit {
+    method $this === $that ^Unit? => true
+  }
+  
+  implement JsonEncoder for Number {
+    method $this to-json => ffi "JSON.stringify($this)"
+  }
+  implement JsonEncoder for String {
+    method $this to-json => ffi "JSON.stringify($this)"
+  }
+  implement JsonEncoder for Boolean {
+    method $this to-json => ffi "JSON.stringify($this)"
+  }
+  implement JsonEncoder for Unit {
+    method $this to-json => "null"
+  }
+  
+  implement JsonDecoder for Number {
+    method from-json: $text => $text parse-json-as: Number? type: "Number"
+  }
+  implement JsonDecoder for String {
+    method from-json: $text => $text parse-json-as: String? type: "String"
+  }
+  implement JsonDecoder for Boolean {
+    method from-json: $text => $text parse-json-as: Boolean? type: "Boolean"
+  }
+  implement JsonDecoder for Unit {
+    method from-json: $text =>
+      | $text === "null" => (ffi "null") Success
+      | otherwise        => "Unable to parse JSON as Unit" Failure
+  }
+  
+  
+  
+  
+  let $x parse-json-as: $pred type: $msg => ffi "(function() {
+    try {
+      var x = JSON.parse($x)
+      if ($pred(x))  return self.Success($x)
+      else           return self.Failure(new Error('Unable to parse JSON as ' + $type))
+    } catch (e) {
+      return self.Failure(e)
+    }
+  }())"
+}
