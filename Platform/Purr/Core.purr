@@ -161,13 +161,13 @@ module Purr.Core {
 
     @| doc: "Returns the greatest of two values."
     method $this if-greater-else: $that =>
-      | this > that => $this
-      | otherise    => $that
+      | $this > $that => $this
+      | otherise      => $that
 
     @| doc: "Returns the lesser of two values."
     method $this if-lesser-else: $that =>
-      | this < that => $this
-      | otherwise   => $that
+      | $this < $that => $this
+      | otherwise     => $that
   }
   
   @| doc: """
