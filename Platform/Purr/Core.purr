@@ -82,7 +82,7 @@ module Purr.Core {
   See [[Either]] for a value that can also convey additional information
   for the failure case.
   """
-  export data Maybe = Nothing | Just(_)
+  export data Maybe = Nothing | _ Just
 
   @| doc: """
   A data structure that represents an expression that might fail, and
@@ -91,7 +91,7 @@ module Purr.Core {
   See [[Maybe]] for a data structure a simpler data structure that
   doesn't convey additional failure information.
   """
-  export data Either = Failure(_) | Success(_)
+  export data Either = _ Failure | _ Success
 
   @| doc: """
   An ordered collection that allows duplicate elements (at different indexes).
@@ -165,7 +165,7 @@ module Purr.Core {
       | otherise      => $that
 
     @| doc: "Returns the lesser of two values."
-    method $this if-lesser-else: $that =>
+    method $this if-least-else: $that =>
       | $this < $that => $this
       | otherwise     => $that
   }
@@ -174,21 +174,21 @@ module Purr.Core {
   A protocol for values that can have an interesting textual representation.
   """
   export
-  interface Representable {
+  interface To-String {
     method $this to-string -> String?
   }
 
   @| doc: """
   A protocol for values that can be constructed from textual representations.
 
-  The [[parse:]] method takes a single argument (besides the dispatch argument
+  The [[from-string:]] method takes a single argument (besides the dispatch argument
   before the keyword) containing the textual representation to be parsed, and
   should return a `Success(_)` with the value if one can parse the representation,
   or `Failure(_)` along with a description of the failure otherwise.
   """
   export
-  interface Parseable {
-    method _ parse: $representation ^String? -> Either?
+  interface From-String {
+    method _ from-string: $representation ^String? -> Either?
   }
 
 
@@ -254,8 +254,8 @@ module Purr.Core {
   @| doc: """
   A commutative group (where the binary operation doesn't depend on order).
 
-  Only the [[negate]] method is required for a full implementation of this
-  protocol, as [[-]] can be derived from the other operations, but you can
+  Either [[negate]] or [[-]] are considered a full implementation of this
+  protocol, as each one can be derived from the other operations, but you can
   provide both for performance depending on the structure.
 
   Abelian-Group implementations should conform to the following laws:
@@ -269,7 +269,7 @@ module Purr.Core {
     need Monoid
 
     @| doc: "Returns the inverse of the value."
-    method $this negate
+    method $this negate => $this zero
 
     @| doc: "Associates this value with the inverse of that."
     method $this - $that => $this + ($that negate)
@@ -331,8 +331,8 @@ module Purr.Core {
 
     @| doc: "Non-zero division."
     method $this / $that -> Either? => match $that reciprocal {
-      | Success($that')  => $this * $that'
-      | Failure($reason) => Failure($reason)
+      | $that' Success  => $this * $that'
+      | $reason Failure => $reason Failure
     }
   }
   
@@ -496,7 +496,7 @@ module Purr.Core {
   }  
   
   export
-  interface IndexedContainer {
+  interface Indexed-Container {
     need Indexable
     method $this at: $index put: $value -> IndexedContainer?
     method $this remove-at: $index -> IndexedContainer?
@@ -522,43 +522,47 @@ module Purr.Core {
     need Monoid
     method $this fold-right: $transformation ^Function? from: $initial-value
     method $this fold => $this fold-right: _ + _ from: $this empty
-    method $this fold-using: $f => $this fold-right: ($a $b => $f($a) + $b) from: $this empty
-    method $this fold: $f from: $initial => $this fold-right: ($a $b => $f($b, $a)) from: $initial
+    method $this fold-using: $f => $this fold-right: ^{$a $b => $f($a) + $b} from: $this empty
+    method $this fold: $f from: $initial => $this fold-right: ^{$a $b => $f($b, $a)} from: $initial
   }
   
   export
-  interface ToList {
+  interface To-List {
     method $this to-list -> List?
+  }
+
+  export
+  interface From-List {
     method $this from-list: $xs ^List?
   }
   
   export
-  interface JsonEncoder {
+  interface To-Json {
     method $this to-json -> String
   }
   
   export
-  interface JsonDecoder {
+  interface From-Json {
     method $type from-json: $text ^String -> Either?
   }
   
   # -- Minimal JS interoperability -------------------------------------
-  implement Representable for Number {
+  implement To-String for Number {
     method $this to-string => ffi "$this.toString()"
   }
-  implement Representable for String {
+  implement To-String for String {
     method $this to-string => ffi "$this.toString()"
   }
-  implement Representable for Function {
+  implement To-String for Function {
     method $this to-string => ffi "self.$describe($this)"
   }
-  implement Representable for Boolean {
+  implement To-String for Boolean {
     method $this to-string => ffi "$this.toString()"
   }
-  implement Representable for Unit {
+  implement To-String for Unit {
     method $this to-string => "<Unit>"
   }
-  implement Representable for Date {
+  implement To-String for Date {
     method $this to-string => ffi "$this.toString()"
   }
   
@@ -579,35 +583,33 @@ module Purr.Core {
     method $this === $that ^Unit? => true
   }
   
-  implement JsonEncoder for Number {
+  implement To-Json for Number {
     method $this to-json => ffi "JSON.stringify($this)"
   }
-  implement JsonEncoder for String {
+  implement To-Json for String {
     method $this to-json => ffi "JSON.stringify($this)"
   }
-  implement JsonEncoder for Boolean {
+  implement To-Json for Boolean {
     method $this to-json => ffi "JSON.stringify($this)"
   }
-  implement JsonEncoder for Unit {
+  implement To-Json for Unit {
     method $this to-json => "null"
   }
   
-  implement JsonDecoder for Number {
+  implement From-Json for Number {
     method from-json: $text => $text parse-json-as: Number? type: "Number"
   }
-  implement JsonDecoder for String {
+  implement From-Json for String {
     method from-json: $text => $text parse-json-as: String? type: "String"
   }
-  implement JsonDecoder for Boolean {
+  implement From-Json for Boolean {
     method from-json: $text => $text parse-json-as: Boolean? type: "Boolean"
   }
-  implement JsonDecoder for Unit {
+  implement From-Json for Unit {
     method from-json: $text =>
       | $text === "null" => (ffi "null") Success
       | otherwise        => "Unable to parse JSON as Unit" Failure
   }
-  
-  
   
   
   let $x parse-json-as: $pred type: $msg => ffi "(function() {

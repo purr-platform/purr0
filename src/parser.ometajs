@@ -355,8 +355,8 @@ ometa Parser {
 
   ffi = kw('ffi') ws string:a -> [#FFI, a],
 
-  lambda = "@{" ws expr:e ws '}'                   -> [#Lambda, [], [[#Ret, e], [#Nil]]]
-         | "@{" (ws pattId)+:as ws fnBody:b ws '}' -> [#Lambda, as, b],
+  lambda = '^' '{' (ws pattId)+:as ws fnBody:b ws '}' -> [#Lambda, as, b]
+         | '^' '{' ws expr:e ws '}'                   -> [#Lambda, [], [[#Ret, e], [#Nil]]],
 
   bindingList = bindingCase:x (ws '|' ws bindingCase)*:xs -> [x].concat(xs),
   bindingCase = '$' identifier:a ws '=' ws expr:e         -> [#VarBind, a, e]

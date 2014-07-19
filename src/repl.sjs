@@ -125,7 +125,7 @@ function maybeLog(module, a) {
 
 function show(module, a) {
   try {
-    var impl = module.$getImplementation(module.$protocols['<#Representable:Purr.Core>'], a);
+    var impl = module.$getImplementation(module.$protocols['<#To-String:Purr.Core>'], a);
     return impl['to-string'](a);
   } catch(e) {
     return module.$describe(a);
