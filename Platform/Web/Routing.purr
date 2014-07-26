@@ -71,7 +71,6 @@ module Web.Routing {
       }())"
     }
   
-  import Debug.Trace
   let $routes ^List? match: $path ^String? => match $routes {
     | $hd :: $rest =>
       match $hd {
