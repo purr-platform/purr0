@@ -1,4 +1,4 @@
-module HelloWorld {
+module Main {
   import Prelude
 
   export main => do {
