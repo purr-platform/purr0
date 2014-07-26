@@ -128,6 +128,7 @@ function show(module, a) {
     var impl = module.$getImplementation(module.$protocols['<#To-String:Purr.Core>'], a);
     return impl['to-string'](a);
   } catch(e) {
+    console.log(e)
     return module.$describe(a);
   }
 }

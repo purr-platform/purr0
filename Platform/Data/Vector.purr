@@ -1,134 +1,123 @@
-module Data.Vector where
+module Data.Vector {
 
-import Purr.Core
-import Data.List
+  import Purr.Core
+  import Data.List
+  
+  ffi """
+  function $$Vector() { }
+  $$Vector.prototype.$$name = 'Vector'
+  $$Vector.prototype.$$tag = self.$newTag($$Vector.prototype, $$package)
+  $$Vector.$$tag = $$Vector.prototype.$$tag
+  $$Vector.$new = function($xs) {
+    var instance = new $$Vector()
+    instance.$items = self.$listToArray($xs)
+    return instance
+  }
+  $$Vector.$make = function($xs) {
+    var instance = new $$Vector()
+    instance.$items = $xs
+    return instance
+  }
+  """
+  
+  let $xs as-vector => ffi "$$Vector.$make($xs)"
+  export $xs Vector? => ffi "self.$tag($xs) === $$Vector.$$tag"
+  
+  export Vector => ffi "$$Vector"
+  export _ Vector: $xs ^List? => ffi "$$Vector.$new($xs)"
+  
+  implement Equality for Vector {
+    method $this === $that ^Vector? => ffi "(function() {
+      var xs = $this.$items, ys = $that.$items
+      if (xs.length !== ys.length)  return false
+      for (var i = 0; i < xs.length; ++i) {
+        if (!self['==='](xs[i], ys[i]))  return false
+      }
+      return true
+    }())"
+  }
+  
+  implement To-String for Vector {
+    method $this to-string => "<#Vector: " + ffi "$this.$items.map(self['to-string']).join(', ')" + ">"
+  }
+  
+  implement Bounded for Vector {
+    method $this upper-bound => ffi "$this.$items.length"
+    method $this lower-bound => ffi "0"
+  }
+  
+  implement Indexable for Vector {
+    method $this at: $index => ffi "(function() {
+      if ($index < 0 || $index >= $this.$items.length)
+        return self.Nothing()
+      else
+        return self.Just($this.$items[$index])
+    }())"
+  }
+  
+  implement Container for Vector {
+    method $this add: $value => ffi "$this.$items.concat([$value])" as-vector
+    method $this remove: $value => ffi "$this.$items.filter(function(x) {
+                                          return x !== $value
+                                        })" as-vector
+  }
+  
+  implement Indexed-Container for Vector {
+    method $this at: $index ^Number? put: $value => ffi "(function() {
+      var xs = $this.items.slice()
+      if ($index < 0 || $index > xs.length - 1)
+        throw new Error('Index out of bounds: ' + $index)
+  
+      xs[$index] = $value
+      return $$Vector.make(xs)
+    }())"
+  
+    method $this remove-at: $index ^Number? => ffi "(function() {
+      var xs = $this.items.slice()
+      if ($index < 0 || $index > $xs.length - 1)
+        throw new Error('Index out of bounds: ' + $index)
+      xs.splice($index, 1)
+      return $$Vector.make(xs)
+    }())"
+  }
+  
+  implement Sliceable for Vector {
+    method $this slice-from: $start ^Number? to: $end ^Number? =>
+      ffi "$this.$items.slice($start, $end)" as-vector
+  }
+  
+  implement Semigroup for Vector {
+    method $this + $that ^Vector? => ffi "$this.$items.concat($that.$items)" as-vector
+  }
+  
+  implement Monoid for Vector {
+    method empty => ffi "[]" as-vector
+  }
+  
+  implement Functor for Vector {
+    method $this map: $f => ffi "$this.$items.map(function(a){ return $f(a) })" as-vector
+  }
+  
+  implement Applicative for Vector {
+    method _ of: $value => ffi "[$value]" as-vector
+    method $this apply-to: $b => $this >>= ($b map: _)
+  }
+  
+  implement Monad for Vector {
+    method $this chain: $f => ($this map: $f) fold: _ + _ from: Vector empty
+  }
+  
+  implement Foldable for Vector {
+    method $this fold-right: $f from: $b =>
+      ffi "$this.$items.reduce(function(xs, x){ return $f(x, xs) }, $b)"
+  }
+  
+  implement To-List for Vector {
+    method $this to-list => ffi "self.$arrayToList($this.$items)"
+  }
 
-ffi """
-function $$Vector() { }
-$$Vector.prototype.$$name = 'Vector'
-$$Vector.prototype.$$tag = self.$newTag($$Vector.prototype, $$package)
-$$Vector.$$tag = $$Vector.prototype.$$tag
-$$Vector.$new = function($xs) {
-  var instance = new $$Vector()
-  instance.$items = self.$listToArray($xs)
-  return instance
-}
-$$Vector.$make = function($xs) {
-  var instance = new $$Vector()
-  instance.$items = $xs
-  return instance
-}
-"""
+  implement From-List for Vector {
+    method from-list: $xs => ffi "$$Vector.$new($xs)"
+  }
 
-let $xs as-vector => ffi "$$Vector.$make($xs)"
-export $xs Vector? => ffi "self.$tag($xs) === $$Vector.$$tag"
-
-export Vector => ffi "$$Vector"
-export _ Vector: $xs ^List? => ffi "$$Vector.$new($xs)"
-
-implement Equality for Vector {
-  method $this === $that ^Vector? => ffi "(function() {
-    var xs = $this.$items, ys = $that.$items
-    if (xs.length !== ys.length)  return false
-    for (var i = 0; i < xs.length; ++i) {
-      if (!self['==='](xs[i], ys[i]))  return false
-    }
-    return true
-  }())"
-}
-
-implement Representable for Vector {
-  method $this to-string => "<#Vector: " + ffi "$this.$items.map(self['to-string']).join(', ')" + ">"
-}
-
-implement Bounded for Vector {
-  method $this upper-bound => ffi "$this.$items.length"
-  method $this lower-bound => ffi "0"
-}
-
-implement Indexable for Vector {
-  method $this at: $index => ffi "(function() {
-    if ($index < 0 || $index >= $this.$items.length)
-      return self.Nothing()
-    else
-      return self.Just($this.$items[$index])
-  }())"
-}
-
-implement Container for Vector {
-  method $this add: $value => ffi "$this.$items.concat([$value])" as-vector
-  method $this remove: $value => ffi "$this.$items.filter(function(x) {
-                                        return x !== $value
-                                      })" as-vector
-}
-
-implement IndexedContainer for Vector {
-  method $this at: $index ^Number? put: $value => ffi "(function() {
-    var xs = $this.items.slice()
-    if ($index < 0 || $index > xs.length - 1)
-      throw new Error('Index out of bounds: ' + $index)
-
-    xs[$index] = $value
-    return $$Vector.make(xs)
-  }())"
-
-  method $this remove-at: $index ^Number? => ffi "(function() {
-    var xs = $this.items.slice()
-    if ($index < 0 || $index > $xs.length - 1)
-      throw new Error('Index out of bounds: ' + $index)
-    xs.splice($index, 1)
-    return $$Vector.make(xs)
-  }())"
-}
-
-implement Sliceable for Vector {
-  method $this slice-from: $start ^Number? to: $end ^Number? =>
-    ffi "$this.$items.slice($start, $end)" as-vector
-}
-
-implement Semigroup for Vector {
-  method $this + $that ^Vector? => ffi "$this.$items.concat($that.$items)" as-vector
-}
-
-implement Monoid for Vector {
-  method empty => ffi "[]" as-vector
-}
-
-implement Functor for Vector {
-  method $this map: $f => ffi "$this.$items.map(function(a){ return $f(a) })" as-vector
-}
-
-implement Applicative for Vector {
-  method _ of: $value => ffi "[$value]" as-vector
-  method $this apply-to: $b => $this >>= ($f => $b map: $f)
-}
-
-implement Chainable for Vector {
-  method $this chain: $f => ($this map: $f) fold: ($x $y => $x + $y) from: Vector empty
-}
-
-implement Foldable for Vector {
-  method $this fold-right: $f from: $b =>
-    ffi "$this.$items.reduce(function(xs, x){ return $f(x, xs) }, $b)"
-}
-
-implement ToList for Vector {
-  method $this to-list => ffi "self.$arrayToList($this.$items)"
-  method $this from-list: $xs => ffi "$$Vector.$new($xs)"
-}
-
-implement JsonEncoder for List {
-  method $this to-json => ffi "JSON.stringify($this.$items)"
-}
-
-implement JsonDecoder for List {
-  method from-json: $text => ffi "(function() {
-    try {
-      var x = JSON.parse($text)
-      if (Array.isArray(x))  return self.Success($$Vector.$new(x))
-      else                   return self.Failure(new Error('Unable to parse JSON as List'))
-    } catch(e) {
-      return self.Failure(e)
-    }
-  }())"
 }

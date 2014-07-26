@@ -1,83 +1,85 @@
-module Io.FileSystem.Path where
+module Io.FileSystem.Path {
 
-import Purr.Core
-import Data.Boolean
-
-ffi """
-var $path      = require('path')
-var $normalise = $path.normalize
-var $join      = $path.join
-"""
-
-let $x get => match $x {
-  | Success($a) => $a
-  }
-
-export data Path = Relative
-                 | Root
-                 | _ ^Path? \ _ ^Segment?
-
-export $a Segment? => ffi "!/\\//.test($a)"
-
-implement Equality for Path {
-  method $this === $that ^Path? => match $this, $that {
-    | Relative, Relative => true
-    | Root,     Root     => true
-    | $as \ $a, $bs \ $b => ($a === $b) && ($as === $bs)
-    | _,        _        => false
+  import Purr.Core
+  import Data.Boolean
+  
+  ffi """
+  var $path      = require('path')
+  var $normalise = $path.normalize
+  var $join      = $path.join
+  """
+  
+  let $x get => match $x {
+    | $a Success => $a
     }
-}
-
-implement Representable for Path {
-  method $this to-string => match $this {
-    | Relative => "."
-    | Root     => $normalise("/")
-    | $as \ $a => $join($as to-string, $a)
+  
+  export data Path = Relative
+                   | Root
+                   | _ ^Path? \ _ ^Segment?
+  
+  export $a Segment? => ffi "!/\\//.test($a)"
+  
+  implement Equality for Path {
+    method $this === $that ^Path? => match $this, $that {
+      | Relative, Relative => true
+      | Root,     Root     => true
+      | $as \ $a, $bs \ $b => ($a === $b) && ($as === $bs)
+      | _,        _        => false
+      }
+  }
+  
+  implement To-String for Path {
+    method $this to-string => match $this {
+      | Relative => "."
+      | Root     => $normalise("/")
+      | $as \ $a => $join($as to-string, $a)
+      }
+  }
+  
+  implement From-String for Path {
+    method from-string: $text => ffi """$p.split('/').reduce(function(xs, x) {
+                                          return self['\\'](xs, x)
+                                        }, $top)""" Success
+                                 where { $p   = $normalise($text)
+                                       | $top = if ffi "/^\\//.test($p)" then Root
+                                                                         else Relative
+                                       }
+  }
+  
+  implement Semigroup for Path {
+    method $this + $that ^Path? =>
+      Path from-string: $join($this to-string, $that to-string) |> _ get
+  }
+  
+  implement Monoid for Path {
+    method empty => Relative
+  }
+  
+  export $this ^Path? parent => match $this {
+    | Root     => Root
+    | Relative => Relative \ ".."
+    | $as \ $a => $as
     }
+  
+  export $this ^Path? filename => match $this {
+    | $as \ $a => $a Just
+    | _        => Nothing
+    }
+  
+  export $this ^Path? extension => match $this {
+    | $as \ $a => let { $xs = ffi "$a.split('.')" }
+                  in
+                    if ffi "$xs.length > 0" then ffi "$xs[$xs.length - 1]" Just
+                                           else Nothing
+    | _        => Nothing
+    }
+  
+  export $this ^Path? relative? => match $this {
+    | Root     => false
+    | Relative => true
+    | $as \ $a => $as relative?
+    }
+  
+  export $this ^Path? absolute? => ($this relative?) not
+
 }
-
-implement Parseable for Path {
-  method _ parse: $text => ffi """$p.split('/').reduce(function(xs, x) {
-                                  return self['\\'](xs, x)
-                                }, $top)""" Success
-                                where { $p   = $normalise($text)
-                                      | $top = if ffi "/^\\//.test($p)" then Root
-                                                                        else Relative
-                                      }
-}
-
-implement Semigroup for Path {
-  method $this + $that ^Path? => Path parse: $join($this to-string, $that to-string) |> _ get
-}
-
-implement Monoid for Path {
-  method empty => Relative
-}
-
-export $this ^Path? parent => match $this {
-  | Root     => Root
-  | Relative => Relative \ ".."
-  | $as \ $a => $as
-  }
-
-export $this ^Path? filename => match $this {
-  | $as \ $a => $a Just
-  | _        => Nothing
-  }
-
-export $this ^Path? extension => match $this {
-  | $as \ $a => let { $xs = ffi "$a.split('.')" }
-                in
-                  if ffi "$xs.length > 0" then ffi "$xs[$xs.length - 1]" Just
-                                         else Nothing
-  | _        => Nothing
-  }
-
-export $this ^Path? relative? => match $this {
-  | Root     => false
-  | Relative => true
-  | $as \ $a => $as relative?
-  }
-
-export $this ^Path? absolute? => not($this relative?)
-

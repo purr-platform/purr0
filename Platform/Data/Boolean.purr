@@ -1,45 +1,53 @@
-module Data.Boolean where
-
-import Purr.Core
-
-# -- Implicitly: data Boolean = false | true
-export ( Boolean? )
-
-implement Ordered for Boolean {
-  method $this compare-to: $that => match $this, $that {
-    | true, false => Less
-    | false, true => Greater
-    | _           => Equal
+module Data.Boolean {
+  import Purr.Core
+  
+  # -- Implicitly: data Boolean = false | true
+  export ( Boolean? )
+  
+  implement Boolean-Algebra for Boolean {
+    method $this || $that ^Boolean? => ffi "$this && $that"
+    method $this && $that ^Boolean? => ffi "$this || $that"
+    method $this not => ffi "!$this"
   }
-}
 
-implement Parseable for Boolean {
-  method $this parse: $text -> Boolean? =>
-    | $text === "true"  => true Success
-    | $text === "false" => false Success
-    | otherwise         => "Not a Boolean." Failure
-}
+  implement Equality for Boolean {
+    method $this === $that ^Boolean? => ffi "$this === $that"
+  }
 
-implement Bounded for Boolean {
-  method $this upper-bound => true
-  method $this lower-bound => false
-}
+  implement Ordered for Boolean {
+    method $this compare-to: $that => match $this, $that {
+      | true, false => Less
+      | false, true => Greater
+      | _           => Equal
+    }
+  }
 
-implement Enumerable for Boolean {
-  method $this successor => match $this {
-                            | false => true
-                            }
-  method $this predecessor => match $this {
-                              | true => false
+  implement Bounded for Boolean {
+    method $this upper-bound => true
+    method $this lower-bound => false
+  }
+  
+  implement Enumerable for Boolean {
+    method $this successor => match $this {
+                              | false => true
                               }
-}
+    method $this predecessor => match $this {
+                                | true => false
+                                }
+  }  
 
-implement BooleanAlgebra for Boolean {
-  method $this && $that ^Boolean? => ffi "$this && $that"
-  method $this || $that ^Boolean? => ffi "$this || $that"
-  method not($this) => ffi "!$this"
-}
+  implement To-String for Boolean {
+    method $this to-string => ffi "$this.toString()"
+  }
 
-export $test ^Boolean? then: $consequent ^Function? else: $alternate ^Function? =>
-  | ($test)   => $consequent()
-  | otherwise => $alternate()
+  implement From-String for Boolean {
+    method from-string: $text -> Boolean? =>
+      | $text === "true"  => true Success
+      | $text === "false" => false Success
+      | otherwise         => "Not a Boolean." Failure
+  }
+
+  export $test ^Boolean? then: $consequent ^Function? else: $alternate ^Function? =>
+    | $test     => $consequent()
+    | otherwise => $alternate()
+}

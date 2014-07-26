@@ -1,99 +1,101 @@
-module Web.Routing where
+module Web.Routing {
 
-import Purr.Core
-import Data.String
-import Data.List
-import Data.Boolean
-import Data.Record
-import Web.Server
-import Io.Task
-
-ffi """
-var path = require('path'), url = require('url')
-
-function merge(groups, keys_) {
-  var keys = self.$listToArray(keys_)
-  if (groups.length !== keys.length)
-    throw new Error("Can't associate the bindings in the route spec. The RoutePath is incorrect")
-
-  return self.$ExtRecord.$fromObject(groups.reduce(function(result, value, index) {
-    var key = keys[index]
-    result[key] = value
-    return result
-  }, {}))
-}
-"""
-
-let $x Segment? => ffi "/[^\\/]/.test($x)"
-
-export
-data RoutePart = _ ^Segment? Segment
-               | _ ^String? Binding
-               | Wildcard
-
-export
-data RoutePath = _ ^RoutePath? /*/ _ ^RoutePart?
-               | Root
-
-export
-data RouteHandler = Route: _ ^RouteSpec? Handlers: _ ^Record?
-
-data RouteSpec = { match: $path ^String? with: $binding ^List? -> Maybe?
-                 , bindings -> List?
-                 }
-
-import Debug.Trace
-export router: $routes ^List? => $app => $req =>
-  let { $handler = $routes match: $req url  }
-  in match $handler {
-    | Nothing => $app($req)
-    | Just(Tuple: (Route: $r Handlers: $hs) With: $bindings) =>
-        match $hs at: $req http-method {
-          | Just($f) => $f()($req at: "params" put: $bindings)
-          | Nothing  => Task of: (Status: 405 Headers: {} Body: "Method Not Allowed")
-        }
+  import Purr.Core
+  import Data.String
+  import Data.List
+  import Data.Boolean
+  import Data.Record
+  import Web.Server
+  import Io.Task
+  
+  ffi """
+  var path = require('path'), url = require('url')
+  
+  function merge(groups, keys_) {
+    var keys = self.$listToArray(keys_)
+    if (groups.length !== keys.length)
+      throw new Error("Can't associate the bindings in the route spec. The RoutePath is incorrect")
+  
+    return self.$ExtRecord.$fromObject(groups.reduce(function(result, value, index) {
+      var key = keys[index]
+      result[key] = value
+      return result
+    }, {}))
   }
-
-export $path ^RoutePath? compile-to-spec =>
-  let { $re   = $path compile-regexp
-      | $vars = $path collect-bindings
-      }
-  in RouteSpec {
-    bindings => $vars,
-    match: $p with: $bs => ffi "(function() {
-      var re = new RegExp($re, 'i')
-      var xs = $p.match(re)
-      if (xs == null)  return self.Nothing()
-      else return self.Just(self.$ExtRecord.$fromObject(merge(xs.slice(1), $bs)))
-    }())"
-  }
-
-let $routes ^List? match: $path ^String? => match $routes {
-  | $hd :: $rest =>
-    match $hd {
-      | Route: $spec Handlers: _ => match $spec match: $path with: $spec.bindings() {
-                                      | Nothing => $rest match: $path
-                                      | $a Just => @Just(Tuple: $hd With: $a)
-                                    }
+  """
+  
+  let $x Segment? => ffi "/[^\\/]/.test($x)"
+  
+  export
+  data RoutePart = _ ^Segment? Segment
+                 | _ ^String? Binding
+                 | Wildcard
+  
+  export
+  data RoutePath = _ ^RoutePath? /*/ _ ^RoutePart?
+                 | Root
+  
+  export
+  data RouteHandler = Route: _ ^RouteSpec? Handlers: _ ^Record?
+  
+  data RouteSpec = { match: $path ^String? with: $binding ^List? -> Maybe?
+                   , bindings -> List?
+                   }
+  
+  import Debug.Trace
+  export router: $routes ^List? => $app => $req =>
+    let { $handler = $routes match: $req url  }
+    in match $handler {
+      | Nothing => $app($req)
+      | (Tuple: (Route: $r Handlers: $hs) With: $bindings) Just =>
+          match $hs at: $req http-method {
+            | $f Just => $f()($req at: "params" put: $bindings)
+            | Nothing => Task of: (Status: 405 Headers: {} Body: "Method Not Allowed")
+          }
     }
-  | Nil            => Nothing
-}
-
-let $path compile-regexp => $path compile + "$"
-where {
-  $p compile => match $p {
-    | Root               => "^"
-    | $xs /*/ Wildcard   => $xs compile + "\\/(.*?)"
-    | $xs /*/ _ Binding  => $xs compile + "\\/([^\\/]+)"
-    | $xs /*/ $a Segment => $xs compile + "\\/" + $a escape-regexp
+  
+  export $path ^RoutePath? compile-to-spec =>
+    let { $re   = $path compile-regexp
+        | $vars = $path collect-bindings
+        }
+    in RouteSpec {
+      bindings => $vars,
+      match: $p with: $bs => ffi "(function() {
+        var re = new RegExp($re, 'i')
+        var xs = $p.match(re)
+        if (xs == null)  return self.Nothing()
+        else return self.Just(self.$ExtRecord.$fromObject(merge(xs.slice(1), $bs)))
+      }())"
+    }
+  
+  let $routes ^List? match: $path ^String? => match $routes {
+    | $hd :: $rest =>
+      match $hd {
+        | Route: $spec Handlers: _ => match $spec match: $path with: $spec.bindings() {
+                                        | Nothing => $rest match: $path
+                                        | $a Just => (Tuple: $hd With: $a) Just
+                                      }
+      }
+    | Nil => Nothing
   }
+  
+  let $path compile-regexp => $path compile + "$"
+  where {
+    $p compile => match $p {
+      | Root               => "^"
+      | $xs /*/ Wildcard   => $xs compile + "\\/(.*?)"
+      | $xs /*/ _ Binding  => $xs compile + "\\/([^\\/]+)"
+      | $xs /*/ $a Segment => $xs compile + "\\/" + $a escape-regexp
+    }
+  }
+  
+  let $path collect-bindings => match $path {
+    | Root               => Nil
+    | $xs /*/ $a Binding => $a :: $xs collect-bindings
+    | $xs /*/ Wildcard   => "wildcard" :: $xs collect-bindings
+    | $xs /*/ _ Segment  => $xs collect-bindings
+  } reverse
+  
+  let $a escape-regexp => ffi """String($a).replace(/\W/, '\\$1')"""
+
 }
-
-let $path collect-bindings => match $path {
-  | Root               => Nil
-  | $xs /*/ $a Binding => $a :: $xs collect-bindings
-  | $xs /*/ Wildcard   => "wildcard" :: $xs collect-bindings
-  | $xs /*/ _ Segment  => $xs collect-bindings
-} reverse
-
-let $a escape-regexp => ffi """String($a).replace(/\W/, '\\$1')"""

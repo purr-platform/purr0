@@ -1,40 +1,42 @@
-module Io.Console where
+module Io.Console {
 
-import Purr.Core
-import Io.Task
+  import Purr.Core
+  import Io.Task
+  
+  ffi "var readline = require('readline')"
+  
+  let _ ~ $x => $x
+  let void => Unit Yield
+  
+  export $x ^To-String? display => 
+    task: ^{ $next => ffi "console.log($text)" ~ $next(void) }
+    where { $text = $x to-string }
+  
+  export $x ^To-String? display-error =>
+    task: ^{ $next => ffi "console.error($text)" ~ $next(void) }
+    where { $text = $x to-string }
+  
+  export $x ^To-String? display-warning =>
+    task: ^{ $next => ffi "console.warn($text)" ~ $next(void) }
+    where { $text = $x to-string }
+  
+  export $x ^To-String? display-info =>
+    task: ^{ $next => ffi "console.info($text)" ~ $next(void) }
+    where { $text = $x to-string }
+  
+  export $text ^String? write => 
+    task: ^{ $next => ffi "process.stdout.write($text)" ~ $next(void) }
+  
+  export get-line: $prompt ^String? =>
+    task: ffi """(function($next) {
+      var rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+      rl.question($prompt, function($text) {
+        $next(self.Yield($text))
+      })
+      return rl
+    })"""
+    cleanup: ^{ $rl => ffi "$rl.close()" }
+  
+  export get-line => get-line: ""
 
-ffi "var readline = require('readline')"
-
-let _ ~ $x => $x
-let void => Unit Yield
-
-export $x ^Representable? display => 
-  task: ($next => ffi "console.log($text)" ~ $next(void))
-  where { $text = $x to-string }
-
-export $x ^Representable? display-error =>
-  task: ($next => ffi "console.error($text)" ~ $next(void))
-  where { $text = $x to-string }
-
-export $x ^Representable? display-warning =>
-  task: ($next => ffi "console.warn($text)" ~ $next(void))
-  where { $text = $x to-string }
-
-export $x ^Representable? display-info =>
-  task: ($next => ffi "console.info($text)" ~ $next(void))
-  where { $text = $x to-string }
-
-export $text ^String? write => 
-  task: ($next => ffi "process.stdout.write($text)" ~ $next(void))
-
-export get-line: $prompt ^String? =>
-  task: ffi """(function($next) {
-    var rl = readline.createInterface({ input: process.stdin, output: process.stdout })
-    rl.question($prompt, function($text) {
-      $next(self.Yield($text))
-    })
-    return rl
-  })"""
-  cleanup: $rl => ffi "$rl.close()"
-
-export get-line => get-line: ""
+}

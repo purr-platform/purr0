@@ -1,60 +1,93 @@
-module Data.Number where
+module Data.Number {
 
-import Purr.Core
+  import Purr.Core
+  
+  export ( Number? )
+  
+  implement Equality for Number {
+    method $this === $that ^Number? => ffi "$this === $that"
+    method $this =/= $that ^Number? => ffi "$this !== $that"
+  }
 
-export ( Number? )
+  implement Ordered for Number {
+    method $this compare-to: $that ^Number? =>
+      | ffi "$this < $that" => Less
+      | ffi "$this > $that" => Greater
+      | otherwise           => Equal
+  
+    method $this < $that ^Number? => ffi "$this < $that"
+    method $this > $that ^Number? => ffi "$this > $that"
+    method $this <= $that ^Number? => ffi "$this <= $that"
+    method $this >= $that ^Number? => ffi "$this >= $that"
+  }
+  
+  implement Semigroup for Number {
+    method $this + $that ^Number? => ffi "$this + $that"
+  }
+  
+  implement Monoid for Number {
+    method $this empty => 0
+  }
 
-implement Ordered for Number {
-  method $this compare-to: $that ^Number? =>
-    | ffi "$this < $that" => Less
-    | ffi "$this > $that" => Greater
-    | otherwise           => Equal
+  implement Abelian-Group for Number {
+    method $this negate => ffi "-$this"
+    method $this - $that => ffi "$this - $that"
+  }
 
-  method $this < $that ^Number? => ffi "$this < $that"
-  method $this > $that ^Number? => ffi "$this > $that"
-  method $this <= $that ^Number? => ffi "$this <= $that"
-  method $this >= $that ^Number? => ffi "$this >= $that"
-}
+  implement Ring for Number {
+    method $this * $that => ffi "$this * $that"
+    method $this one => 1
+  }
 
-implement Numeric for Number {
-  method $this - $that ^Number? => ffi "$this - $that"
-  method $this * $that ^Number? => ffi "$this * $that"
-  method $this absolute => ffi "Math.abs($this)"
-  method $this negate => ffi "-$this"
-}
+  implement Numeric for Number {
+    method $this absolute => ffi "Math.abs($this)"
+  }
 
-implement Floating for Number {
-  method $this / $that => ffi "$this / $that"
-  method $this truncate => ffi "Math.max(0, Math.floor($this))"
-  method $this round => ffi "Math.round($this)"
-  method $this ceiling => ffi "Math.ceil($this)"
-  method $this floor => ffi "Math.floor($this)"
-  method $this nan? => ffi "isNaN($this)"
-  method $this finite? => ffi "isFinite($this)"
-  method $this negative-zero? => ffi "(x === 0) && ((1/x) === -Infinity)"
-}
+  implement Division-Ring for Number {
+    method $this / $that =>
+      | $that === 0 => "Division by zero" Failure
+      | otherwise   => (ffi "$this / $that") Success
+  }
 
-implement Parseable for Number {
-  method $this parse: $repr => let { $x = ffi "Number($repr)" }
-                               in
-                                 if $x is-nan? then "Not a number" Failure
-                                               else $x Success
-}
+  implement Integral for Number {
+    method $this divide-by: $that =>
+      | $that === 0 => "Division by zero" Failure
+      | otherwise   => (ffi "Math.floor($this / $that)") Success
 
-implement Bounded for Number {
-  method upper-bound => ffi "$this.MAX_VALUE"
-  method lower-bound => ffi "$this.MIN_VALUE"
-}
+    method $this modulus: $that =>
+      | $that === 0 => "Division by zero" Failure
+      | otherwise   => (ffi "$this % $that") Success
+  }
+  
+  implement Floating for Number {
+    method $this truncate => ffi "Math.max(0, Math.floor($this))"
+    method $this round => ffi "Math.round($this)"
+    method $this ceiling => ffi "Math.ceil($this)"
+    method $this floor => ffi "Math.floor($this)"
+    method $this nan? => ffi "isNaN($this)"
+    method $this infinite? => ffi "!isFinite($this)"
+    method $this negative-zero? => ffi "(x === 0) && ((1/x) === -Infinity)"
+  }
+  
+  implement From-String for Number {
+    method from-string: $repr => let { $x = ffi "Number($repr)" }
+                                 in
+                                   if $x is-nan? then "Not a number" Failure
+                                                 else $x Success
+  }
 
-implement Enumerable for Number {
-  method $this successor => ffi "$this + 1"
-  method $this predecessor => ffi "$this - 1"
-}
+  implement To-String for Number {
+    method $this to-string => ffi "$this.toString()"
+  }
+  
+  implement Bounded for Number {
+    method upper-bound => ffi "$this.MAX_VALUE"
+    method lower-bound => ffi "$this.MIN_VALUE"
+  }
+  
+  implement Enumerable for Number {
+    method $this successor => ffi "$this + 1"
+    method $this predecessor => ffi "$this - 1"
+  }
 
-implement Semigroup for Number {
-  method $this + $that ^Number? => ffi "$this + $that"
-}
-
-implement Monoid for Number {
-  method $this empty => 0
 }

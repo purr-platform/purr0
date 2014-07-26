@@ -1,68 +1,71 @@
-module Io.Task where
+module Io.Task {
 
-import Purr.Core
-import Data.Function
-
-export data Task = Task: _ ^Function? Cleanup: _ ^Function?
-export data TaskResult = _ Yield  # Succeeds with some result
-                       | _ Throw  # Fails with some result
-                       | Done     # Finishes the computation
-
-# -- Helpers
-let _ ~ _ => Unit # Convenience for running two functions
-let void  => Unit 
-let delayed($f) => ffi "setImmediate($f)"
-let once($f) => ffi "(function(a) { var result = $f(a); $f = function(){}; return result })"
-
-# -- Constructors
-export task: $f ^Function? => Task: $f Cleanup: (=> void)
-export task: $f ^Function? cleanup: $g ^Function? => Task: $f Cleanup: $g
-export fail: $x => task: $next => $next($x Throw)
-export never => task: => Unit
-
-# -- Runs things (meant for the end of the world, a la Haskell's unsafePerformIO)
-export $t ^Task? run: $f ^Function? recover: $g ^Function? => match $t {
-  | Task: $computation Cleanup: $cleanup =>
-      let { 
-        $state = $computation(@once($value => match $value {
-                                                | Yield($a) => $f($a)
-                                                | Throw($a) => $g($a)
-                                                | Done      => void
-                                                } ~ (=> $cleanup($state, $value)) delayed))
-      } in $state
- }
-
-export $t ^Task? run: $f ^Function? => match $t {
-  | Task: $computation Cleanup: $cleanup => 
-      let {
-        $state = $computation(@once($value => match $value {
-                                                | Yield($a) => $f($a)
-                                                | Done      => void
-                                                } ~ (=> $cleanup($state, $value)) delayed))
-      } in $state
+  import Purr.Core
+  import Data.Function
+  
+  export data Task = Task: _ ^Function? Cleanup: _ ^Function?
+  export data TaskResult = _ Yield  # Succeeds with some result
+                         | _ Throw  # Fails with some result
+                         | Done     # Finishes the computation
+  
+  # -- Helpers
+  let _ ~ _ => Unit # Convenience for running two functions
+  let void  => Unit 
+  let $f delayed => ffi "setImmediate($f)"
+  let $f once => ffi "(function(a) { var result = $f(a); $f = function(){}; return result })"
+  
+  # -- Constructors
+  export task: $f ^Function? => Task: $f Cleanup: ^{ void }
+  export task: $f ^Function? cleanup: $g ^Function? => Task: $f Cleanup: $g
+  export fail: $x => task: ^{ $next => $next($x Throw) }
+  export never => task: ^{ Unit }
+  
+  # -- Runs things (meant for the end of the world, a la Haskell's unsafePerformIO)
+  export $t ^Task? run: $f ^Function? recover: $g ^Function? => match $t {
+    | Task: $computation Cleanup: $cleanup =>
+        let { 
+          $state = $computation(^{ $value => match $value {
+                                             | $a Yield => $f($a)
+                                             | $a Throw => $g($a)
+                                             | Done     => void
+                                             } ~ ^{ $cleanup($state, $value) } delayed } once)
+        } in $state
+   }
+  
+  export $t ^Task? run: $f ^Function? => match $t {
+    | Task: $computation Cleanup: $cleanup => 
+        let {
+          $state = $computation(^{ $value => match $value {
+                                             | $a Yield => $f($a)
+                                             | $a Throw => ffi "(function(){ throw $a }())"
+                                             | Done     => void
+                                             } ~ ^{ $cleanup($state, $value) } delayed } once)
+        } in $state
+    }
+  
+  # -- Protocols
+  implement Monad for Task {
+    method $task chain: $f =>
+      task: ^{ $next =>
+                 $task run: ^{ $x => $f($x) run: _ Yield ->> $next recover: _ Throw ->> $next }
+                       recover: _ Throw ->> $next }
+  }
+  
+  implement Functor for Task {
+    method $task map: $f => $task >>= ^{ $a => Task of: $f($a) }
+  }
+  
+  implement Applicative for Task {
+    method of: $value => task: ^{ $next => $next($value Yield) }
+    method $task apply-to: $mappable => $task >>= ^{ $f => $mappable map: $f }
+  }
+  
+  implement Monoid for Task {
+    method $this empty => task: ^{ $next => $next(Unit Yield) }
+  }
+  
+  implement Semigroup for Task {
+    method $this + $that ^Task? => $this >>= ^{ $a => $that map: $a + _ }
   }
 
-# -- Protocols
-implement Chainable for Task {
-  method $task chain: $f =>
-    task: ($next =>
-           $task run: ($x => $f($x) run: @Yield ->> $next recover: @Throw ->> $next)
-                 recover: @Throw ->> $next)
-}
-
-implement Functor for Task {
-  method $task map: $f => $task >>= ($a => Task of: $f($a))
-}
-
-implement Applicative for Task {
-  method of: $value => task: ($next => $next($value Yield))
-  method $task apply-to: $mappable => $task >>= ($f => $mappable map: $f)
-}
-
-implement Monoid for Task {
-  method $this empty => task: ($next => $next(Unit Yield))
-}
-
-implement Semigroup for Task {
-  method $this + $that ^Task? => $this >>= $a => $that map: $b => $a + $b
 }

@@ -119,25 +119,25 @@ module Purr.Core {
 
   Implementations of this protocol should satisfy the following laws:
 
-    * Associativity of \/               x \/ (y \/ z) = (x \/ y) \/ z
-    * Associativity of /\               x /\ (y /\ z) = (x /\ y) /\ z
-    * Commutativity of \/               x \/ y = y \/ x
-    * Commutativity of /\               x /\ y = y /\ x
-    * Distributivity of \/ over /\      x \/ (y /\ z) = (x /\ y) \/ (x /\ z)
-    * Idempotence of \/                 x \/ x = x
-    * Idempotence of /\                 x /\ x = x
-    * Absorption                        x /\ (x \/ y) = x
-                                        x \/ (x /\ y) = x
-    * Distributivity of \/ over /\      x \/ (y /\ z) = (x \/ y) /\ (x \/ z)
+    * Associativity of ||               x || (y || z) = (x || y) || z
+    * Associativity of &&               x && (y && z) = (x && y) && z
+    * Commutativity of ||               x || y = y || x
+    * Commutativity of &&               x && y = y && x
+    * Distributivity of || over &&      x || (y && z) = (x && y) || (x && z)
+    * Idempotence of ||                 x || x = x
+    * Idempotence of &&                 x && x = x
+    * Absorption                        x && (x || y) = x
+                                        x || (x && y) = x
+    * Distributivity of || over &&      x || (y && z) = (x || y) && (x || z)
     * Double negation                   not(not(x)) = x
   """
   export
   interface Boolean-Algebra {
     @| doc: "Logical disjunction."
-    method $this \/ $that
+    method $this || $that
 
     @| doc: "Logical conjunction."
-    method $this /\ $that
+    method $this && $that
 
     @| doc: "Logical negation."
     method $this not
@@ -344,6 +344,9 @@ module Purr.Core {
 
     @| doc: "Constructs a new value for the applicative."
     method _ of: $value
+
+    @| doc: "Alias for [[apply-to:]]"
+    method $this <*> $that => $this apply-to: $that
   }
 
   @| doc: """
@@ -358,7 +361,10 @@ module Purr.Core {
     need Applicative
 
     @| doc: "Transforms the value to another monad of the same type."
-    method $this >>= $transformation ^Function?
+    method $this chain: $transformation ^Function?
+
+    @| doc: "Alias for [[chain:]]"
+    method $this >>= $f => $this chain: $f
   }
 
   @| doc: """
@@ -572,36 +578,8 @@ module Purr.Core {
   interface From-List {
     method $this from-list: $xs ^List?
   }
-
-  @| doc: """
-  A protocol for values that are representable in JSON.
-  """
-  export
-  interface To-Json {
-    method $this to-json -> String
-  }
-
-  @| doc: """
-  A protocol for values that can be parsed from JSON.
-  """
-  export
-  interface From-Json {
-    method $type from-json: $text ^String -> Either?
-  }
   
   # -- Minimal JS interoperability -------------------------------------
-  implement To-String for Number {
-    method $this to-string => ffi "$this.toString()"
-  }
-  implement To-String for String {
-    method $this to-string => ffi "$this.toString()"
-  }
-  implement To-String for Function {
-    method $this to-string => ffi "self.$describe($this)"
-  }
-  implement To-String for Boolean {
-    method $this to-string => ffi "$this.toString()"
-  }
   implement To-String for Unit {
     method $this to-string => "<Unit>"
   }
@@ -609,59 +587,11 @@ module Purr.Core {
     method $this to-string => ffi "$this.toString()"
   }
   
-  implement Equality for Number {
-    method $this === $that ^Number? => ffi "$this === $that"
-    method $this =/= $that ^Number? => ffi "$this !== $that"
-  }
-  implement Equality for String {
-    method $this === $that ^String? => ffi "$this === $that"
-  }
-  implement Equality for Boolean {
-    method $this === $that ^Boolean? => ffi "$this === $that"
-  }
   implement Equality for Date {
     method $this === $that ^Date? => ffi "$this.getTime() === $that.getTime()"
   }
   implement Equality for Unit {
     method $this === $that ^Unit? => true
-  }
+  }  
   
-  implement To-Json for Number {
-    method $this to-json => ffi "JSON.stringify($this)"
-  }
-  implement To-Json for String {
-    method $this to-json => ffi "JSON.stringify($this)"
-  }
-  implement To-Json for Boolean {
-    method $this to-json => ffi "JSON.stringify($this)"
-  }
-  implement To-Json for Unit {
-    method $this to-json => "null"
-  }
-  
-  implement From-Json for Number {
-    method from-json: $text => $text parse-json-as: Number? type: "Number"
-  }
-  implement From-Json for String {
-    method from-json: $text => $text parse-json-as: String? type: "String"
-  }
-  implement From-Json for Boolean {
-    method from-json: $text => $text parse-json-as: Boolean? type: "Boolean"
-  }
-  implement From-Json for Unit {
-    method from-json: $text =>
-      | $text === "null" => (ffi "null") Success
-      | otherwise        => "Unable to parse JSON as Unit" Failure
-  }
-  
-  
-  let $x parse-json-as: $pred type: $msg => ffi "(function() {
-    try {
-      var x = JSON.parse($x)
-      if ($pred(x))  return self.Success($x)
-      else           return self.Failure(new Error('Unable to parse JSON as ' + $type))
-    } catch (e) {
-      return self.Failure(e)
-    }
-  }())"
 }

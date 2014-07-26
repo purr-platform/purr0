@@ -1,50 +1,58 @@
-module Data.String where
+module Data.String {
 
-import Purr.Core
-import Data.Char as C
-import Data.Number
+  import Purr.Core
+  import Data.Char as C
+  import Data.Number
+  
+  # -- Implicitly type String = [Char]
+  export ( String? )
+  
+  ffi """
+  function $asChar(a) { return self.C.Char().$new(a) }
+  """
+  
+  implement Equality for String {
+    method $this === $that ^String? => ffi "$this === $that"
+  }
 
-# -- Implicitly type String = [Char]
-export ( String? )
+  implement Ordered for String {
+    method $this compare-to: $that ^String? =>
+      | ffi "$this > $that" => Greater
+      | ffi "$this < $that" => Less
+      | otherwise           => Equal
+  }
+  
+  implement Bounded for String {
+    method $this lower-bound => 0
+    method $this upper-bound => ffi "$this.length"
+  }
+  
+  implement Indexable for String {
+    method $this at: $index ^Number? =>
+      | ($index > 0) && ($index < ffi "$this.length") => ffi "$asChar($this[$index])" Just
+      | otherwise                                     => Nothing
+  }
+  
+  implement Sliceable for String {
+    method $this slice-from: $start ^Number? to: $end ^Number? => ffi "$this.slice($start, $end)"
+  }
+  
+  implement Semigroup for String {
+    method $this + $that ^String? => ffi "$this + $that"
+  }
+  
+  implement Monoid for String {
+    method $this empty => ""
+  }
 
-ffi """
-function $asChar(a) { return self.C.Char().$new(a) }
-"""
+  implement To-String for String {
+    method $this to-string => ffi "$this.toString()"
+  }
+  
+  export $this ^String? uppercase => ffi "$this.toUpperCase()"
+  export $this ^String? lowercase => ffi "$this.toLowerCase()"
+  export $this ^String? trim => ffi "$this.trim()"
+  export $this ^String? trim-left => ffi "$this.trimLeft()"
+  export $this ^String? trim-right => ffi "$this.trimRight()"  
 
-implement Ordered for String {
-  method $this compare-to: $that ^String? =>
-    | ffi "$this > $that" => Greater
-    | ffi "$this < $that" => Less
-    | otherwise           => Equal
 }
-
-implement Bounded for String {
-  method $this lower-bound => 0
-  method $this upper-bound => ffi "$this.length"
-}
-
-implement Indexable for String {
-  method $this at: $index ^Number? =>
-    | ($index > 0) && ($index < ffi "$this.length") => ffi "$asChar($this[$index])" Just
-    | otherwise                                     => Nothing
-}
-
-implement Sliceable for String {
-  method $this slice-from: $start ^Number? to: $end ^Number? => ffi "$this.slice($start, $end)"
-}
-
-implement Semigroup for String {
-  method $this + $that ^String? => ffi "$this + $that"
-}
-
-implement Monoid for String {
-  method $this empty => ""
-}
-
-
-export $this ^String? uppercase => ffi "$this.toUpperCase()"
-export $this ^String? lowercase => ffi "$this.toLowerCase()"
-export $this ^String? trim => ffi "$this.trim()"
-export $this ^String? trim-left => ffi "$this.trimLeft()"
-export $this ^String? trim-right => ffi "$this.trimRight()"  
-

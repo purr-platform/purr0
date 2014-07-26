@@ -1,114 +1,114 @@
-module Io.Plan where
+module Io.Plan {
 
-import Purr.Core
-import Data.Function
-import Data.String
-import Io.Task
-import Concurrency.Async
-
-# This module provides a way to construct a plan about how I/O should be
-# dealt with. You declare what you want to do, potentially compose plans
-# as much as you want, then feed the plan to a Machine so it gets executed
-# for effects
-export
-data Plan = Halt
-          | Fail: $reason
-          | Emit: $value ^Semigroup? Then: _ ^Plan?
-          | Await: $resource Then: _ ^Function? Fallback: _ ^Plan?
-
-export
-data Resource = { acquire -> Function?  # Unit → Task[Error, R]
-                , release -> Function?  # R → Task[Error, Unit]
-                , step    -> Function?  # R → Task[Error, A]
-                }
-
-let $f force => $f()
-
-export $plan run => 
-  task: $next => $plan go
-    where {
-      $p go => match $p {
-        | Halt                            => $next(Unit Yield)
-        | Fail: $e                        => $next($e Throw)
-        | Emit: $v Then: $t               => $v run: (=> $t go)
-                                                recover: ($e => $next($e Throw))
-        | Await: $r Then: $c Fallback: $t => let { $res = $r acquire force }
-                                             in do {
-                                               $data <- $r step <| $res;
-                                               $x <- match $data {
-                                                 | Nothing  => $t run
-                                                 | Just($a) => $c($a) run
-                                               };
-                                               $r release <| $res;
-                                               return $x
-                                             } run: (=> $next(Unit Yield))
-      }
+  import Purr.Core
+  import Data.Function
+  import Data.String
+  import Io.Task
+  import Concurrency.Async
+  
+  # This module provides a way to construct a plan about how I/O should be
+  # dealt with. You declare what you want to do, potentially compose plans
+  # as much as you want, then feed the plan to a Machine so it gets executed
+  # for effects
+  export
+  data Plan = Halt
+            | Fail: $reason
+            | Emit: $value ^Semigroup? Then: _ ^Plan?
+            | Await: $resource Then: _ ^Function? Fallback: _ ^Plan?
+  
+  export
+  data Resource = { acquire -> Function?  # Unit → Task[Error, R]
+                  , release -> Function?  # R → Task[Error, Unit]
+                  , step    -> Function?  # R → Task[Error, A]
+                  }
+  
+  let $f force => $f()
+  
+  export $plan run => 
+    task: ^{ $next => $plan go
+      where {
+        $p go => match $p {
+          | Halt                            => $next(Unit Yield)
+          | Fail: $e                        => $next($e Throw)
+          | Emit: $v Then: $t               => $v run: ^{ $t go }
+                                                  recover: ^{ $e => $next($e Throw) }
+          | Await: $r Then: $c Fallback: $t => let { $res = $r acquire force }
+                                               in do {
+                                                 $data <- $r step <| $res;
+                                                 $x <- match $data {
+                                                   | Nothing => $t run
+                                                   | $a Just => $c($a) run
+                                                 };
+                                                 $r release <| $res;
+                                                 return $x
+                                               } run: ^{ $next(Unit Yield) }
+        }
+      }}
+  
+  implement Functor for Plan {
+    method $p map: $f => match $p {
+      | Halt                             => $p
+      | Fail: _                          => $p
+      | Await: $r Then: $c Fallback: $fb => Await: $r 
+                                            Then: $c ->> (_ map: $f)
+                                            Fallback: ($fb map: $f)
+      | Emit: $v Then: $t                => Emit: $f($v) Then: ($t map: $f)
     }
-
-implement Functor for Plan {
-  method $p map: $f => match $p {
-    | Halt                             => $p
-    | Fail: _                          => $p
-    | Await: $r Then: $c Fallback: $fb => Await: $r 
-                                          Then: $c ->> (_ map: $f)
-                                          Fallback: ($fb map: $f)
-    | Emit: $v Then: $t                => Emit: $f($v) Then: ($t map: $f)
   }
-}
-
-implement Applicative for Plan {
-  method _ of: $v => $v emit
-  method $plan apply-to: $b => match $plan {
-    | Halt                             => $plan
-    | Fail: _                          => $plan
-    | Emit: $v Then: $t                => Emit: $v Then: $t <*> $b
-    | Await: $r Then: $f Fallback: $fb => Await: $r Then: ($b >>= $f) Fallback: $fb
+  
+  implement Applicative for Plan {
+    method _ of: $v => $v emit
+    method $plan apply-to: $b => match $plan {
+      | Halt                             => $plan
+      | Fail: _                          => $plan
+      | Emit: $v Then: $t                => Emit: $v Then: ($t apply-to: $b)
+      | Await: $r Then: $f Fallback: $fb => Await: $r Then: ($b >>= $f) Fallback: $fb
+    }
   }
-}
-
-implement Chainable for Plan {
-  method $p chain: $f => match $p {
-    | Halt                             => $p
-    | Fail: _                          => $p
-    | Emit: $v Then: $t                => Emit: $v Then: $t + $f($v)
-    | Await: $r Then: $c Fallback: $fb => Await: $r
-                                          Then: ($v => let { $t = $c($v) }
-                                                       in match $t {
-                                                         | Halt => $f($v)
-                                                         | _    => $t >>= $f
-                                                       })
-                                          Fallback: $fb >>= $f
+  
+  implement Monad for Plan {
+    method $p chain: $f => match $p {
+      | Halt                             => $p
+      | Fail: _                          => $p
+      | Emit: $v Then: $t                => Emit: $v Then: $t + $f($v)
+      | Await: $r Then: $c Fallback: $fb => Await: $r
+                                            Then: ^{ $v => let { $t = $c($v) }
+                                                           in match $t {
+                                                             | Halt => $f($v)
+                                                             | _    => $t >>= $f
+                                                           }}
+                                            Fallback: $fb >>= $f
+    }
   }
-}
-
-implement Semigroup for Plan {
-  method $p + $p2 ^Plan? => match $p {
-    | Halt                            => $p2
-    | Fail: _                         => $p
-    | Emit: $xs Then: $t              => Emit: $xs Then: $t + $p2
-    | Await: $r Then: $c Fallback: $t => Await: $r Then: $c ->> (_ + $p2) Fallback: $t + $p2
-  }      
-}
-
-implement Monoid for Plan {
-  method $this empty => Halt
-}
-
-implement Alternative for Plan {
-  method $this none => Halt
-  method $this else: $that => match $this {
-    | Halt                            => $this
-    | Fail: _                         => $this
-    | Emit: $xs Then: $t              => Emit: $xs Then: $t <|> $that
-    | Await: $r Then: $c Fallback: $t => Await: $r Then: $c Fallback: $t + $that
+  
+  implement Semigroup for Plan {
+    method $p + $p2 ^Plan? => match $p {
+      | Halt                            => $p2
+      | Fail: _                         => $p
+      | Emit: $xs Then: $t              => Emit: $xs Then: $t + $p2
+      | Await: $r Then: $c Fallback: $t => Await: $r Then: $c ->> (_ + $p2) Fallback: $t + $p2
+    }      
   }
+  
+  implement Monoid for Plan {
+    method $this empty => Halt
+  }
+  
+  implement Alternative for Plan {
+    method $this none => Halt
+    method $this <|> $that => match $this {
+      | Halt                            => $this
+      | Fail: _                         => $this
+      | Emit: $xs Then: $t              => Emit: $xs Then: $t <|> $that
+      | Await: $r Then: $c Fallback: $t => Await: $r Then: $c Fallback: $t + $that
+    }
+  }
+  
+  
+  export $r await => Await: $r Then: _ halt Fallback: halt
+  export $r await-or: $fb => Await: $r Then: _ halt Fallback: $fb
+  export $x emit => Emit: $x Then: halt
+  export $x fail => Fail: $x
+  export halt => Halt
+
 }
-
-
-export $r await => Await: $r Then: @halt Fallback: halt
-export $r await-or: $fb => Await: $r Then: @halt Fallback: $fb
-export $x emit => Emit: $x Then: halt
-export $x fail => Fail: $x
-export halt => Halt
-
-

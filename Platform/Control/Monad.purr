@@ -1,46 +1,49 @@
-module Control.Monad where
+module Control.Monad {
 
-import Purr.Core
-import Data.List
-
-export $xs ^List? sequence-with: $Type ^Applicative? =>
-  $xs fold-right: _ >> _ from: ($Type of: [])
-  where {
-    $mx >> $mr => do { $x  <- $mx;
-                       $xs <- $mr;
-                       return $x :: $xs
-                     }
+  import Purr.Core
+  import Data.List
+  import Data.Function
+  
+  export $xs ^List? sequence-with: $Type ^Applicative? =>
+    $xs fold-right: _ >> _ from: ($Type of: [])
+    where {
+      $mx >> $mr => do { $x  <- $mx;
+                         $xs <- $mr;
+                         return $x :: $xs
+                       }
+    }
+  
+  export $monad ^Alternative? when: $test ^Boolean? =>
+    | test      => $monad
+    | otherwise => $monad none
+  
+  export $monad ^Alternative? unless: $test ^Boolean? =>
+    | test      => $monad none
+    | otherwise => $monad
+  
+  export $monad ^Functor? void => $monad map: ^{ Unit }
+  
+  export $monad ^Monad? flatten -> Monad? => $monad >>= _ identity
+  
+  export $f ^Function? lift-to: $mx and: $my => do {
+    $x <- $mx;
+    $y <- $my;
+    return $f($x, $y)
+  }
+  
+  export $f ^Function? lift-to: $mx and: $my and: $mz => do {
+    $x <- $mx;
+    $y <- $my;
+    $z <- $mz;
+    return $f($x, $y, $z)
+  }
+  
+  export $f ^Function? lift-to: $ma and: $mb and: $mc and: $md => do {
+    $a <- $ma;
+    $b <- $mb;
+    $c <- $mc;
+    $d <- $md;
+    return $f($a, $b, $c, $d)
   }
 
-export $monad ^Monoid? when: $test ^Boolean? =>
-  | test      => $monad
-  | otherwise => $monad empty
-
-export $monad ^Monoid? unless: $test ^Boolean? =>
-  | test      => $monad empty
-  | otherwise => $monad
-
-export $monad ^Mappable? void => $monad map: => Unit
-
-export $monad ^Chainable? flatten -> Chainable? => $monad >>= $x => $x
-
-export $f ^Function? lift-to: $mx and: $my => do {
-  $x <- $mx;
-  $y <- $my;
-  return $f($x, $y)
-}
-
-export $f ^Function? lift-to: $mx and: $my and: $mz => do {
-  $x <- $mx;
-  $y <- $my;
-  $z <- $mz;
-  return $f($x, $y, $z)
-}
-
-export $f ^Function? lift-to: $ma and: $mb and: $mc and: $md => do {
-  $a <- $ma;
-  $b <- $mb;
-  $c <- $mc;
-  $d <- $md;
-  return $f($a, $b, $c, $d)
 }

@@ -1,45 +1,47 @@
-module Debug.Trace where
+module Debug.Trace {
 
-import Purr.Core
-
-# Convenient functions for analysing the execution of the program
-
-ffi """
-function $inspect($value) {
-  try {
-    return self.$tag($value) + ' ' + self['to-string']($value)
-  } catch(e) {
-    return self.$tag($value) + ' ' + self.$describe($value)
+  import Purr.Core
+  
+  # Convenient functions for analysing the execution of the program
+  
+  ffi """
+  function $inspect($value) {
+    try {
+      return self.$tag($value) + ' ' + self['to-string']($value)
+    } catch(e) {
+      return self.$tag($value) + ' ' + self.$describe($value)
+    }
   }
-}
-function $pad(n, text) {
-  var before = Array(n + 1).join(' ')
-  return String(text).split(/\r\n|\r|\n/)
-                     .map(function(a){ return before + a })
-                     .join('\n')
-}
-"""
-
-export $value trace: $description => ffi "(function() {
-  console.log($description, $inspect($value))
-  return $value
-})()"
-
-export observe: $description => ffi """(function(fn, name, pkg) {
-  var show    = self.$describe
-  var toArray = Function.call.bind([].slice)
-  return function() {
-    var result = fn.apply(this, arguments)
-    console.log(
-      '\n---\n'
-    + '>>> ' + $description + ' (for ' + show(fn) + ' as ' + name + ' in ' + pkg + ')\n'
-    + 'Arguments: \n'
-    + $pad(2, 'o ' + toArray(arguments).map($inspect).join('\no '))
-    + '\n'
-    + 'Result: \n'
-    + $pad(2, $inspect(result))
-    + '\n---\n'
-    )
-    return result
+  function $pad(n, text) {
+    var before = Array(n + 1).join(' ')
+    return String(text).split(/\r\n|\r|\n/)
+                       .map(function(a){ return before + a })
+                       .join('\n')
   }
-})"""
+  """
+  
+  export $value trace: $description => ffi "(function() {
+    console.log($description, $inspect($value))
+    return $value
+  })()"
+  
+  export observe: $description => ffi """(function(fn, name, pkg) {
+    var show    = self.$describe
+    var toArray = Function.call.bind([].slice)
+    return function() {
+      var result = fn.apply(this, arguments)
+      console.log(
+        '\n---\n'
+      + '>>> ' + $description + ' (for ' + show(fn) + ' as ' + name + ' in ' + pkg + ')\n'
+      + 'Arguments: \n'
+      + $pad(2, 'o ' + toArray(arguments).map($inspect).join('\no '))
+      + '\n'
+      + 'Result: \n'
+      + $pad(2, $inspect(result))
+      + '\n---\n'
+      )
+      return result
+    }
+  })"""
+
+}

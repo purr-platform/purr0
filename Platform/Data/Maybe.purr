@@ -1,70 +1,71 @@
-module Data.Maybe where
+module Data.Maybe {
 
-import Purr.Core
-
-# -- Implicitly: data Maybe = Nothing | Just(_)
-export ( Nothing, Just, Maybe, Maybe? )
-
-implement Equality for Maybe {
-  method $this === $that ^Maybe? => match $this, $that {
-    | Nothing, Nothing   => true
-    | Just($a), Just($b) => $a == $b
-    | _, _               => false
+  import Purr.Core
+  
+  # -- Implicitly: data Maybe = Nothing | Just(_)
+  export ( Nothing, Just, Maybe, Maybe? )
+  
+  implement Equality for Maybe {
+    method $this === $that ^Maybe? => match $this, $that {
+      | Nothing, Nothing => true
+      | $a Just, $b Just => $a == $b
+      | _, _             => false
+    }
   }
-}
-
-implement Representable for Maybe {
-  method $this to-string => match $this {
-    | Nothing  => "Nothing"
-    | Just($a) => "Just(" + $a to-string + ")"
+  
+  implement To-String for Maybe {
+    method $this to-string => match $this {
+      | Nothing => "Nothing"
+      | $a Just => "Just(" + $a to-string + ")"
+    }
   }
-}
-
-implement Semigroup for Maybe {
-  method $this + $that ^Maybe? => match $this, $that {
-    | Just($a), Just($b) => ($a + $b) Just
-    | _, _               => Nothing
+  
+  implement Semigroup for Maybe {
+    method $this + $that ^Maybe? => match $this, $that {
+      | $a Just, $b Just => ($a + $b) Just
+      | _, _             => Nothing
+    }
   }
-}
-
-implement Monoid for Maybe {
-  method $this empty => Nothing
-}
-
-implement Functor for Maybe {
-  method $this map: $f => match $this {
-    | Nothing  => Nothing
-    | Just($a) => $f($a) Just
+  
+  implement Monoid for Maybe {
+    method $this empty => Nothing
   }
-}
-
-implement Applicative for Maybe {
-  method $protocol of: $value => value Just
-  method $this apply-to: $that => match $this {
-    | Nothing  => $that
-    | Just($f) => $that map: $f
+  
+  implement Functor for Maybe {
+    method $this map: $f => match $this {
+      | Nothing => Nothing
+      | $a Just => $f($a) Just
+    }
   }
-}
-
-implement Chainable for Maybe {
-  method $this chain: $f => match $this {
-    | Nothing  => Nothing
-    | Just($a) => $f($a)
+  
+  implement Applicative for Maybe {
+    method $protocol of: $value => value Just
+    method $this apply-to: $that => match $this {
+      | Nothing => $that
+      | $f Just => $that map: $f
+    }
   }
-}
-
-implement Foldable for Maybe {
-  method $this fold-right: $f from: $b => match $this {
-    | Nothing  => $b
-    | Just($a) => $f($a)
+  
+  implement Monad for Maybe {
+    method $this chain: $f => match $this {
+      | Nothing => Nothing
+      | $a Just => $f($a)
+    }
   }
-}
-
-implement Alternative for Maybe {
-  method none => Nothing
-  method $this else: $that => match $this {
-    | Nothing => $that
-    | _       => $this
+  
+  implement Foldable for Maybe {
+    method $this fold-right: $f from: $b => match $this {
+      | Nothing => $b
+      | $a Just => $f($a)
+    }
   }
-}
+  
+  implement Alternative for Maybe {
+    method none => Nothing
+    method $this <|> $that => match $this {
+      | Nothing => $that
+      | _       => $this
+    }
+  }
 
+}
