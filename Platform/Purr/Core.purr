@@ -107,91 +107,13 @@ module Purr.Core {
   export data List = Nil | _ :: _ ^List?
 
   @| doc: """
-  A cartesian product of two elements.
+  A pair of values.
   """
   export data Tuple = Tuple: _ With: _
 
   
 
-  # -- Protocols -------------------------------------------------------
-
-  @| doc: """
-  A protocol for values that can be compared for equality. It will make
-  sense for most values to implement structural equality (two values are
-  equal if they have the same contents), since the semantics of Purr
-  encourage the heavy use of immutability.
-
-  A minimal definition requires only the [[===]] method, but the [[=/=]]
-  method is included for values where inequality is not a composition
-  of logical negation and [[===]], such as IEEE 754 floating point numbers.
-  """
-  export
-  interface Equality {
-    @| doc: "Tests if two values are equal. The values should be of the same type."
-    method $this === $that -> Boolean?
-
-    @| doc: "Tests if two values are inequal. The values should be of the same type."
-    method $this =/= $that -> Boolean? => ffi "!$x" where { $x = $this === $that }
-  }
-  
-  @| doc: """
-  A protocol for values for which there exists a well-defined ordering.
-
-  Implementations of this protocol are required to implement only the
-  [[compare-to:]] method, since all the others can be derived from it.
-  """
-  export
-  interface Ordered {
-    need Equality
-
-    @| doc: "Returns how two values of the same type compare to each other."
-    method $this compare-to: $that -> Ordering?
-
-    @| doc: "Tests if `$this` is less than `$that`."
-    method $this < $that -> Boolean? => ($this compare-to: $that) === Less
-
-    @| doc: "Tests if `$this` is greater than `$that`."
-    method $this > $that -> Boolean? => ($this compare-to: $that) === Greater
-
-    @| doc: "Tests if `$this` is less or equal to `$that`."
-    method $this <= $that -> Boolean? => ($this compare-to: $that) =/= Greater
-
-    @| doc: "Tests if `$this` is greater or equal to `$that`."
-    method $this >= $that -> Boolean? => ($this compare-to: $that) =/= Less
-
-    @| doc: "Returns the greatest of two values."
-    method $this if-greater-else: $that =>
-      | $this > $that => $this
-      | otherise      => $that
-
-    @| doc: "Returns the lesser of two values."
-    method $this if-least-else: $that =>
-      | $this < $that => $this
-      | otherwise     => $that
-  }
-  
-  @| doc: """
-  A protocol for values that can have an interesting textual representation.
-  """
-  export
-  interface To-String {
-    method $this to-string -> String?
-  }
-
-  @| doc: """
-  A protocol for values that can be constructed from textual representations.
-
-  The [[from-string:]] method takes a single argument (besides the dispatch argument
-  before the keyword) containing the textual representation to be parsed, and
-  should return a `Success(_)` with the value if one can parse the representation,
-  or `Failure(_)` along with a description of the failure otherwise.
-  """
-  export
-  interface From-String {
-    method _ from-string: $representation ^String? -> Either?
-  }
-
-
+  # -- Protocols -------------------------------------------------------  
   @| doc: """
   A protocol for values for which the boolean algebra operations make sense.
 
@@ -460,12 +382,74 @@ module Purr.Core {
   
 
   # -- Lawless (but useful for sharing operation names) protocols
+  @| doc: """
+  A protocol for values that can be compared for equality. It will make
+  sense for most values to implement structural equality (two values are
+  equal if they have the same contents), since the semantics of Purr
+  encourage the heavy use of immutability.
+
+  A minimal definition requires only the [[===]] method, but the [[=/=]]
+  method is included for values where inequality is not a composition
+  of logical negation and [[===]], such as IEEE 754 floating point numbers.
+  """
+  export
+  interface Equality {
+    @| doc: "Tests if two values are equal. The values should be of the same type."
+    method $this === $that -> Boolean?
+
+    @| doc: "Tests if two values are inequal. The values should be of the same type."
+    method $this =/= $that -> Boolean? => ffi "!$x" where { $x = $this === $that }
+  }
+  
+  @| doc: """
+  A protocol for values for which there exists a well-defined ordering.
+
+  Implementations of this protocol are required to implement only the
+  [[compare-to:]] method, since all the others can be derived from it.
+  """
+  export
+  interface Ordered {
+    need Equality
+
+    @| doc: "Returns how two values of the same type compare to each other."
+    method $this compare-to: $that -> Ordering?
+
+    @| doc: "Tests if `$this` is less than `$that`."
+    method $this < $that -> Boolean? => ($this compare-to: $that) === Less
+
+    @| doc: "Tests if `$this` is greater than `$that`."
+    method $this > $that -> Boolean? => ($this compare-to: $that) === Greater
+
+    @| doc: "Tests if `$this` is less or equal to `$that`."
+    method $this <= $that -> Boolean? => ($this compare-to: $that) =/= Greater
+
+    @| doc: "Tests if `$this` is greater or equal to `$that`."
+    method $this >= $that -> Boolean? => ($this compare-to: $that) =/= Less
+
+    @| doc: "Returns the greatest of two values."
+    method $this if-greater-else: $that =>
+      | $this > $that => $this
+      | otherise      => $that
+
+    @| doc: "Returns the lesser of two values."
+    method $this if-least-else: $that =>
+      | $this < $that => $this
+      | otherwise     => $that
+  }
+
+  @| doc: """
+  A protocol for values that have some kind of lower and upper limit, like
+  numbers or ADTs.
+  """  
   export
   interface Bounded {
     method $this upper-bound -> Bounded?
     method $this lower-bound -> Bounded?
   }
   
+  @| doc: """
+  A protocol for values we can enumerate within some range.
+  """
   export
   interface Enumerable {
     need Bounded
@@ -479,7 +463,11 @@ module Purr.Core {
       } in if $next >= $max then Nil
                             else $start :: ($next up-to: $end)
   }
-  
+
+  @| doc: """
+  A protocol for values for which it makes sense to access value through
+  some indexing key.
+  """
   export
   interface Indexable {
     method $this at: $index -> Maybe?
@@ -488,35 +476,56 @@ module Purr.Core {
                                                   | _       => true
                                                   }
   }
-  
+
+  @| doc: """
+  A protocol for values to which values can be added to or removed from.
+  """
   export
   interface Container {
     method $this add: $value -> Container?
     method $this remove: $value -> Container?
-  }  
-  
+  }
+
+  @| doc: """
+  A protocol for containers for which it makes sense to store or remove things
+  at particular indexes.
+  """
   export
   interface Indexed-Container {
     need Indexable
-    method $this at: $index put: $value -> IndexedContainer?
-    method $this remove-at: $index -> IndexedContainer?
+    method $this at: $index put: $value -> Indexed-Container?
+    method $this remove-at: $index -> Indexed-Container?
   }
-  
+
+  @| doc: """
+  A protocol for values for which it makes sense extract a part of it.
+
+  It's similar to the Enumerable, but for sequential collections.
+  """
   export
   interface Sliceable {
     need Bounded
     need Indexable
     method $this slice-from: $start to: $end -> Sliceable?
   }
-    
+
+  @| doc: """
+  The equivalent of Monoid for functors.
+
+  Alternative contains an identity ([[none]]), which provides a failure value,
+  and a binary associative operation ([[<|>]]), which chooses the first
+  non-failure value.  
+  """
   export
   interface Alternative {
     need Applicative
     method $this none -> Alternative?
-    method $this else: $that -> Alternative?
-    method $this <|> $that => $this else: $that
+    method $this <|> $that -> Alternative?
   }
   
+  @| doc: """
+  A protocol for values that can be folded.
+  """
   export
   interface Foldable {
     need Monoid
@@ -526,21 +535,55 @@ module Purr.Core {
     method $this fold: $f from: $initial => $this fold-right: ^{$a $b => $f($b, $a)} from: $initial
   }
   
+  @| doc: """
+  A protocol for values that can have an interesting textual representation.
+  """
+  export
+  interface To-String {
+    method $this to-string -> String?
+  }
+
+  @| doc: """
+  A protocol for values that can be constructed from textual representations.
+
+  The [[from-string:]] method takes a single argument (besides the dispatch argument
+  before the keyword) containing the textual representation to be parsed, and
+  should return a `Success(_)` with the value if one can parse the representation,
+  or `Failure(_)` along with a description of the failure otherwise.
+  """
+  export
+  interface From-String {
+    method _ from-string: $representation ^String? -> Either?
+  }
+
+
+  @| doc: """
+  A protocol for values that are convertible to Lists.
+  """
   export
   interface To-List {
     method $this to-list -> List?
   }
 
+  @| doc: """
+  A protocol for values that can be converted from a List.
+  """
   export
   interface From-List {
     method $this from-list: $xs ^List?
   }
-  
+
+  @| doc: """
+  A protocol for values that are representable in JSON.
+  """
   export
   interface To-Json {
     method $this to-json -> String
   }
-  
+
+  @| doc: """
+  A protocol for values that can be parsed from JSON.
+  """
   export
   interface From-Json {
     method $type from-json: $text ^String -> Either?
