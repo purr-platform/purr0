@@ -41,9 +41,12 @@ module Web.Routing {
   data RouteSpec = { match: $path ^String? with: $binding ^List? -> Maybe?
                    , bindings -> List?
                    }
+
+  implement To-String for RouteSpec {
+    method $this to-string => ffi "self['to-string'](self.$arrayToList(Object.keys($this)))"
+  }
   
-  import Debug.Trace
-  export router: $routes ^List? => $app => $req =>
+  export router: $routes ^List? => ^{ $app => ^{ $req =>
     let { $handler = $routes match: $req url  }
     in match $handler {
       | Nothing => $app($req)
@@ -52,7 +55,7 @@ module Web.Routing {
             | $f Just => $f()($req at: "params" put: $bindings)
             | Nothing => Task of: (Status: 405 Headers: {} Body: "Method Not Allowed")
           }
-    }
+    }}}
   
   export $path ^RoutePath? compile-to-spec =>
     let { $re   = $path compile-regexp
@@ -68,10 +71,11 @@ module Web.Routing {
       }())"
     }
   
+  import Debug.Trace
   let $routes ^List? match: $path ^String? => match $routes {
     | $hd :: $rest =>
       match $hd {
-        | Route: $spec Handlers: _ => match $spec match: $path with: $spec.bindings() {
+        | Route: $spec Handlers: _ => match $spec match: $path with: $spec bindings {
                                         | Nothing => $rest match: $path
                                         | $a Just => (Tuple: $hd With: $a) Just
                                       }
