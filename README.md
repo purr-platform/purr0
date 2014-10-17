@@ -46,3 +46,4 @@ $ bin/purr some-file.purr
 
   - [The Wiki](https://github.com/robotlolita/purr/wiki) has some information on the project.
   - [The Gitter chat](https://gitter.im/robotlolita/purr) is used for discussing project-related things.
+  - `#purr-lang` on the Freenode IRC network.
