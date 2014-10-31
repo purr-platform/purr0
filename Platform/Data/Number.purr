@@ -72,8 +72,8 @@ module Data.Number {
   implement From-String for Number {
     method from-string: $repr => let { $x = ffi "Number($repr)" }
                                  in
-                                   if $x is-nan? then "Not a number" Failure
-                                                 else $x Success
+                                   if $x nan? then "Not a number" Failure
+                                              else $x Success
   }
 
   implement To-String for Number {
