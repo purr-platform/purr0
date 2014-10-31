@@ -1,5 +1,7 @@
 *.orig
-node_modules
-dist
+node_modules/
+dist/
 npm-debug.log
-docs
+docs/
+lib/
+test/specs/
