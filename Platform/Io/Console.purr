@@ -3,8 +3,6 @@ module Io.Console {
   import Purr.Core
   import Io.Task
   
-  ffi "var readline = require('readline')"
-  
   let _ ~ $x => $x
   let void => Unit Yield
   
@@ -27,16 +25,51 @@ module Io.Console {
   export $text ^String? write => 
     task: ^{ $next => ffi "process.stdout.write($text)" ~ $next(void) }
   
-  export get-line: $prompt ^String? =>
+  export get-line =>
     task: ffi """(function($next) {
-      var rl = readline.createInterface({ input: process.stdin, output: process.stdout })
-      rl.question($prompt, function($text) {
-        $next(self.Yield($text))
-      })
-      return rl
+      var stdin = process.stdin
+      var resolved = false
+      stdin.setEncoding('utf8')
+
+      var line = ''
+      stdin.on('readable', onReadable)
+      process.stdin.once('error', onError)
+
+      function onError(error) {
+        if (resolved)  return
+        resolved = true
+        cleanup()
+        $next(self.Throw(error))
+      }
+
+      function onReadable(chunk) {
+        if (resolved)  return
+        var chunk
+        while (null !== (chunk = stdin.read())) {
+          var xs = chunk.split('\n')
+          line += xs[0]
+          if (xs.length > 1) {
+            process.stdin.unshift(xs[1])
+            resolved = true
+            cleanup()
+            $next(self.Yield(line))
+          }
+        }
+      }
+
+      function cleanup() {
+        stdin.removeListener('error', onError)
+        stdin.removeListener('readable', onReadable)
+      }
+
+      return cleanup
     })"""
-    cleanup: ^{ $rl => ffi "$rl.close()" }
+    cleanup: ^{ $f => ffi "$f()" }
+
+  export get-line: $prompt ^String? => do {
+    $prompt write;
+    get-line
+  }
   
-  export get-line => get-line: ""
 
 }
