@@ -9,7 +9,7 @@ module Io.Task is
                          | Done     # Finishes the computation
   
   # -- Helpers
-  let _ ~ _ => Unit # Convenience for running two functions
+  let _ ~ _ => Unit # Convenience for running two expressions
   let void  => Unit 
   let $f delayed => ffi "setImmediate($f)"
   let $f once => ffi "(function(a) { var result = $f(a); $f = function(){}; return result })"
