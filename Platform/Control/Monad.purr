@@ -1,4 +1,4 @@
-module Control.Monad {
+module Control.Monad is
 
   import Purr.Core
   import Data.List
@@ -6,12 +6,13 @@ module Control.Monad {
   
   export $xs ^List? sequence-with: $Type ^Applicative? =>
     $xs fold-right: _ >> _ from: ($Type of: [])
-    where {
-      $mx >> $mr => do { $x  <- $mx;
-                         $xs <- $mr;
-                         return $x :: $xs
-                       }
-    }
+    where
+    | $mx >> $mr => do
+                      $x  <- $mx;
+                      $xs <- $mr;
+                      return $x :: $xs
+                    end
+    end
   
   export $monad ^Alternative? when: $test ^Boolean? =>
     | test      => $monad
@@ -25,25 +26,25 @@ module Control.Monad {
   
   export $monad ^Monad? flatten -> Monad? => $monad >>= _ identity
   
-  export $f ^Function? lift-to: $mx and: $my => do {
+  export $f ^Function? lift-to: $mx and: $my => do
     $x <- $mx;
     $y <- $my;
     return $f($x, $y)
-  }
+  end
   
-  export $f ^Function? lift-to: $mx and: $my and: $mz => do {
+  export $f ^Function? lift-to: $mx and: $my and: $mz => do
     $x <- $mx;
     $y <- $my;
     $z <- $mz;
     return $f($x, $y, $z)
-  }
+  end
   
-  export $f ^Function? lift-to: $ma and: $mb and: $mc and: $md => do {
+  export $f ^Function? lift-to: $ma and: $mb and: $mc and: $md => do
     $a <- $ma;
     $b <- $mb;
     $c <- $mc;
     $d <- $md;
     return $f($a, $b, $c, $d)
-  }
+  end
 
-}
+end

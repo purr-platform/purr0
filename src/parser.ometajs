@@ -16,7 +16,7 @@ var reserved = [ ':'  // Method parameter
                , 'implement'
                , 'for'
                , 'method'
-               , 'need'
+               , 'needs'
                , 'derivation'
                // Data structures
                , 'data'
@@ -41,6 +41,8 @@ var reserved = [ ':'  // Method parameter
                , 'do'
                , 'return'
                , 'self'
+               , 'with'
+               , 'end'
                ]
 
 
@@ -180,24 +182,24 @@ ometa Parser {
 
   letStmt = kw('let') ws pattern:p ws fnBody:e -> [#Let, p[0], [#Fn, p, e]],
 
-  module = decoratorApp*:as ws kw('module') ws mparms:p ws '{' (ws declaration)*:xs ws '}' -> [#Mod, p, xs, as],
+  module = decoratorApp*:as ws kw('module') ws mparms:p ws kw('is') (ws declaration)*:xs ws kw('end') -> [#Mod, p, xs, as],
   mparms = namespace:ns (ws keywordArg)*:ks -> (function(i, xs, cs) {
                                                  if (i[1]) ns[1] = ns[1] + ':' + i[1]
                                                  return [ns, xs, cs]
                                                }(kwId(ks), kwArgs(ks), kwCont(ks))),
 
   iface = kw('interface') ws identifier:a 
-            ws '{' (ws ifaceDecl)*:xs ws '}' 
+            ws kw('is') (ws ifaceDecl)*:xs ws kw('end')
         -> [#IFace, a, xs],
 
   ifaceDecl  = needDecl
              | methodDecl,
-  needDecl   = kw('need') ws expr:e -> [#INeed, e],
+  needDecl   = kw('needs') ws expr:e -> [#INeed, e],
   methodDecl = decoratorApp*:as ws kw('method') ws pattern:p ws fnBody:e -> [#DMeth, p, [#DecoExpr, p[0], as, [#Fn, p, e]]]
              | decoratorApp*:as ws kw('method') ws pattern:p ws posC:c   -> [#IMeth, as, c].concat(p),
 
   implem = kw('implement') ws expr:a ws kw('for') ws expr:b
-             ws '{' (ws implDecl)*:xs ws '}' -> [#Impl, a, b, xs],
+             ws kw('with') (ws implDecl)*:xs ws kw('end') -> [#Impl, a, b, xs],
   implDecl = methodImpl,
   methodImpl = decoratorApp*:as ws kw('method') ws pattern:p ws fnBody:e -> [#Meth, p[0], [#DecoExpr, p[0], as, [#Fn, p, e]]],
 
@@ -253,15 +255,15 @@ ometa Parser {
              | '(' ws matchCase:a ws ')'                 -> a,
 
   keywordCase = keyword:k ws matchCase2:x -> [k, x],
-  caseExpr = kw('match') ws listOf(#expr, ','):es ws '{' ws (ws casePatt)+:xs ws '}' -> [#Case, es, xs],
+  caseExpr = kw('match') ws listOf(#expr, ','):es ws kw('with') ws (ws casePatt)+:xs ws kw('end') -> [#Case, es, xs],
   casePatt = '|' ws listOf(#matchCase, ','):cs ws "=>" ws expr:b                     -> [#CPatt, cs, b],
 
   // Expressions
-  letExpr   = kw('let') ws '{' ws bindingList:xs ws '}' ws kw('in') ws expr:e    -> [#Bind, xs, e],
+  letExpr   = kw('let') ws bindingList:xs ws kw('in') ws expr:e                  -> [#Bind, xs, e],
   ifExpr    = kw('if') ws expr:a ws kw('then') ws expr:b ws kw('else') ws expr:c -> [#IfExpr, a, b, c],
-  whereExpr = appExpr:e ws kw('where') ws '{' ws bindingList:xs ws '}'           -> [#Bind, xs, e],
+  whereExpr = appExpr:e ws kw('where') ws bindingList:xs ws kw('end')            -> [#Bind, xs, e],
 
-  doExpr = kw('do') ws '{' ws listOf(#doCase, ';'):xs ws ';'? ws '}' -> [#Do, xs],
+  doExpr = kw('do') ws listOf(#doCase, ';'):xs ws ';'? ws kw('end') -> [#Do, xs],
   doTailAction = expr:e -> [#DoAct, [#Id, '_'], e],
   doAction = pattId:a ws "<-" ws expr:e -> [#DoAct, a, e]
            | doTailAction,
@@ -331,7 +333,7 @@ ometa Parser {
   lambda = '^' '{' (ws pattId)+:as ws fnBody:b ws '}' -> [#Lambda, as, b]
          | '^' '{' ws expr:e ws '}'                   -> [#Lambda, [], [[#Ret, e], [#Nil]]],
 
-  bindingList = bindingCase:x (ws '|' ws bindingCase)*:xs -> [x].concat(xs),
+  bindingList = (ws '|' ws bindingCase)*:xs               -> xs,
   bindingCase = '$' identifier:a ws '=' ws expr:e         -> [#VarBind, a, e]
               | decoratorApp*:as ws pattern:p ws fnBody:e -> [#Let, p[0], [#DecoExpr, p[0], as, [#Fn, p, e]]],
 

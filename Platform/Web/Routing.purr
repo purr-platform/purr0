@@ -1,4 +1,4 @@
-module Web.Routing {
+module Web.Routing is
 
   import Purr.Core
   import Data.String
@@ -42,25 +42,25 @@ module Web.Routing {
                    , bindings -> List?
                    }
 
-  implement To-String for RouteSpec {
+  implement To-String for RouteSpec with
     method $this to-string => ffi "self['to-string'](self.$arrayToList(Object.keys($this)))"
-  }
+  end
   
   export router: $routes ^List? => ^{ $app => ^{ $req =>
-    let { $handler = $routes match: $req url  }
-    in match $handler {
-      | Nothing => $app($req)
-      | (Tuple: (Route: $r Handlers: $hs) With: $bindings) Just =>
-          match $hs at: $req http-method {
-            | $f Just => $f()($req at: "params" put: $bindings)
-            | Nothing => Task of: (Status: 405 Headers: {} Body: "Method Not Allowed")
-          }
-    }}}
+    let
+    | $handler = $routes match: $req url 
+    in match $handler with
+    | Nothing => $app($req)
+    | (Tuple: (Route: $r Handlers: $hs) With: $bindings) Just => match $hs at: $req http-method with
+                                                                 | $f Just => $f()($req at: "params" put: $bindings)
+                                                                 | Nothing => Task of: (Status: 405 Headers: {} Body: "Method Not Allowed")
+                                                                 end
+    end }}
   
   export $path ^RoutePath? compile-to-spec =>
-    let { $re   = $path compile-regexp
-        | $vars = $path collect-bindings
-        }
+    let
+    | $re   = $path compile-regexp
+    | $vars = $path collect-bindings
     in RouteSpec {
       bindings => $vars,
       match: $p with: $bs => ffi "(function() {
@@ -71,34 +71,33 @@ module Web.Routing {
       }())"
     }
   
-  let $routes ^List? match: $path ^String? => match $routes {
-    | $hd :: $rest =>
-      match $hd {
-        | Route: $spec Handlers: _ => match $spec match: $path with: $spec bindings {
-                                        | Nothing => $rest match: $path
-                                        | $a Just => (Tuple: $hd With: $a) Just
-                                      }
-      }
-    | Nil => Nothing
-  }
+  let $routes ^List? match: $path ^String? => match $routes with
+                                              | $hd :: $rest => match $hd with
+                                                                | Route: $spec Handlers: _ => match $spec match: $path with: $spec bindings with
+                                                                                              | Nothing => $rest match: $path
+                                                                                              | $a Just => (Tuple: $hd With: $a) Just
+                                                                                              end
+                                                                end
+                                              | Nil => Nothing
+                                              end
   
   let $path compile-regexp => $path compile + "$"
-  where {
-    $p compile => match $p {
-      | Root               => "^"
-      | $xs /*/ Wildcard   => $xs compile + "\\/(.*?)"
-      | $xs /*/ _ Binding  => $xs compile + "\\/([^\\/]+)"
-      | $xs /*/ $a Segment => $xs compile + "\\/" + $a escape-regexp
-    }
-  }
+  where
+  | $p compile => match $p with
+                  | Root               => "^"
+                  | $xs /*/ Wildcard   => $xs compile + "\\/(.*?)"
+                  | $xs /*/ _ Binding  => $xs compile + "\\/([^\\/]+)"
+                  | $xs /*/ $a Segment => $xs compile + "\\/" + $a escape-regexp
+                  end
+  end
   
-  let $path collect-bindings => match $path {
-    | Root               => Nil
-    | $xs /*/ $a Binding => $a :: $xs collect-bindings
-    | $xs /*/ Wildcard   => "wildcard" :: $xs collect-bindings
-    | $xs /*/ _ Segment  => $xs collect-bindings
-  } reverse
+  let $path collect-bindings => match $path with
+                                | Root               => Nil
+                                | $xs /*/ $a Binding => $a :: $xs collect-bindings
+                                | $xs /*/ Wildcard   => "wildcard" :: $xs collect-bindings
+                                | $xs /*/ _ Segment  => $xs collect-bindings
+                                end reverse
   
   let $a escape-regexp => ffi """String($a).replace(/\W/, '\\$1')"""
 
-}
+end

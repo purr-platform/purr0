@@ -1,4 +1,4 @@
-module Data.Function {
+module Data.Function is
 
   import Purr.Core
   
@@ -10,8 +10,8 @@ module Data.Function {
   export $f <<- $g => ^{ $a => $f($g($a)) }
   export $f flip => ^{ $a $b => $f($b, $a) }
 
-  implement To-String for Function {
+  implement To-String for Function with
     method $this to-string => ffi "self.$describe($this)"
-  }
+  end
 
-}
+end

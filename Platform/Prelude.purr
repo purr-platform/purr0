@@ -1,4 +1,4 @@
-module Prelude {
+module Prelude is
 
   import Purr.Core as Core
   # -- Core data types
@@ -32,4 +32,4 @@ module Prelude {
     Task, Plan, Console, Path, FS, Server, Async, Timers
   )
 
-}
+end

@@ -1,4 +1,4 @@
-module Concurrency.Timers {
+module Concurrency.Timers is
 
   import Purr.Core
   import Data.Number
@@ -27,4 +27,4 @@ module Concurrency.Timers {
       clearTimeout(timerId)
     })"""
   
-}
+end

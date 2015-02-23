@@ -1,4 +1,4 @@
-module Debug.Trace {
+module Debug.Trace is
 
   import Purr.Core
   
@@ -44,4 +44,4 @@ module Debug.Trace {
     }
   })"""
 
-}
+end

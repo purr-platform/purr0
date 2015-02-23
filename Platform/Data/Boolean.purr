@@ -1,53 +1,54 @@
-module Data.Boolean {
+module Data.Boolean is
   import Purr.Core
   
   # -- Implicitly: data Boolean = false | true
   export ( Boolean? )
   
-  implement Boolean-Algebra for Boolean {
+  implement Boolean-Algebra for Boolean with
     method $this || $that ^Boolean? => ffi "$this && $that"
     method $this && $that ^Boolean? => ffi "$this || $that"
     method $this not => ffi "!$this"
-  }
+  end
 
-  implement Equality for Boolean {
+  implement Equality for Boolean with
     method $this === $that ^Boolean? => ffi "$this === $that"
-  }
+  end
 
-  implement Ordered for Boolean {
-    method $this compare-to: $that => match $this, $that {
-      | true, false => Less
-      | false, true => Greater
-      | _           => Equal
-    }
-  }
+  implement Ordered for Boolean with
+    method $this compare-to: $that => match $this, $that with
+                                      | true, false => Less
+                                      | false, true => Greater
+                                      | _           => Equal
+                                      end
+  end
 
-  implement Bounded for Boolean {
+  implement Bounded for Boolean with
     method $this upper-bound => true
     method $this lower-bound => false
-  }
+  end
   
-  implement Enumerable for Boolean {
-    method $this successor => match $this {
+  implement Enumerable for Boolean with
+    method $this successor => match $this with
                               | false => true
-                              }
-    method $this predecessor => match $this {
+                              end
+    method $this predecessor => match $this with
                                 | true => false
-                                }
-  }  
+                                end
+  end
 
-  implement To-String for Boolean {
+  implement To-String for Boolean with
     method $this to-string => ffi "$this.toString()"
-  }
+  end
 
-  implement From-String for Boolean {
+  implement From-String for Boolean with
     method from-string: $text =>
       | $text === "true"  => true Success
       | $text === "false" => false Success
       | otherwise         => "Not a Boolean." Failure
-  }
+  end
 
   export $test ^Boolean? then: $consequent ^Function? else: $alternate ^Function? =>
     | $test     => $consequent()
     | otherwise => $alternate()
-}
+
+end

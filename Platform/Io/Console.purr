@@ -1,4 +1,4 @@
-module Io.Console {
+module Io.Console is
 
   import Purr.Core
   import Io.Task
@@ -8,19 +8,27 @@ module Io.Console {
   
   export $x ^To-String? display => 
     task: ^{ $next => ffi "console.log($text)" ~ $next(void) }
-    where { $text = $x to-string }
+    where
+    | $text = $x to-string
+    end
   
   export $x ^To-String? display-error =>
     task: ^{ $next => ffi "console.error($text)" ~ $next(void) }
-    where { $text = $x to-string }
+    where
+    | $text = $x to-string
+    end
   
   export $x ^To-String? display-warning =>
     task: ^{ $next => ffi "console.warn($text)" ~ $next(void) }
-    where { $text = $x to-string }
+    where
+    | $text = $x to-string
+    end
   
   export $x ^To-String? display-info =>
     task: ^{ $next => ffi "console.info($text)" ~ $next(void) }
-    where { $text = $x to-string }
+    where
+    | $text = $x to-string
+    end
   
   export $text ^String? write => 
     task: ^{ $next => ffi "process.stdout.write($text)" ~ $next(void) }
@@ -66,10 +74,10 @@ module Io.Console {
     })"""
     cleanup: ^{ $f => ffi "$f()" }
 
-  export get-line: $prompt ^String? => do {
+  export get-line: $prompt ^String? => do
     $prompt write;
     get-line
-  }
+  end
   
 
-}
+end
