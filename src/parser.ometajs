@@ -10,7 +10,6 @@ var reserved = [ ':'  // Method parameter
                , '|'  // Case separators
                , '<-' // Do binding
                , '<|', '|>'  // pipes
-               , "'"  // Symbol
                // Protocols
                , 'interface'
                , 'implement'
@@ -68,7 +67,7 @@ ometa Parser {
   comment = fromTo('#', '\n'),
   ws      = space*,
   symbol  = ~(letter | digit | space
-             | '$' | '@' | '^' | ';' | ',' | '.' | ':' | '[' | ']' | '{' | '}' | '(' | ')') char,
+             | '$' | '@' | '^' | ';' | '`' | ',' | '.' | ':' | '[' | ']' | '{' | '}' | '(' | ')') char,
   eof     = ~char,
   kw :xs  = seq(xs) ~(letter | digit | symbol | ':'),
 
@@ -320,7 +319,7 @@ ometa Parser {
               | doExpr
               | value
               | lambda
-              | '\'' extendedId:i    -> i
+              | '`' extendedId:i    -> i
               | identifier:a         -> [#App, [#Self], a, [[#Self]]]
               | varName:a            -> [#Var, a[1]]
               | kw('self')           -> [#Self]
