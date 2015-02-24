@@ -1,4 +1,4 @@
-module Data.Record {
+module Data.Record is
 
   import Purr.Core
   import Data.List
@@ -6,7 +6,7 @@ module Data.Record {
   
   export ( Record? )
   
-  implement Equality for Record {
+  implement Equality for Record with
     method $this === $that ^Record? => ffi "(function() {
       var xs = $this.$toObject(), ys = $that.$toObject()
       var ks1 = Object.keys(xs).sort(), ks2 = Object.keys(ys).sort()
@@ -19,9 +19,9 @@ module Data.Record {
       }
       return true
     }())"
-  }
+  end
   
-  implement To-String for Record {
+  implement To-String for Record with
     method $this to-string => ffi "(function() {
       var xs = $this.$toObject()
       var ks = Object.keys(xs)
@@ -29,14 +29,14 @@ module Data.Record {
            + ks.map(function(k){ return k + ' => ' + self['to-string']($this[k]) }).join(', ')
            + '}'
     }())"
-  }
+  end
   
-  implement Indexable for Record {
+  implement Indexable for Record with
     method $this at: $index ^String? => ffi "$this[$index]? self.Just($this.$get($index))
                                                           : self.Nothing()"
-  }
+  end
   
-  implement Indexed-Container for Record {
+  implement Indexed-Container for Record with
     method $this at: $index ^String? put: $value => ffi "(function() {
       var result = $this.$clone()
       result[$index] = $value
@@ -48,29 +48,29 @@ module Data.Record {
       result[$index] = null
       return result
     })"
-  }
+  end
   
-  implement Semigroup for Record {
+  implement Semigroup for Record with
     method $this + $that ^Record? => ffi "$this.$with($that)"
-  }
+  end
   
-  implement Monoid for Record {
+  implement Monoid for Record with
     method empty => {}
-  }
+  end
   
   
-  implement To-List for Record {
+  implement To-List for Record with
     method $this to-list => ffi "(function() {
       var xs = $this.$toObject()
       var ks = Object.keys(xs)
       return ks.map(function(k){ return self['Tuple:With:'](null, k, $this[k]) })
                .reduceRight(function(ys, y){ return self['::'](y, ys) }, self.Nil())
     }())"
-  }
+  end
 
-  implement From-List for Record {
+  implement From-List for Record with
     method $this from-list: $xs =>
       $xs fold-right: ^{ $x $v => $v at: $x fst put: $x snd } from: Record empty
-  }
+  end
 
-}
+end

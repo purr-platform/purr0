@@ -1,4 +1,4 @@
-module Io.FileSystem {
+module Io.FileSystem is
 
   import Purr.Core
   import Io.Task
@@ -7,30 +7,30 @@ module Io.FileSystem {
   ffi "var $fs = require('fs')"
   
   # -- Helpers
-  let $x ^String? asPath => match Path from-string: $x {
-    | $a Success => $a
-    }
+  let $x ^String? asPath => match Path from-string: $x with
+                            | $a Success => $a
+                            end
   
   
   # -- Data structures
   export data LinkType = Directory | File | Junction
   
-  implement To-String for LinkType {
-    method $this to-string => match $this {
-      | Directory => "<LinkType:Directory>"
-      | File      => "<LinkType:File>"
-      | Junction  => "<LinkType:Junction>"
-      }
-  }
+  implement To-String for LinkType with
+    method $this to-string => match $this with
+                              | Directory => "<LinkType:Directory>"
+                              | File      => "<LinkType:File>"
+                              | Junction  => "<LinkType:Junction>"
+                              end
+  end
   
-  implement Equality for LinkType {
-    method $this === $that => match $this, $that {
-      | Directory, Directory => true
-      | File,      File      => true
-      | Junction,  Junction  => true
-      | otherwise            => false
-      }
-  }
+  implement Equality for LinkType with
+    method $this === $that => match $this, $that with
+                              | Directory, Directory => true
+                              | File,      File      => true
+                              | Junction,  Junction  => true
+                              | otherwise            => false
+                              end
+  end
   
   
   # -- Path-level operations
@@ -80,13 +80,13 @@ module Io.FileSystem {
         else        $next(self.Yield(null))
       })
     })"""
-    where { 
-      $a render-type => match $a {
-        | Directory => "dir"
-        | File      => "file"
-        | Junction  => "junction"
-      }
-    }
+    where
+    | $a render-type => match $a with
+                        | Directory => "dir"
+                        | File      => "file"
+                        | Junction  => "junction"
+                        end
+    end
   
   export $p ^Path? read-link =>
     task: ffi """(function($next) {
@@ -113,15 +113,15 @@ module Io.FileSystem {
       })
     })"""
   
-  export $p ^Path? file? => do {
+  export $p ^Path? file? => do
     $stats <- $p stat;
     return ffi "$stats.isFile()"
-  }
+  end
   
-  export $p ^Path? directory? => do {
+  export $p ^Path? directory? => do
     $stats <- $p stat;
     return ffi "$stats.isDirectory()"
-  }
+  end
     
   
   # -- Node-level operations
@@ -190,10 +190,10 @@ module Io.FileSystem {
   
   export $p ^Path? make-directory: $mode =>
     if $p parent exists? then $p mkdir: $mode
-                         else do {
+                         else do
                            $p parent make-directory: $mode;
                            $p make-directory: $mode
-                         }
+                         end
   
   export $p ^Path? make-directory => $p make-directory: 0o777
   
@@ -207,4 +207,4 @@ module Io.FileSystem {
       })
     })"""
 
-}
+end

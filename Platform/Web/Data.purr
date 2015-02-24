@@ -1,4 +1,4 @@
-module Web.Data {
+module Web.Data is
 
   import Purr.Core
   
@@ -13,21 +13,21 @@ module Web.Data {
               | TRACE
               | CONNECT
   
-  implement Equality for Method {
+  implement Equality for Method with
     method $this === $that ^Method? => ffi "$this.$$ctag === $that.$$ctag"
-  }
+  end
   
-  implement To-String for Method {
+  implement To-String for Method with
     method $this to-string => ffi "$this.$$ctag"
-  }
+  end
   
-  implement From-String for Method {
+  implement From-String for Method with
     method from-string: $text => ffi "(function() {
       $text = $text.toUpperCase()
       var m = self.Method()[$text]
       if (m)  return self.Success(m())
       else    return self.Failure('Not a Method: ' + $text)
     })"
-  }
+  end
 
-}
+end

@@ -1,15 +1,15 @@
-module Data.Number {
+module Data.Number is
 
   import Purr.Core
   
   export ( Number? )
   
-  implement Equality for Number {
+  implement Equality for Number with
     method $this === $that ^Number? => ffi "$this === $that"
     method $this =/= $that ^Number? => ffi "$this !== $that"
-  }
+  end
 
-  implement Ordered for Number {
+  implement Ordered for Number with
     method $this compare-to: $that ^Number? =>
       | ffi "$this < $that" => Less
       | ffi "$this > $that" => Greater
@@ -19,37 +19,37 @@ module Data.Number {
     method $this > $that ^Number? => ffi "$this > $that"
     method $this <= $that ^Number? => ffi "$this <= $that"
     method $this >= $that ^Number? => ffi "$this >= $that"
-  }
+  end
   
-  implement Semigroup for Number {
+  implement Semigroup for Number with
     method $this + $that ^Number? => ffi "$this + $that"
-  }
-  
-  implement Monoid for Number {
+  end
+ 
+  implement Monoid for Number with
     method $this empty => 0
-  }
+  end
 
-  implement Abelian-Group for Number {
+  implement Abelian-Group for Number with
     method $this negate => ffi "-$this"
     method $this - $that => ffi "$this - $that"
-  }
+  end
 
-  implement Ring for Number {
+  implement Ring for Number with
     method $this * $that => ffi "$this * $that"
     method $this one => 1
-  }
+  end
 
-  implement Numeric for Number {
+  implement Numeric for Number with
     method $this absolute => ffi "Math.abs($this)"
-  }
+  end
 
-  implement Division-Ring for Number {
+  implement Division-Ring for Number with
     method $this / $that =>
       | $that === 0 => "Division by zero" Failure
       | otherwise   => (ffi "$this / $that") Success
-  }
+  end
 
-  implement Integral for Number {
+  implement Integral for Number with
     method $this divide-by: $that =>
       | $that === 0 => "Division by zero" Failure
       | otherwise   => (ffi "Math.floor($this / $that)") Success
@@ -57,9 +57,9 @@ module Data.Number {
     method $this modulus: $that =>
       | $that === 0 => "Division by zero" Failure
       | otherwise   => (ffi "$this % $that") Success
-  }
+  end
   
-  implement Floating for Number {
+  implement Floating for Number with
     method $this truncate => ffi "Math.max(0, Math.floor($this))"
     method $this round => ffi "Math.round($this)"
     method $this ceiling => ffi "Math.ceil($this)"
@@ -67,27 +67,28 @@ module Data.Number {
     method $this nan? => ffi "isNaN($this)"
     method $this infinite? => ffi "!isFinite($this)"
     method $this negative-zero? => ffi "(x === 0) && ((1/x) === -Infinity)"
-  }
+  end
   
-  implement From-String for Number {
-    method from-string: $repr => let { $x = ffi "Number($repr)" }
+  implement From-String for Number with
+    method from-string: $repr => let
+                                 | $x = ffi "Number($repr)"
                                  in
                                    if $x nan? then "Not a number" Failure
                                               else $x Success
-  }
+  end
 
-  implement To-String for Number {
+  implement To-String for Number with
     method $this to-string => ffi "$this.toString()"
-  }
+  end
   
-  implement Bounded for Number {
+  implement Bounded for Number with
     method upper-bound => ffi "$this.MAX_VALUE"
     method lower-bound => ffi "$this.MIN_VALUE"
-  }
+  end
   
-  implement Enumerable for Number {
+  implement Enumerable for Number with
     method $this successor => ffi "$this + 1"
     method $this predecessor => ffi "$this - 1"
-  }
+  end
 
-}
+end

@@ -1,4 +1,4 @@
-module Purr.Core {
+module Purr.Core is
  
   @| doc: "Attachs documentation to an object."
   @| category: "Decorator"
@@ -132,7 +132,7 @@ module Purr.Core {
     * Double negation                   not(not(x)) = x
   """
   export
-  interface Boolean-Algebra {
+  interface Boolean-Algebra is
     @| doc: "Logical disjunction."
     method $this || $that
 
@@ -141,7 +141,7 @@ module Purr.Core {
 
     @| doc: "Logical negation."
     method $this not
-  }
+  end
 
   
   # -- Abstractions derived from Group/Ring theory
@@ -153,10 +153,10 @@ module Purr.Core {
     * Associativity             (x + y) + z = x + (y + z)
   """
   export
-  interface Semigroup {
+  interface Semigroup is
     @| doc: "An associative operation (usually concatenation)"
     method $this + $that
-  }
+  end
 
   @| doc: """
   A semigroup with an identity value.
@@ -166,12 +166,12 @@ module Purr.Core {
     * Identity                  empty + x = x + empty = x
   """
   export
-  interface Monoid {
-    need Semigroup
+  interface Monoid is
+    needs Semigroup
 
     @| doc: "The identity element."
     method $this empty
-  }
+  end
 
   @| doc: """
   A commutative group (where the binary operation doesn't depend on order).
@@ -187,8 +187,8 @@ module Purr.Core {
     * Commutativity             a + b = b + a
   """
   export
-  interface Abelian-Group {
-    need Monoid
+  interface Abelian-Group is
+    needs Monoid
 
     @| doc: "Returns the inverse of the value."
     method $this negate => $this zero
@@ -198,7 +198,7 @@ module Purr.Core {
 
     @| doc: "An alias for [[empty]] that makes more sense for numbers"
     method $this zero => $this empty
-  }
+  end
 
   @| doc: """
   An [[Abelian-Group]] with a second binary operation that is distributive over
@@ -213,26 +213,26 @@ module Purr.Core {
     * Right distributivity              (b + c) * a = (b * a) + (c * a)
   """
   export
-  interface Ring {
-    need Abelian-Group
+  interface Ring is
+    needs Abelian-Group
 
     @| doc: "The multiplication operation."
     method $this * $that
 
     @| doc: "The identity of the multiplication."
     method $this one
-  }
+  end
 
   @| doc: """
   A protocol for all values that can be treated as numbers.
   """
   export
-  interface Numeric {
-    need Ring
+  interface Numeric is
+    needs Ring
 
     @| doc: "Returns the absolute value of an element in this set."
     method $this absolute
-  }
+  end
 
   @| doc: """
   A [[Ring]] with a multiplicative inverse.
@@ -245,40 +245,40 @@ module Purr.Core {
   the set of elements might have zero values.
   """
   export
-  interface Division-Ring {
-    need Ring
+  interface Division-Ring is
+    needs Ring
 
     @| doc: "The multiplicative inverse."
     method $this reciprocal -> Either? => $this one / $this
 
     @| doc: "Non-zero division."
-    method $this / $that -> Either? => match $that reciprocal {
+    method $this / $that -> Either? => match $that reciprocal with
       | $that' Success  => $this * $that'
       | $reason Failure => $reason Failure
-    }
-  }
+    end
+  end
   
   @| doc: """
   A protocol representing integral numbers.
   """
   export
-  interface Integral {
-    need Numeric
+  interface Integral is
+    needs Numeric
 
     @| doc: "The quotient of dividing `$this` by `$that`."
     method $this divide-by: $that -> Either?
 
     @| doc: "The modulus of dividing `$this` by `$that`."
     method $this modulus: $that -> Either?
-  }
+  end
   
   @| doc: """
   A protocol representing floating point numbers.
   """
   export
-  interface Floating {
-    need Numeric
-    need Division-Ring
+  interface Floating is
+    needs Numeric
+    needs Division-Ring
     
     @| doc: "Returns the nearest integer between zero and `$this`."
     method $this truncate -> Floating?
@@ -300,7 +300,7 @@ module Purr.Core {
 
     @| doc: "Tests if the value is an IEEE 754 negative zero."
     method $this negative-zero? -> Boolean?
-  }
+  end
 
 
   # -- Abstractions derived from Category Theory
@@ -319,10 +319,10 @@ module Purr.Core {
     * Composition               $a map: ^{ $b => $b g f } = ($a map: $g) map: $f
   """
   export
-  interface Functor {
+  interface Functor is
     @| doc: "Transforms values of the functor."
     method $this map: $transformation ^Function?
-  }
+  end
 
   @| doc: """
   Implementations of Applicative should satisfy the following laws:
@@ -336,8 +336,8 @@ module Purr.Core {
     * Interchange               $a apply-to: ($b of: $c) = ($b of: ^{ $f => $f($c) }) apply-to: $a
   """
   export
-  interface Applicative {
-    need Functor
+  interface Applicative is
+    needs Functor
     
     @| doc: "Applies this value to another functor."
     method $this apply-to: $that ^Functor?
@@ -347,7 +347,7 @@ module Purr.Core {
 
     @| doc: "Alias for [[apply-to:]]"
     method $this <*> $that => $this apply-to: $that
-  }
+  end
 
   @| doc: """
   Implementations of Monad should satisfy the following laws:
@@ -357,15 +357,15 @@ module Purr.Core {
     * Right identity            ($m >>= (T of: _)) = $m
   """
   export
-  interface Monad {
-    need Applicative
+  interface Monad is
+    needs Applicative
 
     @| doc: "Transforms the value to another monad of the same type."
     method $this chain: $transformation ^Function?
 
     @| doc: "Alias for [[chain:]]"
     method $this >>= $f => $this chain: $f
-  }
+  end
 
   @| doc: """
   Implementations of Comonad should satisfy the following laws:
@@ -376,15 +376,15 @@ module Purr.Core {
     * $c extend: $f = ($c extend: ^{ $x => $x }) map: $f
   """
   export
-  interface Comonad {
-    need Functor
+  interface Comonad is
+    needs Functor
 
     @| doc: "Returns the value inside the Comonad."
     method _ extract: $comonad
 
     @| doc: "Transforms the value inside the Comonad, and returns it."
     method $this extend: $transformation ^Function?
-  }
+  end
   
 
   # -- Lawless (but useful for sharing operation names) protocols
@@ -399,13 +399,15 @@ module Purr.Core {
   of logical negation and [[===]], such as IEEE 754 floating point numbers.
   """
   export
-  interface Equality {
+  interface Equality is
     @| doc: "Tests if two values are equal. The values should be of the same type."
     method $this === $that -> Boolean?
 
     @| doc: "Tests if two values are inequal. The values should be of the same type."
-    method $this =/= $that -> Boolean? => ffi "!$x" where { $x = $this === $that }
-  }
+    method $this =/= $that -> Boolean? => ffi "!$x" where 
+                                                    | $x = $this === $that 
+                                                    end
+  end
   
   @| doc: """
   A protocol for values for which there exists a well-defined ordering.
@@ -414,8 +416,8 @@ module Purr.Core {
   [[compare-to:]] method, since all the others can be derived from it.
   """
   export
-  interface Ordered {
-    need Equality
+  interface Ordered is
+    needs Equality
 
     @| doc: "Returns how two values of the same type compare to each other."
     method $this compare-to: $that -> Ordering?
@@ -441,67 +443,67 @@ module Purr.Core {
     method $this if-least-else: $that =>
       | $this < $that => $this
       | otherwise     => $that
-  }
+  end
 
   @| doc: """
   A protocol for values that have some kind of lower and upper limit, like
   numbers or ADTs.
   """  
   export
-  interface Bounded {
+  interface Bounded is
     method $this upper-bound -> Bounded?
     method $this lower-bound -> Bounded?
-  }
+  end
   
   @| doc: """
   A protocol for values we can enumerate within some range.
   """
   export
-  interface Enumerable {
-    need Bounded
-    need Ordered
+  interface Enumerable is
+    needs Bounded
+    needs Ordered
     method $this successor -> Enumerable?
     method $this predecessor -> Enumerable?
     method $start up-to: $end -> List? =>
-      let {
-        $next = $start sucessor
+      let
+      | $next = $start sucessor
       | $max  = $end max: $start upper-bound
-      } in if $next >= $max then Nil
-                            else $start :: ($next up-to: $end)
-  }
+      in if $next >= $max then Nil
+                          else $start :: ($next up-to: $end)
+  end
 
   @| doc: """
   A protocol for values for which it makes sense to access value through
   some indexing key.
   """
   export
-  interface Indexable {
+  interface Indexable is
     method $this at: $index -> Maybe?
-    method $this includes?: $index -> Boolean? => match $this at: $index {
+    method $this includes?: $index -> Boolean? => match $this at: $index with
                                                   | Nothing => false
                                                   | _       => true
-                                                  }
-  }
+                                                  end
+  end
 
   @| doc: """
   A protocol for values to which values can be added to or removed from.
   """
   export
-  interface Container {
+  interface Container is
     method $this add: $value -> Container?
     method $this remove: $value -> Container?
-  }
+  end
 
   @| doc: """
   A protocol for containers for which it makes sense to store or remove things
   at particular indexes.
   """
   export
-  interface Indexed-Container {
-    need Indexable
+  interface Indexed-Container is
+    needs Indexable
     method $this at: $index put: $value -> Indexed-Container?
     method $this remove-at: $index -> Indexed-Container?
-  }
+  end
 
   @| doc: """
   A protocol for values for which it makes sense extract a part of it.
@@ -509,11 +511,11 @@ module Purr.Core {
   It's similar to the Enumerable, but for sequential collections.
   """
   export
-  interface Sliceable {
-    need Bounded
-    need Indexable
+  interface Sliceable is
+    needs Bounded
+    needs Indexable
     method $this slice-from: $start to: $end -> Sliceable?
-  }
+  end
 
   @| doc: """
   The equivalent of Monoid for functors.
@@ -523,31 +525,31 @@ module Purr.Core {
   non-failure value.  
   """
   export
-  interface Alternative {
-    need Applicative
+  interface Alternative is
+    needs Applicative
     method $this none -> Alternative?
     method $this <|> $that -> Alternative?
-  }
+  end
   
   @| doc: """
   A protocol for values that can be folded.
   """
   export
-  interface Foldable {
-    need Monoid
+  interface Foldable is
+    needs Monoid
     method $this fold-right: $transformation ^Function? from: $initial-value
     method $this fold => $this fold-right: _ + _ from: $this empty
     method $this fold-using: $f => $this fold-right: ^{$a $b => $f($a) + $b} from: $this empty
     method $this fold: $f from: $initial => $this fold-right: ^{$a $b => $f($b, $a)} from: $initial
-  }
+  end
   
   @| doc: """
   A protocol for values that can have an interesting textual representation.
   """
   export
-  interface To-String {
+  interface To-String is
     method $this to-string -> String?
-  }
+  end
 
   @| doc: """
   A protocol for values that can be constructed from textual representations.
@@ -558,40 +560,42 @@ module Purr.Core {
   or `Failure(_)` along with a description of the failure otherwise.
   """
   export
-  interface From-String {
+  interface From-String is
     method _ from-string: $representation ^String? -> Either?
-  }
+  end
 
 
   @| doc: """
   A protocol for values that are convertible to Lists.
   """
   export
-  interface To-List {
+  interface To-List is
     method $this to-list -> List?
-  }
+  end
 
   @| doc: """
   A protocol for values that can be converted from a List.
   """
   export
-  interface From-List {
+  interface From-List is
     method $this from-list: $xs ^List?
-  }
+  end
   
   # -- Minimal JS interoperability -------------------------------------
-  implement To-String for Unit {
+  implement To-String for Unit with
     method $this to-string => "<Unit>"
-  }
-  implement To-String for Date {
+  end
+
+  implement To-String for Date with
     method $this to-string => ffi "$this.toString()"
-  }
+  end
   
-  implement Equality for Date {
+  implement Equality for Date with
     method $this === $that ^Date? => ffi "$this.getTime() === $that.getTime()"
-  }
-  implement Equality for Unit {
+  end
+
+  implement Equality for Unit with
     method $this === $that ^Unit? => true
-  }  
+  end
   
-}
+end

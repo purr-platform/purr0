@@ -1,4 +1,4 @@
-module Io.FileSystem.Path {
+module Io.FileSystem.Path is
 
   import Purr.Core
   import Data.Boolean
@@ -9,9 +9,9 @@ module Io.FileSystem.Path {
   var $join      = $path.join
   """
   
-  let $x get => match $x {
-    | $a Success => $a
-    }
+  let $x get => match $x with
+                | $a Success => $a
+                end
   
   export data Path = Relative
                    | Root
@@ -19,67 +19,69 @@ module Io.FileSystem.Path {
   
   export $a Segment? => ffi "!/\\//.test($a)"
   
-  implement Equality for Path {
-    method $this === $that ^Path? => match $this, $that {
-      | Relative, Relative => true
-      | Root,     Root     => true
-      | $as \ $a, $bs \ $b => ($a === $b) && ($as === $bs)
-      | _,        _        => false
-      }
-  }
+  implement Equality for Path with
+    method $this === $that ^Path? => match $this, $that with
+                                     | Relative, Relative => true
+                                     | Root,     Root     => true
+                                     | $as \ $a, $bs \ $b => ($a === $b) && ($as === $bs)
+                                     | _,        _        => false
+                                     end
+  end
   
-  implement To-String for Path {
-    method $this to-string => match $this {
-      | Relative => "."
-      | Root     => $normalise("/")
-      | $as \ $a => $join($as to-string, $a)
-      }
-  }
+  implement To-String for Path with
+    method $this to-string => match $this with
+                              | Relative => "."
+                              | Root     => $normalise("/")
+                              | $as \ $a => $join($as to-string, $a)
+                              end
+  end
   
-  implement From-String for Path {
+  implement From-String for Path with
     method from-string: $text => ffi """$p.split('/').reduce(function(xs, x) {
                                           return self['\\'](xs, x)
                                         }, $top)""" Success
-                                 where { $p   = $normalise($text)
-                                       | $top = if ffi "/^\\//.test($p)" then Root
-                                                                         else Relative
-                                       }
-  }
+                                 where
+                                 | $p   = $normalise($text)
+                                 | $top = if ffi "/^\\//.test($p)" then Root
+                                                                   else Relative
+                                 end
+  end
   
-  implement Semigroup for Path {
+  implement Semigroup for Path with
     method $this + $that ^Path? =>
       Path from-string: $join($this to-string, $that to-string) |> _ get
-  }
+  end
   
-  implement Monoid for Path {
+  implement Monoid for Path with
     method empty => Relative
-  }
+  end
   
-  export $this ^Path? parent => match $this {
-    | Root     => Root
-    | Relative => Relative \ ".."
-    | $as \ $a => $as
-    }
+  export $this ^Path? parent => match $this with
+                                | Root     => Root
+                                | Relative => Relative \ ".."
+                                | $as \ $a => $as
+                                end
   
-  export $this ^Path? filename => match $this {
-    | $as \ $a => $a Just
-    | _        => Nothing
-    }
+  export $this ^Path? filename => match $this with
+                                  | $as \ $a => $a Just
+                                  | _        => Nothing
+                                  end
   
-  export $this ^Path? extension => match $this {
-    | $as \ $a => let { $xs = ffi "$a.split('.')" }
-                  in
-                    if ffi "$xs.length > 0" then ffi "$xs[$xs.length - 1]" Just
-                                           else Nothing
-    | _        => Nothing
-    }
+  export $this ^Path? extension => match $this with
+                                   | $as \ $a => let
+                                                 | $xs = ffi "$a.split('.')"
+                                                 in
+                                                   if ffi "$xs.length > 0" then ffi "$xs[$xs.length - 1]" Just
+                                                                           else Nothing
+                                   | _        => Nothing
+                                   end
   
-  export $this ^Path? relative? => match $this {
-    | Root     => false
-    | Relative => true
-    | $as \ $a => $as relative?
-    }
+  export $this ^Path? relative? => match $this with
+                                   | Root     => false
+                                   | Relative => true
+                                   | $as \ $a => $as relative?
+                                   end
   
   export $this ^Path? absolute? => ($this relative?) not
 
-}
+end

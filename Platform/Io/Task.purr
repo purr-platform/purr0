@@ -1,4 +1,4 @@
-module Io.Task {
+module Io.Task is
 
   import Purr.Core
   import Data.Function
@@ -9,7 +9,7 @@ module Io.Task {
                          | Done     # Finishes the computation
   
   # -- Helpers
-  let _ ~ _ => Unit # Convenience for running two functions
+  let _ ~ _ => Unit # Convenience for running two expressions
   let void  => Unit 
   let $f delayed => ffi "setImmediate($f)"
   let $f once => ffi "(function(a) { var result = $f(a); $f = function(){}; return result })"
@@ -21,51 +21,53 @@ module Io.Task {
   export never => task: ^{ Unit }
   
   # -- Runs things (meant for the end of the world, a la Haskell's unsafePerformIO)
-  export $t ^Task? run: $f ^Function? recover: $g ^Function? => match $t {
+  export $t ^Task? run: $f ^Function? recover: $g ^Function? =>
+    match $t with
     | Task: $computation Cleanup: $cleanup =>
-        let { 
-          $state = $computation(^{ $value => match $value {
+        let
+        | $state = $computation(^{ $value => match $value with
                                              | $a Yield => $f($a)
                                              | $a Throw => $g($a)
                                              | Done     => void
-                                             } ~ ^{ $cleanup($state, $value) } delayed } once)
-        } in $state
-   }
+                                             end ~ ^{ $cleanup($state, $value) } delayed } once)
+        in $state
+   end
   
-  export $t ^Task? run: $f ^Function? => match $t {
+  export $t ^Task? run: $f ^Function? =>
+    match $t with
     | Task: $computation Cleanup: $cleanup => 
-        let {
-          $state = $computation(^{ $value => match $value {
+        let
+        | $state = $computation(^{ $value => match $value with
                                              | $a Yield => $f($a)
                                              | $a Throw => ffi "(function(){ throw $a }())"
                                              | Done     => void
-                                             } ~ ^{ $cleanup($state, $value) } delayed } once)
-        } in $state
-    }
+                                             end ~ ^{ $cleanup($state, $value) } delayed } once)
+        in $state
+    end
   
   # -- Protocols
-  implement Monad for Task {
+  implement Monad for Task with
     method $task chain: $f =>
       task: ^{ $next =>
                  $task run: ^{ $x => $f($x) run: _ Yield ->> $next recover: _ Throw ->> $next }
                        recover: _ Throw ->> $next }
-  }
+  end
   
-  implement Functor for Task {
+  implement Functor for Task with
     method $task map: $f => $task >>= ^{ $a => Task of: $f($a) }
-  }
+  end
   
-  implement Applicative for Task {
+  implement Applicative for Task with
     method of: $value => task: ^{ $next => $next($value Yield) }
     method $task apply-to: $mappable => $task >>= ^{ $f => $mappable map: $f }
-  }
+  end
   
-  implement Monoid for Task {
+  implement Monoid for Task with
     method $this empty => task: ^{ $next => $next(Unit Yield) }
-  }
+  end
   
-  implement Semigroup for Task {
+  implement Semigroup for Task with
     method $this + $that ^Task? => $this >>= ^{ $a => $that map: $a + _ }
-  }
+  end
 
-}
+end

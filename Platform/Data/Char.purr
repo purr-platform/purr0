@@ -1,4 +1,4 @@
-module Data.Char {
+module Data.Char is
 
   import Purr.Core
   import Data.Number
@@ -21,45 +21,46 @@ module Data.Char {
   export $this Char? => $this tag === ffi "$$Char.$$tag"
   export Char => ffi "$$Char"
   
-  implement Equality for Char {
+  implement Equality for Char with
     method $this === $that ^Char? => ffi "$this.$chr === $that.$chr"
-  }
+  end
   
-  implement Ordered for Char {
+  implement Ordered for Char with
     method $this compare-to: $that ^Char? =>
       | ffi "$this.$chr < $that.$chr" => Less
       | ffi "$this.$chr > $that.$chr" => Greater
       | otherwise                     => Equal
-  }
+  end
   
-  implement Bounded for Char {
+  implement Bounded for Char with
     method lower-bound => 0 to-char
     method upper-bound => (ffi "0xFFFF") to-char
-  }
+  end
   
-  implement To-String for Char {
+  implement To-String for Char with
     method $this to-string => ffi "'<#Char:' + $this.$chr + '>'"
-  }
+  end
   
-  implement Enumerable for Char {
+  implement Enumerable for Char with
     method $this successor => ($this code + 1) to-char
     method $this predecessor => ($this code - 1) to-char
-  }
+  end
   
   export $this ^Char? uppercase => ffi "$$Char.$new($this.toUpperCase())"
   export $this ^Char? lowercase => ffi "$$Char.$new($this.toLowerCase())"
-  export $this ^Char? code => ffi "$this.$chr.charCodeAt(0)"
+
+  export $this ^Char? code       => ffi "$this.$chr.charCodeAt(0)"
   export $num ^CharCode? to-char => ffi "$this.$chr.fromCharCode($num)"
   
-  export $this ^Char? control? => ffi "/[\cA-\cZ]/.test($this.$chr)"
-  export $this ^Char? space? => ffi "/\s/.test($this.$chr)"
-  export $this ^Char? lower? => $this === $this lowercase
-  export $this ^Char? upper? => $this === $this uppercase
-  export $this ^Char? alpha? => ffi "/[\w]/.test($this.$chr)"
-  export $this ^Char? alpha-numeric? => ffi "/[\w\d]/.test($this.$chr)"
-  export $this ^Char? digit? => ffi "/\d/.test($this.$chr)"
-  export $this ^Char? octal-digit? => ffi "/[0-7]/.test($this.$chr)"
+  export $this ^Char? control?           => ffi "/[\cA-\cZ]/.test($this.$chr)"
+  export $this ^Char? space?             => ffi "/\s/.test($this.$chr)"
+  export $this ^Char? lower?             => $this === $this lowercase
+  export $this ^Char? upper?             => $this === $this uppercase
+  export $this ^Char? alpha?             => ffi "/[\w]/.test($this.$chr)"
+  export $this ^Char? alpha-numeric?     => ffi "/[\w\d]/.test($this.$chr)"
+  export $this ^Char? digit?             => ffi "/\d/.test($this.$chr)"
+  export $this ^Char? octal-digit?       => ffi "/[0-7]/.test($this.$chr)"
   export $this ^Char? hexadecimal-digit? => ffi "/[\da-fA-F]/.test($this.$chr)"
-  export $this ^Char? letter? => ffi "/[a-zA-Z]/.test($this.$chr)"
+  export $this ^Char? letter?            => ffi "/[a-zA-Z]/.test($this.$chr)"
   
-}
+end

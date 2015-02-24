@@ -1,4 +1,4 @@
-module Web.Server {
+module Web.Server is
 
   import Purr.Core
   import Io.Task
@@ -105,13 +105,14 @@ module Web.Server {
   export $this ^Request? http-version => ffi "$this['http-version']($this)"
   export $this ^Request? headers => ffi "$this.headers($this)"
   
-  implement Indexable for Request {
+  implement Indexable for Request with
     method $this at: $key ^String? => ffi "$this.$get($key)"
-  }
-  implement Indexed-Container for Request {
+  end
+
+  implement Indexed-Container for Request with
     method $this at: $key ^String? put: $value => ffi "$this.$set($key, $value)"
     method $this remove-at: $key ^String? => ffi "$this.$remove($key)"
-  }
+  end
   
   export data Response = Status: _ ^Number? Headers: _ ^Record? Body: _
   
@@ -161,4 +162,4 @@ module Web.Server {
   
   export https: $app listen: $port => https: $app listen: $port host: "0.0.0.0"
 
-}
+end

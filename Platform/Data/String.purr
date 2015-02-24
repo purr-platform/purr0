@@ -1,4 +1,4 @@
-module Data.String {
+module Data.String is
 
   import Purr.Core
   import Data.Char as C
@@ -11,43 +11,43 @@ module Data.String {
   function $asChar(a) { return self.C.Char().$new(a) }
   """
   
-  implement Equality for String {
+  implement Equality for String with
     method $this === $that ^String? => ffi "$this === $that"
-  }
+  end
 
-  implement Ordered for String {
+  implement Ordered for String with
     method $this compare-to: $that ^String? =>
       | ffi "$this > $that" => Greater
       | ffi "$this < $that" => Less
       | otherwise           => Equal
-  }
+  end
   
-  implement Bounded for String {
+  implement Bounded for String with
     method $this lower-bound => 0
     method $this upper-bound => ffi "$this.length"
-  }
+  end
   
-  implement Indexable for String {
+  implement Indexable for String with
     method $this at: $index ^Number? =>
       | ($index > 0) && ($index < ffi "$this.length") => ffi "$asChar($this[$index])" Just
       | otherwise                                     => Nothing
-  }
+  end
   
-  implement Sliceable for String {
+  implement Sliceable for String with
     method $this slice-from: $start ^Number? to: $end ^Number? => ffi "$this.slice($start, $end)"
-  }
+  end
   
-  implement Semigroup for String {
+  implement Semigroup for String with
     method $this + $that ^String? => ffi "$this + $that"
-  }
+  end
   
-  implement Monoid for String {
+  implement Monoid for String with
     method $this empty => ""
-  }
+  end
 
-  implement To-String for String {
+  implement To-String for String with
     method $this to-string => ffi "$this.toString()"
-  }
+  end
   
   export $this ^String? uppercase => ffi "$this.toUpperCase()"
   export $this ^String? lowercase => ffi "$this.toLowerCase()"
@@ -55,4 +55,4 @@ module Data.String {
   export $this ^String? trim-left => ffi "$this.trimLeft()"
   export $this ^String? trim-right => ffi "$this.trimRight()"  
 
-}
+end

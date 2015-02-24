@@ -1,4 +1,4 @@
-module Concurrency.Async {
+module Concurrency.Async is
 
   import Purr.Core
   import Data.List
@@ -79,12 +79,12 @@ module Concurrency.Async {
       $state.forEach(function(x){ x[0].$$2(x[1]) })
     })""" 
   
-  implement Boolean-Algebra for Task {
+  implement Boolean-Algebra for Task with
     method $this || $that ^Task? => $this or: $that
     method $this && $that ^Task? => [$this, $that] concurrently
     method $this not =>
       task: ^{ $next => $this run: ^{ $v => $next($v Yield) }
                               recover: ^{ $e => $next($e Throw) }}
-  }
+  end
 
-}
+end

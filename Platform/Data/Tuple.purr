@@ -1,4 +1,4 @@
-module Data.Tuple {
+module Data.Tuple is
 
   import Purr.Core
   import Data.Boolean
@@ -6,24 +6,24 @@ module Data.Tuple {
   # -- Implicitly: Tuple: _ With: _
   export ( Tuple:With:, Tuple? )
   
-  implement Equality for Tuple {
-    method $this === $that ^Tuple? => match $this, $that {
-      | Tuple: $x With: $y, Tuple: $x' With: $y' => ($x === $x') && ($y === $y')
-    }
-  }
+  implement Equality for Tuple with
+    method $this === $that ^Tuple? => match $this, $that with
+                                      | Tuple: $x With: $y, Tuple: $x' With: $y' => ($x === $x') && ($y === $y')
+                                      end
+  end
   
-  implement To-String for Tuple {
-    method $this to-string => match $this {
-      | Tuple: $x With: $y => "(" + $x to-string + ", " + $y to-string + ")"
-    }
-  }
+  implement To-String for Tuple with
+    method $this to-string => match $this with
+                              | Tuple: $x With: $y => "(" + $x to-string + ", " + $y to-string + ")"
+                              end
+  end
   
-  export $this first => match $this {
-    | Tuple: $x With: _ => $x
-  }
+  export $this first => match $this with
+                        | Tuple: $x With: _ => $x
+                        end
   
-  export $this second => match $this {
-    | Tuple: _ With: $x => $x
-  }
+  export $this second => match $this with
+                         | Tuple: _ With: $x => $x
+                         end
 
-}
+end
