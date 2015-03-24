@@ -5,8 +5,8 @@ module Data.Boolean is
   export ( Boolean? )
   
   implement Boolean-Algebra for Boolean with
-    method $this || $that ^Boolean? => ffi "$this && $that"
-    method $this && $that ^Boolean? => ffi "$this || $that"
+    method $this || $that ^Boolean? => ffi "$this || $that"
+    method $this && $that ^Boolean? => ffi "$this && $that"
     method $this not => ffi "!$this"
   end
 
