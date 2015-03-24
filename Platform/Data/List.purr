@@ -13,6 +13,8 @@ module Data.List is
   implement Equality for List with
     method $this === $that ^List? => match $this, $that with
                                      | $x :: $xs, $y :: $ys => ($x === $y) && ($xs === $ys)
+                                     | $x :: _, Nil         => false
+                                     | Nil, $y :: _         => false
                                      | Nil, Nil             => true
                                      end
   end
