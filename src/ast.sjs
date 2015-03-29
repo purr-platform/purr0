@@ -50,7 +50,7 @@ data Param {
   contract: Contract
 } deriving (Base)
 
-union FnMessage {
+data FnMessage {
   message: Message,
   contract: Contract
 }
@@ -66,7 +66,7 @@ union Message {
   Binary {
     name: Id,
     params: Array/*(Param)*/,
-  }
+  },
   Keyword {
     name: Id,
     params: Array/*(Param)*/,
