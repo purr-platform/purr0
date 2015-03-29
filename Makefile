@@ -37,13 +37,15 @@ $(LIB_DIR)/%.js: $(SRC_DIR)/%.ometajs
 
 $(LIB_DIR)/%.js: $(SRC_DIR)/%.sjs
 	mkdir -p $(dir $@)
-	cat ./node_modules/macros.operators/macros/*.sjs - < $< > $(LIB_DIR)/tmp.sjs
 	$(sjs) --readable-names \
-	       --sourcemap      \
+	       --sourcemap \
 	       --module lambda-chop/macros \
-	       --output $@      \
-	       $(LIB_DIR)/tmp.sjs
-	rm $(LIB_DIR)/tmp.sjs
+	       --module adt-simple/macros \
+	       --module sparkler/macros \
+	       --module es6-macros/macros/destructure \
+	       --module macros.operators \
+	       --output $@ \
+	       $<
 
 $(TEST_BLD)/%.js: $(TEST_DIR)/%.sjs
 	mkdir -p $(dir $@)
