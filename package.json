@@ -28,16 +28,19 @@
     "xtend": "^3.0.0"
   },
   "devDependencies": {
+    "adt-simple": "^0.1.3",
     "alright": "^1.0.0",
     "browserify": "^3.33.0",
+    "es6-macros": "0.0.7",
     "hifive": "^0.4.0",
     "hifive-spec": "^0.2.1",
     "ink-docstrap": "git://github.com/robotlolita/docstrap",
     "jsdoc": "^3.3.0-alpha5",
     "lambda-chop": "^0.1.5",
     "laws": "^0.2.1",
-    "macros.operators": "^0.4.0",
-    "sweet.js": "^0.6.1",
+    "macros.operators": "^0.5.1",
+    "sparkler": "^0.3.5",
+    "sweet.js": "^0.7.4",
     "uglify-js": "^2.4.3"
   }
 }
