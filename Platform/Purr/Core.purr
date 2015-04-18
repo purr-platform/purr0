@@ -191,7 +191,7 @@ module Purr.Core is
     needs Monoid
 
     @| doc: "Returns the inverse of the value."
-    method $this negate => $this zero
+    method $this negate => $this zero - $this
 
     @| doc: "Associates this value with the inverse of that."
     method $this - $that => $this + ($that negate)
