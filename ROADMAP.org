@@ -18,11 +18,11 @@
 - [ ] Atom
 ** Libraries
 *** TODO Remove ~Tuple:With:~ data structure
-*** Core
+*** [0/3] Core
 **** TODO FFI
 **** TODO Protocols
 **** TODO Data
-*** Data
+*** [0/14] Data
 **** TODO Boolean
 **** TODO Number
 **** TODO Maybe
@@ -37,14 +37,14 @@
 **** TODO Map
 **** TODO Record
 **** TODO Date
-*** Control
+*** [0/1] Control
 **** TODO Monad
-*** Concurrency
+*** [0/2] Concurrency
 **** TODO Async
 **** TODO Timer
-*** Debug
+*** [0/1] Debug
 **** TODO Trace
-*** I/O
+*** [0/9] I/O
 **** TODO Plan
 **** TODO Plan.Combinators
 **** TODO Task
@@ -56,20 +56,20 @@
 **** TODO Shell
 **** TODO Zip
 **** TODO Crypto
-*** Web
+*** [0/3] Web
 **** TODO HTTP
 **** TODO URI
 **** TODO Server
-*** Database
+*** [0/3] Database
 **** TODO Driver.PostgreSQL
 **** TODO Driver.MySQL
 **** TODO Modelling
-*** Language
+*** [0/4] Language
 **** TODO Parsing
 **** TODO JSON
 **** TODO HTML
 **** TODO SQL
-*** Test
+*** [0/3] Test
 **** TODO QuickCheck
 **** TODO Spec
 **** TODO Benchmark
