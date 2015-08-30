@@ -33,7 +33,8 @@ Type :quit to exit (or ^D).
 *** Loaded the Prelude from: /home/queen/Projects/PLs/purr/Platform/Prelude.purr
 
 > "Hello, world"
-"Hello, world"
+=> (<string>) Hello, World
+>
 ```
 
 To run files, use the `purr` command:
