@@ -16,7 +16,7 @@ modules.
 ```ruby
 # Declares that the module implements the Data.List interface
 # at version 2.x (using semver wildcards)
-module Data.List @ 2.x where
+module Data.List @ 2.x is
   # Declares that the module depends on the interface Data.Boolean
   import Data.Boolean only (True, False)
 
@@ -28,6 +28,19 @@ module Data.List @ 2.x where
   end
 end
 ```
+
+## Interfaces
+
+In Purr, interfaces are a tuple of unique name, metadata, and
+constraints. Interfaces declare what it means to be something in Purr,
+although modules can be supersets of these constraints.
+
+```ruby
+interface Data.List is
+  data List
+end
+```
+
 
 
 
@@ -45,6 +58,8 @@ A Ban on Imports [Part I](http://gbracha.blogspot.com.br/2009/06/ban-on-imports.
 [F-ing Modules](https://www.mpi-sws.org/~rossberg/f-ing/)
 : *Andreas Rossberg, Claudio Russo, Derek Dreyer*
 
+[Backpack: Retrofitting Haskell with Interfaces](http://plv.mpi-sws.org/backpack/)
+: *Scott Kilpatrick, Derek Dreyer, Simon Peyton Jones, Simon Marlow*
 
 <!--
 Local Variables:

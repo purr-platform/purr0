@@ -16,4 +16,18 @@ here.
   components, allowing safe experimentation in branches and rollbacks.
 
 
+## Safety / Correctness
 
+- It should only be possible for someone to do something they're explicitly
+  given access to. (OCS)
+
+- Code should follow from data shapes.
+
+- Components should program to interfaces, not concrete representations
+  (future-proofing).
+
+
+## Evolution
+
+- There should be language support for evolving it (by the user, and by the
+  language itself).
