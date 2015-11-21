@@ -22,6 +22,8 @@ the [Design Questions and Constraints](design-questions.md) document.
 To understand how the language is being designed, see the
 [Language Layers](layers.md) document.
 
+To get a feel of what kind of literature has inspired Purr's design the
+most, take a look at [the list of selected papers](papers.md).
 
 ## Features
 
