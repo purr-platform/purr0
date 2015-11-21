@@ -3,8 +3,10 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Modules in Purr](#modules-in-purr)
-  - [Interfaces](#interfaces)
-  - [References](#references)
+- [Interfaces](#interfaces)
+- [Modules](#modules)
+- [Linking](#linking)
+- [References](#references)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
