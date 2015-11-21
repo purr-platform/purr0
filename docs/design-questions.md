@@ -1,3 +1,15 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Design Questions](#design-questions)
+  - [Workflow](#workflow)
+  - [Safety / Correctness](#safety--correctness)
+  - [Environment](#environment)
+  - [Evolution](#evolution)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 Design Questions
 ================
 
@@ -25,6 +37,12 @@ here.
 
 - Components should program to interfaces, not concrete representations
   (future-proofing).
+
+
+## Environment
+
+- How do you attach rich meta-data to every object in a user-definable way
+  without running a turing-complete program?
 
 
 ## Evolution

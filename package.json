@@ -16,8 +16,8 @@
   "bugs": {
     "url": "https://github.com/robotlolita/purr/issues"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
+    "doctoc": "^0.15.0"
   }
 }

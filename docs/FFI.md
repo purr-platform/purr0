@@ -1,5 +1,19 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [FFI](#ffi)
+  - [Overview](#overview)
+  - [Anatomy of an Alien](#anatomy-of-an-alien)
+  - [Future directions](#future-directions)
+  - [References](#references)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 FFI
 ===
+
+## Overview
 
 Purr needs to interact cleanly with JavaScript first and foremost, but
 it needs to do so while maintaining the security guarantees of Purr
@@ -127,6 +141,9 @@ end
 
 [Why Not FFI](https://awelonblue.wordpress.com/2013/04/16/why-not-ffi/)
 : David Barbour
+
+[Alien Foreign Function Interface User Guide](http://wiki.squeak.org/squeak/uploads/6100/Alien%20FFI.2.pdf)
+: Eliot Miranda
 
 <!--
 Local Variables:

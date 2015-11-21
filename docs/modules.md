@@ -1,3 +1,13 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Modules in Purr](#modules-in-purr)
+  - [Interfaces](#interfaces)
+  - [References](#references)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 Modules in Purr
 ===============
 
@@ -15,12 +25,12 @@ modules.
 
 ```ruby
 # Declares that the module implements the Data.List interface
-# at version 2.x (using semver wildcards)
-module Data.List @ 2.x is
+# at version 2.* (using semver wildcards)
+module Data.List @ 2.* is
   # Declares that the module depends on the interface Data.Boolean
   import Data.Boolean only (True, False)
 
-  export data List = Nil | a :: b
+  export data List = Nil | left <> right
 
   export list empty? = match list with
     | Nil => True
@@ -33,11 +43,23 @@ end
 
 In Purr, interfaces are a tuple of unique name, metadata, and
 constraints. Interfaces declare what it means to be something in Purr,
-although modules can be supersets of these constraints.
+although modules can be supersets of those constraints.
 
 ```ruby
+meta
+| version: "1.0.0"
+| author: "Purr"
+| licence: "MIT"
 interface Data.List is
-  data List
+  # Depends on definitions from this interface
+  import Data.Boolean
+  import Purr.Core.MetaData
+
+  data List = Nil | (left :: Any?) <> (right :: List?)
+
+  meta
+  | doc: "True if the list has no elements."
+  let (list :: List?) empty? -> Boolean
 end
 ```
 
