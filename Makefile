@@ -2,7 +2,7 @@ bin    := $(shell npm bin)
 doctoc := $(bin)/doctoc
 
 # -- CONFIGURATION -----------------------------------------------------
-DOC_DIR := docs
+DOC_DIR := docs/notes
 
 # -- TASKS -------------------------------------------------------------
 help:
