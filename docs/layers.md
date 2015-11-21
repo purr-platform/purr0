@@ -5,17 +5,21 @@ The Purr language is divided in many layers, each of which add new
 features to the language for a particular domain.
 
 
-## Core
+## Kernel
 
-The `core` layer provides the most basic functionality for Purr. At its
-core, Purr is a pure functional programming language, providing
-functions, algebraic data types, and pattern matching.
+The `kernel` layer provides the most basic functionality for Purr. At
+its core, Purr is a pure functional programming language, providing
+primitive types and operations, function definitions, algebraic data
+types, and pattern matching.
 
 Functions are defined with a Smalltalk-inspired syntax:
 
 ```ruby
 # Nullary functions
 let x = ...
+
+# Unary tupled functions 
+let sum(tuple) = ...
 
 # Unary functions
 let x successor = ...
@@ -36,12 +40,13 @@ Invocation of those functions use the same syntax as their definition:
 x   # invoke a nullary function (or evaluates a variable to its value)
 1 successor
 1 + 1
+sum(1, 2, 3)
 1 between: 0 and: 10
 from: 1 to: 10
 ```
 
-Precedence of the functions is fixed: nullary > unary > binary >
-keyword.
+Precedence of the functions is fixed: nullary > tupled > unary > binary
+> keyword.
 
 ```ruby
 from: x + y successor to: (increment: z predecessor * 2)
@@ -49,12 +54,28 @@ from: x + y successor to: (increment: z predecessor * 2)
 (from: (x) + ((y) successor) to: (increment: (((z) predecessor) * (2))))
 ```
 
-Algebraic data types are defined with similar syntax:
+Algebraic data types are defined with similar syntax. By convention,
+they use PascalCase:
 
 
 ```ruby
-
+data List = Empty | _ :: _
+data Tuple = Cons: _ And: _
+data Tuple2 = _ Cons: _
 ```
+
+Pattern matching also follow from that structure:
+
+```ruby
+let list length = match list with
+                  | Empty     => 0
+                  | _ :: rest => 1 + rest length
+                  end
+```
+
+The kernel also defines a few basic types: numbers (arbitrary
+precision), floats, strings, functions, tuples.
+
 
 
 <!--
