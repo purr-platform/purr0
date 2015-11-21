@@ -2,7 +2,9 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [Design Questions](#design-questions)
+- [Design Questions and Constraints](#design-questions-and-constraints)
+- [What is Purr?](#what-is-purr)
+- [Constraints for specific areas](#constraints-for-specific-areas)
   - [Workflow](#workflow)
   - [Safety / Correctness](#safety--correctness)
   - [Environment](#environment)
