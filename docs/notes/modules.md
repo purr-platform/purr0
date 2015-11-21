@@ -155,6 +155,12 @@ A Ban on Imports [Part I](http://gbracha.blogspot.com.br/2009/06/ban-on-imports.
 [Backpack: Retrofitting Haskell with Interfaces](http://plv.mpi-sws.org/backpack/)
 : *Scott Kilpatrick, Derek Dreyer, Simon Peyton Jones, Simon Marlow*
 
+[Modules as Objects in Newspeak](http://bracha.org/newspeak-modules.pdf)
+: Gilad Bracha, Peter von der Ahé, Vassili Bykov, Yaron Kashai, William Maddox, and Eliot Miranda
+
+[The Programming Language Jigsaw: Mixins, Modularity, and Multiple Inheritance](http://www.bracha.org/jigsaw.pdf)
+: Gilad Bracha
+
 <!--
 Local Variables:
 ispell-dictionary: british
