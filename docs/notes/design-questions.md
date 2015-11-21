@@ -10,12 +10,49 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-Design Questions
-================
+# Design Questions and Constraints
 
 Questions and constraints that move the design of Purr forward are documented
 here.
 
+# What is Purr?
+
+Purr is a functional programming langauge designed for writing safe
+concurrent applications, as an alternative to things like PHP. However,
+it's also a general-purpose programming platform.
+
+In essence, Purr must provide at least the following:
+
+- An efficient workflow for iterative development (attractive for one
+  who'd write PHP);
+
+- To be perceived as "easy" by programmers and non-programmers, while
+  not sacrificing simplicity;
+
+- Enforce compositional constraints, in a way that it's possible to
+  explain to the user WHY constraints fail, in context, and debuggable
+  with the same tools used for debugging runtime errors;
+
+- Enforce safety in usage of external languages (HTML, SQL) while
+  providing similar syntax to avoid having people learn entirely new
+  APIs;
+
+- Support concurrency in an "easy" way. People shouldn't need to worry
+  about concurrent accesses to data structures, in general, where
+  possible;
+
+- Failures should be simple to reason about (this rules out dynamic
+  exceptions);
+
+- Having a fully reflective and explorable programming environment;
+
+- Avoid forcing people to rely on non-natural idioms because of language
+  limitations where possible (e.g.: support mutually recursive
+  dependencies so people don't need to work around it with awkward
+  idioms);
+
+
+# Constraints for specific areas
 
 ## Workflow
 
