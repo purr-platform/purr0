@@ -54,8 +54,7 @@ sum(1, 2, 3)
 from: 1 to: 10
 ```
 
-Precedence of the functions is fixed: nullary > tupled > unary > binary
-> keyword.
+Precedence of the functions is fixed: nullary > tupled > unary > binary > keyword.
 
 ```ruby
 from: x + y successor to: (increment: z predecessor * 2)
